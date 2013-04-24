@@ -1,11 +1,11 @@
 # WP-DownloadManager
-Contributors: GamerZ
-Donate link: http://lesterchan.net/site/donation/
-Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager
-Requires at least: 2.8
-Tested up to: 3.5
-Stable tag: trunk
-License: GPLv2
+Contributors: GamerZ  
+Donate link: http://lesterchan.net/site/donation/  
+Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
+Requires at least: 2.8  
+Tested up to: 3.5  
+Stable tag: trunk  
+License: GPLv2  
 
 Adds a simple download manager to your WordPress blog.
 
