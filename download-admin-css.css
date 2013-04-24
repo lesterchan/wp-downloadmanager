@@ -1,0 +1,21 @@
+/*
++-----------------------------------------------------------------------+
+|																		|
+|	WordPress Plugin: WP-DownloadManager								|
+|	Copyright (c) 2013 Lester "GaMerZ" Chan								|
+|																		|
+|	File Written By:													|
+|	- Lester "GaMerZ" Chan												|
+|	- http://lesterchan.net												|
+|																		|
+|	File Information:													|
+|	- Downloads Admin CSS Style											|
+|	- wp-content/plugins/wp-downloadmanager/download-admin-css.css		|
+|																		|
++-----------------------------------------------------------------------+
+*/
+
+
+#icon-wp-downloadmanager {
+	background: transparent url(images/download_admin_icon.png) no-repeat;
+}
