@@ -197,19 +197,19 @@ $download_template_most = get_option('download_template_most');
 		</tr>
 		<tr>
 			<td>
-				<strong>%FILE_SIZE%</strong><br />
-				<?php _e('Display the file\'s size in bytes/KB/MB/GB/TB.', 'wp-downloadmanager'); ?>
+				<strong>%FILE_SIZE%</strong> (or <strong>%FILE_SIZE_DEC%</strong>)<br />
+				<?php _e('Display the file\'s size in bytes/KiB/MiB/GiB/TiB (or bytes/KB/MB/GB/TB).', 'wp-downloadmanager'); ?>
 			</td>
 			<td>
 				<strong>%FILE_CATEGORY_NAME%</strong><br />
 				<?php _e('Display the files\'s category name.', 'wp-downloadmanager'); ?>
 			</td>
 			<td>
-				<strong>%CATEGORY_SIZE%</strong><br />
+				<strong>%CATEGORY_SIZE%</strong> (or <strong>%CATEGORY_SIZE_DEC%</strong>)<br />
 				<?php _e('Display the total size of all the files in the category.', 'wp-downloadmanager'); ?>
 			</td>
 			<td>
-				<strong>%TOTAL_SIZE%</strong><br />
+				<strong>%TOTAL_SIZE%</strong> (or <strong>%TOTAL_SIZE_DEC%</strong>)<br />
 				<?php _e('Display the total file size.', 'wp-downloadmanager'); ?>
 			</td>
 			<td>
@@ -271,6 +271,7 @@ $download_template_most = get_option('download_template_most');
 				- %TOTAL_FILES_COUNT%<br />
 				- %TOTAL_HITS%<br />
 				- %TOTAL_SIZE%<br />
+				- %TOTAL_SIZE_DEC%<br />
 				- %RECORD_START%<br />
 				- %RECORD_END%<br />
 				- %CATEGORY_ID%<br />
@@ -288,6 +289,7 @@ $download_template_most = get_option('download_template_most');
 				- %TOTAL_FILES_COUNT%<br />
 				- %TOTAL_HITS%<br />
 				- %TOTAL_SIZE%<br />
+				- %TOTAL_SIZE_DEC%<br />
 				- %CATEGORY_ID%<br />
 				- %FILE_CATEGORY_NAME%<br />
 				- %FILE_SEARCH_WORD%<br />
@@ -338,7 +340,8 @@ $download_template_most = get_option('download_template_most');
 				- %CATEGORY_URL%<br />
 				- %CATEGORY_FILES_COUNT%<br />
 				- %CATEGORY_HITS%<br />
-				- %CATEGORY_SIZE%<br /><br />
+				- %CATEGORY_SIZE%<br />
+				- %CATEGORY_SIZE_DEC%<br /><br />
 				<input type="button" name="RestoreDefault" value="<?php _e('Restore Default Template', 'wp-downloadmanager'); ?>" onclick="download_default_templates('category_header');" class="button" />
 			</td>
 			<td><textarea cols="80" rows="20" id="download_template_category_header" name="download_template_category_header"><?php echo htmlspecialchars(stripslashes(get_option('download_template_category_header'))); ?></textarea></td>
@@ -352,7 +355,8 @@ $download_template_most = get_option('download_template_most');
 				- %CATEGORY_URL%<br />
 				- %CATEGORY_FILES_COUNT%<br />
 				- %CATEGORY_HITS%<br />
-				- %CATEGORY_SIZE%<br /><br />
+				- %CATEGORY_SIZE%<br />
+				- %CATEGORY_SIZE_DEC%<br /><br />
 				<input type="button" name="RestoreDefault" value="<?php _e('Restore Default Template', 'wp-downloadmanager'); ?>" onclick="download_default_templates('category_footer');" class="button" />
 			</td>
 			<td><textarea cols="80" rows="20" id="download_template_category_footer" name="download_template_category_footer"><?php echo htmlspecialchars(stripslashes(get_option('download_template_category_footer'))); ?></textarea></td>
@@ -371,6 +375,7 @@ $download_template_most = get_option('download_template_most');
 				- %FILE_NAME%<br />
 				- %FILE_DESCRIPTION%<br />
 				- %FILE_SIZE%<br />
+				- %FILE_SIZE_DEC%<br />
 				- %FILE_CATEGORY_ID%<br />
 				- %FILE_CATEGORY_NAME%<br />
 				- %FILE_DATE%<br />
@@ -394,6 +399,7 @@ $download_template_most = get_option('download_template_most');
 				- %FILE_NAME%<br />
 				- %FILE_DESCRIPTION%<br />
 				- %FILE_SIZE%<br />
+				- %FILE_SIZE_DEC%<br />
 				- %FILE_CATEGORY_ID%<br />
 				- %FILE_CATEGORY_NAME%<br />
 				- %FILE_DATE%<br />
@@ -420,6 +426,7 @@ $download_template_most = get_option('download_template_most');
 				- %FILE_NAME%<br />
 				- %FILE_DESCRIPTION%<br />
 				- %FILE_SIZE%<br />
+				- %FILE_SIZE_DEC%<br />
 				- %FILE_CATEGORY_ID%<br />
 				- %FILE_CATEGORY_NAME%<br />
 				- %FILE_DATE%<br />
@@ -443,6 +450,7 @@ $download_template_most = get_option('download_template_most');
 				- %FILE_NAME%<br />
 				- %FILE_DESCRIPTION%<br />
 				- %FILE_SIZE%<br />
+				- %FILE_SIZE_DEC%<br />
 				- %FILE_CATEGORY_ID%<br />
 				- %FILE_CATEGORY_NAME%<br />
 				- %FILE_DATE%<br />
@@ -486,6 +494,7 @@ $download_template_most = get_option('download_template_most');
 				- %FILE_NAME%<br />
 				- %FILE_DESCRIPTION%<br />
 				- %FILE_SIZE%<br />
+				- %FILE_SIZE_DEC%<br />
 				- %FILE_CATEGORY_ID%<br />
 				- %FILE_CATEGORY_NAME%<br />
 				- %FILE_DATE%<br />
@@ -517,6 +526,7 @@ $download_template_most = get_option('download_template_most');
 				- %FILE_NAME%<br />
 				- %FILE_DESCRIPTION%<br />
 				- %FILE_SIZE%<br />
+				- %FILE_SIZE_DEC%<br />
 				- %FILE_CATEGORY_ID%<br />
 				- %FILE_CATEGORY_NAME%<br />
 				- %FILE_DATE%<br />
