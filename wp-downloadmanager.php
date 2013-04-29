@@ -473,7 +473,7 @@ function download_page_shortcode($atts) {
 ### Function: Short Code For Inserting Files Download Into Posts
 add_shortcode('download', 'download_shortcode');
 function download_shortcode($atts) {
-	extract(shortcode_atts(array('id' => '0', 'category' => '0', 'display' => 'both', 'sort_by' => 'file_id', 'sort_order' => 'asc', 'stream_limit' => '0'), $atts));
+	extract(shortcode_atts(array('id' => '0', 'category' => '0', 'display' => 'both', 'sort_by' => 'file_id', 'sort_order' => 'asc', 'stream_limit' => 0), $atts));
 	if(!is_feed()) {
 		$conditions = array();
 		if($id != '0') {
@@ -995,7 +995,7 @@ function get_download_hits($display = true) {
 
 
 ### Function: Download Embedded
-function download_embedded($condition = '', $display = 'both', $sort_by = 'file_id', $sort_order = 'asc', $stream_limit = '0') {
+function download_embedded($condition = '', $display = 'both', $sort_by = 'file_id', $sort_order = 'asc', $stream_limit = 0) {
 	global $wpdb, $user_ID;
 	$valid_sort_by = array('file_id', 'file', 'file_name', 'file_size', 'file_date', 'file_hits');
 	$valid_sort_order = array('asc', 'desc');
@@ -1005,16 +1005,7 @@ function download_embedded($condition = '', $display = 'both', $sort_by = 'file_
 	if (!in_array($sort_order, $valid_sort_order)) {
 		$sort_order = 'asc';
 	}
-	if (is_numeric($stream_limit)) {
-		$stream_limit = (int) $stream_limit;
-		if ($stream_limit < 0)
-		{
-			$stream_limit = 0;
-		}
-	}
-	else {
-		$stream_limit = 0;
-	}
+    $stream_limit = max(intval($stream_limit), 0);
 	$output = '';
 	if($condition !== '') {
 		$condition .= ' AND ';
@@ -1071,7 +1062,7 @@ function download_embedded($condition = '', $display = 'both', $sort_by = 'file_
 			$output .= $template_download_embedded;
 		}
 		if (!is_single() && $stream_limit != 0 && $stream_limit < count($files)) {
-			$output .= '<p><a href="' . get_permalink() . '">More …</a></p>';
+			$output .= '<p><a href="' . get_permalink() . '">'.__('More …', 'wp-downloadmanager').'</a></p>';
 		}
 		return apply_filters('download_embedded', $output);
 	}

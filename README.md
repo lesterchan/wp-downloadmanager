@@ -128,6 +128,9 @@ Adds a simple download manager to your WordPress blog.
 ### General Usage
 1. To embed a specific file to be downloaded into a post/page, use `[download id="2"]` where 2 is your file id.
 1. To embed multiple files to be downloaded into a post/page, use `[download id="1,2,3"]` where 1,2,3 are your file ids.
+1. To limit the number of embedded downloads shown for each post in a post stream, use the `stream_limit` option. E.g. `[download id="2" stream_limit="4"]` - this will only display the first 4 downloads for the post when rendered in a post stream, and display the full list of downloads when viewing the single post.
+1. To sort embedded downloads, use the `sort_by` and `sort_order` options. E.g. `[download id="2" sort_by="file_id" sort_order="asc"]` - this will sort the embedded downloads by file ID in ascending order.
+1. You can now choose to display file sizes in either binary base or decimal base (i.e. KiB vs KB), using either `%FILE_SIZE` or `%FILE_SIZE_DEC`; `%CATEGORY_SIZE` and `%TOTAL_SIZE` also have their `_DEC` counterparts.
 1. To choose what to display within the embedded file, use `[download id="1" display="both"]` where 1 is your file id and both will display both the file name and file desccription, whereas name will only display the filename. Note that this will overwrite the "Download Embedded File" template you have in your Download Templates.
 1. To embed files as well as categories, use `[download id="1,2,3" category="4,5,6"]` where 1,2,3 are your file id and 4,5,6 are your category ids.
 1. If you are using Default Permalinks, the file direct download link will be `http://yoursite.com/index.php?dl_id=2`. If you are using Nice Permalinks, the file direct download link will be `http://yoursite.com/download/2/`, where yoursite.com is your WordPress URL and 2 is your file id.
