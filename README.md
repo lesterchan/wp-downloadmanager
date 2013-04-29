@@ -1,11 +1,11 @@
 # WP-DownloadManager
-Contributors: GamerZ  
-Donate link: http://lesterchan.net/site/donation/  
-Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
-Requires at least: 2.8  
-Tested up to: 3.5  
-Stable tag: trunk  
-License: GPLv2  
+Contributors: GamerZ
+Donate link: http://lesterchan.net/site/donation/
+Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager
+Requires at least: 2.8
+Tested up to: 3.5
+Stable tag: trunk
+License: GPLv2
 
 Adds a simple download manager to your WordPress blog.
 
@@ -129,7 +129,7 @@ Adds a simple download manager to your WordPress blog.
 1. To embed a specific file to be downloaded into a post/page, use `[download id="2"]` where 2 is your file id.
 1. To embed multiple files to be downloaded into a post/page, use `[download id="1,2,3"]` where 1,2,3 are your file ids.
 1. To limit the number of embedded downloads shown for each post in a post stream, use the `stream_limit` option. E.g. `[download id="2" stream_limit="4"]` - this will only display the first 4 downloads for the post when rendered in a post stream, and display the full list of downloads when viewing the single post.
-1. To sort embedded downloads, use the `sort_by` and `sort_order` options. E.g. `[download id="2" sort_by="file_id" sort_order="asc"]` - this will sort the embedded downloads by file ID in ascending order.
+1. To sort embedded downloads, use the `sort_by` and `sort_order` options. E.g. `[download id="2" sort_by="file_id" sort_order="asc"]` - this will sort the embedded downloads by file ID in ascending order. Valid values for `sort_by` are: `file_id`, `file`, `file_name`, `file_size`, `file_date`, and `file_hits` (just like in the regular "Download Listing Options" of the plug-in).
 1. You can now choose to display file sizes in either binary base or decimal base (i.e. KiB vs KB), using either `%FILE_SIZE` or `%FILE_SIZE_DEC`; `%CATEGORY_SIZE` and `%TOTAL_SIZE` also have their `_DEC` counterparts.
 1. To choose what to display within the embedded file, use `[download id="1" display="both"]` where 1 is your file id and both will display both the file name and file desccription, whereas name will only display the filename. Note that this will overwrite the "Download Embedded File" template you have in your Download Templates.
 1. To embed files as well as categories, use `[download id="1,2,3" category="4,5,6"]` where 1,2,3 are your file id and 4,5,6 are your category ids.
