@@ -473,17 +473,17 @@ function download_page_shortcode($atts) {
 ### Function: Short Code For Inserting Files Download Into Posts
 add_shortcode('download', 'download_shortcode');
 function download_shortcode($atts) {
-	extract(shortcode_atts(array('id' => '0', 'category' => '0', 'display' => 'both', 'sort_by' => 'file_id', 'sort_order' => 'asc', 'stream_limit' => 0), $atts));
+	extract(shortcode_atts(array('id' => 0, 'category' => 0, 'display' => 'both', 'sort_by' => 'file_id', 'sort_order' => 'asc', 'stream_limit' => 0), $atts));
 	if(!is_feed()) {
 		$conditions = array();
-		if($id != '0') {
+		if($id != 0) {
 			if(strpos($id, ',') !== false) {
 				$conditions[] = "file_id IN ($id)";
 			} else {
 				$conditions[] = "file_id = $id";
 			}
 		}
-		if($category != '0') {
+		if($category != 0) {
 			if(strpos($category, ',') !== false) {
 				$conditions[] = "file_category IN ($category)";
 			} else {
