@@ -1,11 +1,11 @@
-# WP-DownloadManager
-Contributors: GamerZ
-Donate link: http://lesterchan.net/site/donation/
-Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager
-Requires at least: 2.8
-Tested up to: 3.5
-Stable tag: trunk
-License: GPLv2
+# WP-DownloadManager  
+Contributors: GamerZ  
+Donate link: http://lesterchan.net/site/donation/  
+Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
+Requires at least: 2.8  
+Tested up to: 3.5  
+Stable tag: trunk  
+License: GPLv2  
 
 Adds a simple download manager to your WordPress blog.
 
@@ -38,6 +38,10 @@ Adds a simple download manager to your WordPress blog.
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appericiate it. If not feel free to use it without any obligations.
 
 ## Changelog
+
+### Version 1.62
+* NEW: Added sorting to embedded downloads. Props ksze.
+* NEW: Added %FILE_SIZE_DEC% template variable for bytes/KB/MB/GB/TB. Props ksze.
 
 ### Version 1.61
 * FIXED: Added nonce to Options. Credits to Charlie Eriksen via Secunia SVCRP.
