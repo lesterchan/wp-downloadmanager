@@ -4,7 +4,7 @@ Donate link: http://lesterchan.net/site/donation/
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
 Requires at least: 3.9  
 Tested up to: 3.9  
-Stable tag: trunk  
+Stable tag: 1.62  
 License: GPLv2  
 
 Adds a simple download manager to your WordPress blog.
