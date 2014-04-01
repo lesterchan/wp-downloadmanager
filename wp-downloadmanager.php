@@ -3,7 +3,7 @@
 Plugin Name: WP-DownloadManager
 Plugin URI: http://lesterchan.net/portfolio/programming/php/
 Description: Adds a simple download manager to your WordPress blog.
-Version: 1.61
+Version: 1.62
 Author: Lester 'GaMerZ' Chan
 Author URI: http://lesterchan.net
 Text Domain: wp-downloadmanager
@@ -11,7 +11,7 @@ Text Domain: wp-downloadmanager
 
 
 /*
-	Copyright 2013  Lester Chan  (email : lesterchan@gmail.com)
+	Copyright 2014  Lester Chan  (email : lesterchan@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,9 +30,9 @@ Text Domain: wp-downloadmanager
 
 
 ### Create text domain for translations
-add_action('init', 'downloadmanager_textdomain');
+add_action( 'plugins_loaded', 'downloadmanager_textdomain' );
 function downloadmanager_textdomain() {
-	load_plugin_textdomain('wp-downloadmanager', false, 'wp-downloadmanager');
+	load_plugin_textdomain( 'wp-downloadmanager', false, dirname( plugin_basename( __FILE__ ) ) );
 }
 
 
@@ -84,40 +84,21 @@ add_action('admin_footer-post.php', 'downloads_footer_admin');
 add_action('admin_footer-page-new.php', 'downloads_footer_admin');
 add_action('admin_footer-page.php', 'downloads_footer_admin');
 function downloads_footer_admin() {
-	// Javascript Code Courtesy Of WP-AddQuicktag (http://bueltge.de/wp-addquicktags-de-plugin/120/)
-	echo '<script type="text/javascript">'."\n";
-	echo "\t".'var downloadsEdL10n = {'."\n";
-	echo "\t\t".'enter_download_id: "'.js_escape(__('Enter File ID (Separate Multiple IDs By A Comma)', 'wp-downloadmanager')).'",'."\n";
-	echo "\t\t".'download: "'.js_escape(__('Download', 'wp-downloadmanager')).'",'."\n";
-	echo "\t\t".'insert_download: "'.js_escape(__('Insert File Download', 'wp-downloadmanager')).'",'."\n";
-	echo "\t".'};'."\n";
-	echo "\t".'function insertDownload(where, myField) {'."\n";
-	echo "\t\t".'var download_id = jQuery.trim(prompt(downloadsEdL10n.enter_download_id));'."\n";
-	echo "\t\t".'if(download_id == null || download_id == "") {'."\n";
-	echo "\t\t\t".'return;'."\n";
-	echo "\t\t".'} else {'."\n";
-	echo "\t\t\t".'if(where == "code") {'."\n";
-	echo "\t\t\t\t".'edInsertContent(myField, "[download id=\"" + download_id + "\"]");'."\n";
-	echo "\t\t\t".'} else {'."\n";
-	echo "\t\t\t\t".'return "[download id=\"" + download_id + "\"]";'."\n";
-	echo "\t\t\t".'}'."\n";
-	echo "\t\t".'}'."\n";
-	echo "\t".'}'."\n";
-	echo "\t".'if(document.getElementById("ed_toolbar")){'."\n";
-	echo "\t\t".'edButtons[edButtons.length] = new edButton("ed_downloadmanager",downloadsEdL10n.download, "", "","");'."\n";
-	echo "\t\t".'jQuery(document).ready(function($){'."\n";
-	echo "\t\t\t".'$(\'#qt_content_ed_downloadmanager\').replaceWith(\'<input type="button" id="qt_content_ed_downloadmanager" accesskey="" class="ed_button" onclick="insertDownload(\\\'code\\\', edCanvas);" value="\' + downloadsEdL10n.download + \'" title="\' + downloadsEdL10n.insert_download + \'" />\');'."\n";
-	echo "\t\t".'});'."\n";
-	echo "\t".'}'."\n";
-	echo '</script>'."\n";
-}
-
-
-### Function: Add Favourite Actions >= WordPress 2.7
-add_filter('favorite_actions', 'downloads_favorite_actions');
-function downloads_favorite_actions($favorite_actions) {
-       $favorite_actions['admin.php?page=wp-downloadmanager/download-add.php'] = array(__('Add File', 'wp-downloadmanager'), 'manage_downloads');
-       return $favorite_actions;
+?>
+	<script type="text/javascript">
+		var downloadsEdL10n = {
+			  enter_download_id: "<?php echo esc_js(__('Enter File ID (Separate Multiple IDs By A Comma)', 'wp-downloadmanager')); ?>"
+			, download: "<?php echo esc_js(__('Download', 'wp-downloadmanager')); ?>"
+			, insert_download: "<?php echo esc_js(__('Insert File Download', 'wp-downloadmanager')); ?>"
+		};
+		QTags.addButton('ed_wp_downloadmanager', downloadsEdL10n.download, function() {
+			var download_id = jQuery.trim(prompt(downloadsEdL10n.enter_download_id));
+			if (download_id != null && download_id != "") {
+				QTags.insertContent('[download="' + download_id + '"]');
+			}
+		});
+	</script>
+<?php
 }
 
 
@@ -137,7 +118,11 @@ function download_tinymce_registerbutton($buttons) {
 	return $buttons;
 }
 function download_tinymce_addplugin($plugin_array) {
-	$plugin_array['downloadmanager'] = plugins_url('wp-downloadmanager/tinymce/plugins/downloadmanager/editor_plugin.js');
+	if(WP_DEBUG) {
+		$plugin_array['downloadmanager'] = plugins_url('wp-downloadmanager/tinymce/plugins/downloadmanager/plugin.js');
+	} else {
+		$plugin_array['downloadmanager'] = plugins_url('wp-downloadmanager/tinymce/plugins/downloadmanager/plugin.min.js');
+	}
 	return $plugin_array;
 }
 

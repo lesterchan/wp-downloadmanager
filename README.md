@@ -2,8 +2,8 @@
 Contributors: GamerZ  
 Donate link: http://lesterchan.net/site/donation/  
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
-Requires at least: 2.8  
-Tested up to: 3.5  
+Requires at least: 3.9  
+Tested up to: 3.9  
 Stable tag: trunk  
 License: GPLv2  
 
@@ -12,19 +12,11 @@ Adds a simple download manager to your WordPress blog.
 ## Description
 Adds a simple download manager to your WordPress blog.
 
-### Previous Versions
-* [WP-DownloadManager 1.40 For WordPress 2.7.x](http://downloads.wordpress.org/plugin/wp-downloadmanager.1.40.zip "WP-DownloadManager 1.40 For WordPress 2.7.x")
-* [WP-DownloadManager 1.31 For WordPress 2.5.x And 2.6.x](http://downloads.wordpress.org/plugin/wp-downloadmanager.1.31.zip "WP-DownloadManager 1.31 For WordPress 2.5.x And 2.6.x")
-* [WP-DownloadManager 1.00 For WordPress 2.2.x And 2.3.x](http://downloads.wordpress.org/plugin/wp-downloadmanager.1.00.zip "WP-DownloadManager 1.00 For WordPress 2.2.x And 2.3.x")
-
 ### Development
-* [http://dev.wp-plugins.org/browser/wp-downloadmanager/](http://dev.wp-plugins.org/browser/wp-downloadmanager/ "http://dev.wp-plugins.org/browser/wp-downloadmanager/")
+* [https://github.com/lesterchan/wp-downloadmanager](https://github.com/lesterchan/wp-downloadmanager "https://github.com/lesterchan/wp-downloadmanager")
 
 ### Translations
 * [http://dev.wp-plugins.org/browser/wp-downloadmanager/i18n/](http://dev.wp-plugins.org/browser/wp-downloadmanager/i18n/ "http://dev.wp-plugins.org/browser/wp-downloadmanager/i18n/")
-
-### Support Forums
-* [http://forums.lesterchan.net/index.php?board=12.0](http://forums.lesterchan.net/index.php?board=12.0 "http://forums.lesterchan.net/index.php?board=12.0")
 
 ### Credits
 * Icons courtesy of [FamFamFam](http://www.famfamfam.com/ "FamFamFam")
@@ -40,6 +32,7 @@ Adds a simple download manager to your WordPress blog.
 ## Changelog
 
 ### Version 1.62
+* NEW: Supports TinyMCE 4.0 For WordPress 3.9
 * NEW: Added sorting to embedded downloads. Props ksze.
 * NEW: You can now choose to display file sizes in either binary base or decimal base (i.e. KiB vs KB), using either `%FILE_SIZE` or `%FILE_SIZE_DEC`; `%CATEGORY_SIZE` and `%TOTAL_SIZE` also have their `_DEC` counterparts.. Props ksze.
 
