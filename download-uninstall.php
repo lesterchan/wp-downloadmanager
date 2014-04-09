@@ -84,7 +84,6 @@ switch($mode) {
 				$deactivate_url = wp_nonce_url($deactivate_url, 'deactivate-plugin_wp-downloadmanager/wp-downloadmanager.php');
 			}
 			echo '<div class="wrap">';
-			echo '<div id="icon-wp-downloadmanager" class="icon32"><br /></div>';
 			echo '<h2>'.__('Uninstall WP-DownloadManager', 'wp-downloadmanager').'</h2>';
 			echo '<p><strong>'.sprintf(__('<a href="%s">Click Here</a> To Finish The Uninstallation And WP-DownloadManager Will Be Deactivated Automatically.', 'wp-downloadmanager'), $deactivate_url).'</strong></p>';
 			echo '</div>';
@@ -95,7 +94,6 @@ switch($mode) {
 <!-- Uninstall WP-DownloadManager -->
 <form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>">
 <div class="wrap">
-	<div id="icon-wp-downloadmanager" class="icon32"><br /></div>
 	<h2><?php _e('Uninstall WP-DownloadManager', 'wp-downloadmanager'); ?></h2>
 	<p>
 		<?php _e('Deactivating WP-DownloadManager plugin does not remove any data that may have been created, such as the download options and the download data. To completely remove this plugin, you can uninstall it here.', 'wp-downloadmanager'); ?>

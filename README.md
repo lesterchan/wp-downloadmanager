@@ -32,6 +32,7 @@ Adds a simple download manager to your WordPress blog.
 ## Changelog
 
 ### Version 1.62
+* NEW: Uses Dash Icons
 * NEW: Supports TinyMCE 4.0 For WordPress 3.9
 * NEW: Added sorting to embedded downloads. Props ksze.
 * NEW: You can now choose to display file sizes in either binary base or decimal base (i.e. KiB vs KB), using either `%FILE_SIZE` or `%FILE_SIZE_DEC`; `%CATEGORY_SIZE` and `%TOTAL_SIZE` also have their `_DEC` counterparts.. Props ksze.

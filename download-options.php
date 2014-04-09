@@ -112,7 +112,6 @@ $download_options = get_option('download_options');
 <form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>">
 	<?php wp_nonce_field('wp-downloadmanager_options'); ?>
 	<div class="wrap">
-		<div id="icon-wp-downloadmanager" class="icon32"><br /></div>
 		<h2><?php _e('Download Options', 'wp-downloadmanager'); ?></h2>
 		<h3><?php _e('Download Options', 'wp-downloadmanager'); ?></h3>
 		<table class="form-table">

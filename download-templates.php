@@ -145,7 +145,6 @@ $download_template_most = get_option('download_template_most');
 /* ]]> */
 </script>
 <div class="wrap">
-	<div id="icon-wp-downloadmanager" class="icon32"><br /></div>
 	<h2><?php _e('Download Templates', 'wp-downloadmanager'); ?></h2>
 	<form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>">
 	<?php wp_nonce_field('wp-downloadmanager_templates'); ?>

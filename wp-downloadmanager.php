@@ -44,16 +44,13 @@ $wpdb->downloads = $wpdb->prefix.'downloads';
 ### Function: Downloads Administration Menu
 add_action('admin_menu', 'downloads_menu');
 function downloads_menu() {
-	if (function_exists('add_menu_page')) {
-		add_menu_page(__('Downloads', 'wp-downloadmanager'), __('Downloads', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-manager.php', '', plugins_url('wp-downloadmanager/images/drive.png'));
-	}
-	if (function_exists('add_submenu_page')) {
-		add_submenu_page('wp-downloadmanager/download-manager.php', __('Manage Downloads', 'wp-downloadmanager'), __('Manage Downloads', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-manager.php');
-		add_submenu_page('wp-downloadmanager/download-manager.php', __('Add File', 'wp-downloadmanager'), __('Add File', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-add.php');
-		add_submenu_page('wp-downloadmanager/download-manager.php', __('Download Options', 'wp-downloadmanager'), __('Download Options', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-options.php');
-		add_submenu_page('wp-downloadmanager/download-manager.php', __('Download Templates', 'wp-downloadmanager'), __('Download Templates', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-templates.php');
-		add_submenu_page('wp-downloadmanager/download-manager.php', __('Uninstall WP-DownloadManager', 'wp-downloadmanager'), __('Uninstall WP-DownloadManager', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-uninstall.php');
-	}
+	add_menu_page(__('Downloads', 'wp-downloadmanager'), __('Downloads', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-manager.php', '', 'dashicons-download');
+
+	add_submenu_page('wp-downloadmanager/download-manager.php', __('Manage Downloads', 'wp-downloadmanager'), __('Manage Downloads', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-manager.php');
+	add_submenu_page('wp-downloadmanager/download-manager.php', __('Add File', 'wp-downloadmanager'), __('Add File', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-add.php');
+	add_submenu_page('wp-downloadmanager/download-manager.php', __('Download Options', 'wp-downloadmanager'), __('Download Options', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-options.php');
+	add_submenu_page('wp-downloadmanager/download-manager.php', __('Download Templates', 'wp-downloadmanager'), __('Download Templates', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-templates.php');
+	add_submenu_page('wp-downloadmanager/download-manager.php', __('Uninstall WP-DownloadManager', 'wp-downloadmanager'), __('Uninstall WP-DownloadManager', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-uninstall.php');
 }
 
 

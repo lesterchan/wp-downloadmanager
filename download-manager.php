@@ -285,7 +285,6 @@ switch($mode) {
 			<input type="hidden" name="old_file" value="<?php echo stripslashes($file->file); ?>" />
 			<?php wp_nonce_field('wp-downloadmanager_edit-file'); ?>
 			<div class="wrap">
-				<div id="icon-wp-downloadmanager" class="icon32"><br /></div>
 				<h2><?php _e('Edit A File', 'wp-downloadmanager'); ?></h2>
 				<table class="form-table">
 					<tr>
@@ -395,7 +394,6 @@ switch($mode) {
 			<input type="hidden" name="file_name" value="<?php echo htmlspecialchars(stripslashes($file->file_name)); ?>" />
 			<?php wp_nonce_field('wp-downloadmanager_delete-file'); ?>
 			<div class="wrap">
-				<div id="icon-wp-downloadmanager" class="icon32"><br /></div>
 				<h2><?php _e('Delete A File', 'wp-downloadmanager'); ?></h2>
 				<br style="clear" />
 				<table class="widefat">
@@ -492,7 +490,6 @@ switch($mode) {
 		<?php if(!empty($text)) { echo '<!-- Last Action --><div id="message" class="updated fade"><p>'.stripslashes($text).'</p></div>'; } ?>
 		<!-- Manage Downloads -->
 		<div class="wrap">
-			<div id="icon-wp-downloadmanager" class="icon32"><br /></div>
 			<h2><?php _e('Manage Downloads', 'wp-downloadmanager'); ?></h2>
 			<h3><?php _e('Downloads', 'wp-downloadmanager'); ?></h3>
 			<p><?php printf(__('Displaying <strong>%s</strong> To <strong>%s</strong> Of <strong>%s</strong> Files', 'wp-downloadmanager'), number_format_i18n($display_on_page), number_format_i18n($max_on_page), number_format_i18n($get_total_files)); ?></p>

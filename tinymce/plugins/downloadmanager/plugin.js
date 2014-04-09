@@ -9,7 +9,7 @@
 		editor.addButton('downloadmanager', {
 			text: false,
 			tooltip: downloadsEdL10n.insert_download,
-			image: url + '/img/download.svg',
+			icon: 'downloadmanager dashicons-before dashicons-download',
 			onclick: function() {
 				tinyMCE.activeEditor.execCommand( 'WP-DownloadManager-Insert_Download' )
 			}

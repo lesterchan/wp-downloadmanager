@@ -109,7 +109,6 @@ if(!empty($_POST['do'])) {
 	<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo get_max_upload_size(); ?>" />
 	<?php wp_nonce_field('wp-downloadmanager_add-file'); ?>
 	<div class="wrap">
-		<div id="icon-wp-downloadmanager" class="icon32"><br /></div>
 		<h2><?php _e('Add A File', 'wp-downloadmanager'); ?></h2>
 		<table class="form-table">
 			<tr>
