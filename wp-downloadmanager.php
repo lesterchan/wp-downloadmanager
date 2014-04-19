@@ -103,7 +103,7 @@ function download_tinymce_addbuttons() {
 	if(get_user_option('rich_editing') == 'true') {
 		add_filter('mce_external_plugins', 'download_tinymce_addplugin');
 		add_filter('mce_buttons', 'download_tinymce_registerbutton');
-		add_filter('wp_mce_translation', 'donload_tinymce_translation');
+		add_filter('wp_mce_translation', 'download_tinymce_translation');
 	}
 }
 function download_tinymce_registerbutton($buttons) {
