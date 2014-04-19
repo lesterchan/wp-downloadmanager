@@ -4,13 +4,12 @@ Donate link: http://lesterchan.net/site/donation/
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
 Requires at least: 3.9  
 Tested up to: 3.9  
-Stable tag: 1.62  
+Stable tag: 1.63  
 License: GPLv2  
 
 Adds a simple download manager to your WordPress blog.
 
 ## Description
-Adds a simple download manager to your WordPress blog.
 
 ### Development
 * [https://github.com/lesterchan/wp-downloadmanager](https://github.com/lesterchan/wp-downloadmanager "https://github.com/lesterchan/wp-downloadmanager")
@@ -30,6 +29,9 @@ Adds a simple download manager to your WordPress blog.
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appericiate it. If not feel free to use it without any obligations.
 
 ## Changelog
+
+### Version 1.63
+* FIXED: ReferenceError: downloadssEdL10n is not defined if TinyMCE 4.0 is loaded outside the Add/Edit Posts/Pages.
 
 ### Version 1.62
 * NEW: Uses Dash Icons

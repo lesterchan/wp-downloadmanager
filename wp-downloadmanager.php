@@ -3,7 +3,7 @@
 Plugin Name: WP-DownloadManager
 Plugin URI: http://lesterchan.net/portfolio/programming/php/
 Description: Adds a simple download manager to your WordPress blog.
-Version: 1.62
+Version: 1.63
 Author: Lester 'GaMerZ' Chan
 Author URI: http://lesterchan.net
 Text Domain: wp-downloadmanager
@@ -83,13 +83,8 @@ add_action('admin_footer-page.php', 'downloads_footer_admin');
 function downloads_footer_admin() {
 ?>
 	<script type="text/javascript">
-		var downloadsEdL10n = {
-			  enter_download_id: "<?php echo esc_js(__('Enter File ID (Separate Multiple IDs By A Comma)', 'wp-downloadmanager')); ?>"
-			, download: "<?php echo esc_js(__('Download', 'wp-downloadmanager')); ?>"
-			, insert_download: "<?php echo esc_js(__('Insert File Download', 'wp-downloadmanager')); ?>"
-		};
-		QTags.addButton('ed_wp_downloadmanager', downloadsEdL10n.download, function() {
-			var download_id = jQuery.trim(prompt(downloadsEdL10n.enter_download_id));
+		QTags.addButton('ed_wp_downloadmanager', '<?php echo esc_js(__('Download', 'wp-downloadmanager')); ?>', function() {
+			var download_id = jQuery.trim(prompt('<?php echo esc_js(__('Enter File ID (Separate Multiple IDs By A Comma)', 'wp-downloadmanager')); ?>'));
 			if (download_id != null && download_id != "") {
 				QTags.insertContent('[download="' + download_id + '"]');
 			}
@@ -106,8 +101,9 @@ function download_tinymce_addbuttons() {
 		return;
 	}
 	if(get_user_option('rich_editing') == 'true') {
-		add_filter("mce_external_plugins", "download_tinymce_addplugin");
+		add_filter('mce_external_plugins', 'download_tinymce_addplugin');
 		add_filter('mce_buttons', 'download_tinymce_registerbutton');
+		add_filter('wp_mce_translation', 'donload_tinymce_translation');
 	}
 }
 function download_tinymce_registerbutton($buttons) {
@@ -121,6 +117,11 @@ function download_tinymce_addplugin($plugin_array) {
 		$plugin_array['downloadmanager'] = plugins_url('wp-downloadmanager/tinymce/plugins/downloadmanager/plugin.min.js');
 	}
 	return $plugin_array;
+}
+function download_tinymce_translation($mce_translation) {
+	$mce_translation['Enter File ID (Separate Multiple IDs By A Comma)'] = esc_js(__('Enter File ID (Separate Multiple IDs By A Comma)', 'wp-downloadmanager'));
+	$mce_translation['Insert File Download'] = esc_js(__('Insert File Download', 'wp-downloadmanager'));
+	return $mce_translation;
 }
 
 
