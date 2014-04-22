@@ -86,7 +86,7 @@ function downloads_footer_admin() {
 		QTags.addButton('ed_wp_downloadmanager', '<?php echo esc_js(__('Download', 'wp-downloadmanager')); ?>', function() {
 			var download_id = jQuery.trim(prompt('<?php echo esc_js(__('Enter File ID (Separate Multiple IDs By A Comma)', 'wp-downloadmanager')); ?>'));
 			if (download_id != null && download_id != "") {
-				QTags.insertContent('[download="' + download_id + '"]');
+				QTags.insertContent('[download id="' + download_id + '"]');
 			}
 		});
 	</script>
