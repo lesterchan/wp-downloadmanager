@@ -178,6 +178,10 @@ $download_template_most = get_option('download_template_most');
 				<?php _e('Display the file\'s name.', 'wp-downloadmanager'); ?>
 			</td>
 			<td>
+				<strong>%FILE_EXTENSION%</strong><br />
+				<?php _e('Display the file\'s extension.', 'wp-downloadmanager'); ?>
+			</td>
+			<td>
 				<strong>%FILE_DESCRIPTION%</strong><br />
 				<?php _e('Display the file\'s description.', 'wp-downloadmanager'); ?>
 			</td>

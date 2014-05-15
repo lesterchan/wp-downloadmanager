@@ -641,6 +641,7 @@ function downloads_page($category_id = 0) {
 			$template_download_listing = str_replace("%FILE_ID%", $file->file_id, $template_download_listing);
 			$template_download_listing = str_replace("%FILE%", stripslashes($file->file), $template_download_listing);
 			$template_download_listing = str_replace("%FILE_NAME%", download_search_highlight($search, stripslashes($file->file_name)), $template_download_listing);
+			$template_download_listing = str_replace("%FILE_EXT%", file_extension(stripslashes($file->file)), $template_download_listing);
 			$template_download_listing = str_replace("%FILE_ICON%", file_extension_image(stripslashes($file->file), $file_extensions_images), $template_download_listing);
 			$template_download_listing = str_replace("%FILE_DESCRIPTION%", download_search_highlight($search, stripslashes($file->file_des)), $template_download_listing);
 			$template_download_listing = str_replace("%FILE_SIZE%",  format_filesize($file->file_size), $template_download_listing);
@@ -1026,6 +1027,7 @@ function download_embedded($condition = '', $display = 'both', $sort_by = 'file_
 			$template_download_embedded = str_replace("%FILE_ID%", $file->file_id, $template_download_embedded);
 			$template_download_embedded = str_replace("%FILE%", stripslashes($file->file), $template_download_embedded);
 			$template_download_embedded = str_replace("%FILE_NAME%", stripslashes($file->file_name), $template_download_embedded);
+			$template_download_embedded = str_replace("%FILE_EXT%", file_extension(stripslashes($file->file)), $template_download_embedded);
 			$template_download_embedded = str_replace("%FILE_ICON%", file_extension_image(stripslashes($file->file), $file_extensions_images), $template_download_embedded);
 			if($display == 'both') {
 				$template_download_embedded = str_replace("%FILE_DESCRIPTION%",  stripslashes($file->file_des), $template_download_embedded);
@@ -1079,6 +1081,7 @@ if(!function_exists('get_most_downloaded')) {
 				$template_download_most = str_replace("%FILE_ID%", $file->file_id, $template_download_most);
 				$template_download_most = str_replace("%FILE%", stripslashes($file->file), $template_download_most);
 				$template_download_most = str_replace("%FILE_NAME%", $file_name, $template_download_most);
+				$template_download_most = str_replace("%FILE_EXT%", file_extension(stripslashes($file->file)), $template_download_most);
 				$template_download_most = str_replace("%FILE_ICON%", file_extension_image(stripslashes($file->file), $file_extensions_images), $template_download_most);
 				$template_download_most = str_replace("%FILE_DESCRIPTION%",  stripslashes($file->file_des), $template_download_most);
 				$template_download_most = str_replace("%FILE_SIZE%",  format_filesize($file->file_size), $template_download_most);
@@ -1132,6 +1135,7 @@ if(!function_exists('get_recent_downloads')) {
 				$template_download_most = str_replace("%FILE_ID%", $file->file_id, $template_download_most);
 				$template_download_most = str_replace("%FILE%", stripslashes($file->file), $template_download_most);
 				$template_download_most = str_replace("%FILE_NAME%", $file_name, $template_download_most);
+				$template_download_most = str_replace("%FILE_EXT%", file_extension(stripslashes($file->file)), $template_download_most);
 				$template_download_most = str_replace("%FILE_ICON%", file_extension_image(stripslashes($file->file), $file_extensions_images), $template_download_most);
 				$template_download_most = str_replace("%FILE_DESCRIPTION%",  stripslashes($file->file_des), $template_download_most);
 				$template_download_most = str_replace("%FILE_SIZE%",  format_filesize($file->file_size), $template_download_most);
@@ -1190,6 +1194,7 @@ if(!function_exists('get_downloads_category')) {
 				$template_download_most = str_replace("%FILE_ID%", $file->file_id, $template_download_most);
 				$template_download_most = str_replace("%FILE%", stripslashes($file->file), $template_download_most);
 				$template_download_most = str_replace("%FILE_NAME%", $file_name, $template_download_most);
+				$template_download_most = str_replace("%FILE_EXT%", file_extension(stripslashes($file->file)), $template_download_most);
 				$template_download_most = str_replace("%FILE_ICON%", file_extension_image(stripslashes($file->file), $file_extensions_images), $template_download_most);
 				$template_download_most = str_replace("%FILE_DESCRIPTION%",  stripslashes($file->file_des), $template_download_most);
 				$template_download_most = str_replace("%FILE_SIZE%",  format_filesize($file->file_size), $template_download_most);

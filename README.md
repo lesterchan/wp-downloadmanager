@@ -31,6 +31,7 @@ Adds a simple download manager to your WordPress blog.
 ## Changelog
 
 ### Version 1.63
+* NEW: Added %FILE_EXT% template variable that  output the file extension
 * FIXED: Editor button was outputting the wrong shortcode.
 * FIXED: ReferenceError: downloadssEdL10n is not defined if TinyMCE 4.0 is loaded outside the Add/Edit Posts/Pages.
 
