@@ -29,6 +29,9 @@ Text Domain: wp-downloadmanager
 */
 
 
+### Version
+define( 'WP_DOWNLOADMANAGER_VERSION', 1.63 );
+
 ### Create text domain for translations
 add_action( 'plugins_loaded', 'downloadmanager_textdomain' );
 function downloadmanager_textdomain() {
@@ -58,9 +61,9 @@ function downloads_menu() {
 add_action('wp_print_styles', 'downloads_stylesheets');
 function downloads_stylesheets() {
 	if(@file_exists(TEMPLATEPATH.'/download-css.css')) {
-		wp_enqueue_style('wp-downloadmanager', get_stylesheet_directory_uri().'/download-css.css', false, '1.50', 'all');
+		wp_enqueue_style('wp-downloadmanager', get_stylesheet_directory_uri().'/download-css.css', false, WP_DOWNLOADMANAGER_VERSION, 'all');
 	} else {
-		wp_enqueue_style('wp-downloadmanager', plugins_url('wp-downloadmanager/download-css.css'), false, '1.50', 'all');
+		wp_enqueue_style('wp-downloadmanager', plugins_url('wp-downloadmanager/download-css.css'), false, WP_DOWNLOADMANAGER_VERSION, 'all');
 	}
 }
 
@@ -70,7 +73,7 @@ add_action('admin_enqueue_scripts', 'downloads_stylesheets_admin');
 function downloads_stylesheets_admin($hook_suffix) {
 	$downloads_admin_pages = array('wp-downloadmanager/download-manager.php', 'wp-downloadmanager/download-add.php', 'wp-downloadmanager/download-options.php', 'wp-downloadmanager/download-templates.php', 'wp-downloadmanager/download-uninstall.php');
 	if(in_array($hook_suffix, $downloads_admin_pages)) {
-		wp_enqueue_style('wp-downloadmanager-admin', plugins_url('wp-downloadmanager/download-admin-css.css'), false, '1.50', 'all');
+		wp_enqueue_style('wp-downloadmanager-admin', plugins_url('wp-downloadmanager/download-admin-css.css'), false, WP_DOWNLOADMANAGER_VERSION, 'all');
 	}
 }
 
@@ -110,11 +113,11 @@ function download_tinymce_registerbutton($buttons) {
 	array_push($buttons, 'separator', 'downloadmanager');
 	return $buttons;
 }
-function download_tinymce_addplugin($plugin_array) {
-	if(WP_DEBUG) {
-		$plugin_array['downloadmanager'] = plugins_url('wp-downloadmanager/tinymce/plugins/downloadmanager/plugin.js');
+function download_tinymce_addplugin( $plugin_array ) {
+	if( WP_DEBUG ) {
+		$plugin_array['downloadmanager'] = plugins_url( 'wp-downloadmanager/tinymce/plugins/downloadmanager/plugin.js?v=' . WP_DOWNLOADMANAGER_VERSION);
 	} else {
-		$plugin_array['downloadmanager'] = plugins_url('wp-downloadmanager/tinymce/plugins/downloadmanager/plugin.min.js');
+		$plugin_array['downloadmanager'] = plugins_url( 'wp-downloadmanager/tinymce/plugins/downloadmanager/plugin.min.js?v= ' . WP_DOWNLOADMANAGER_VERSION);
 	}
 	return $plugin_array;
 }
@@ -445,42 +448,52 @@ function download_search_highlight($search_word, $search_text) {
 
 
 ### Function: Short Code For Inserting Downloads Page Into Page
-add_shortcode('page_download', 'download_page_shortcode');
-add_shortcode('page_downloads', 'download_page_shortcode');
-function download_page_shortcode($atts) {
-	extract(shortcode_atts(array('category' => 0), $atts));
-	return downloads_page($category);
+add_shortcode( 'page_download', 'download_page_shortcode' );
+add_shortcode( 'page_downloads', 'download_page_shortcode' );
+function download_page_shortcode( $atts ) {
+	$attributes = shortcode_atts( array( 'category' => 0 ), $atts );
+	return downloads_page( $attributes['category'] );
 }
 
 
 ### Function: Short Code For Inserting Files Download Into Posts
-add_shortcode('download', 'download_shortcode');
-function download_shortcode($atts) {
-	extract(shortcode_atts(array('id' => 0, 'category' => 0, 'display' => 'both', 'sort_by' => 'file_id', 'sort_order' => 'asc', 'stream_limit' => 0), $atts));
+add_shortcode( 'download', 'download_shortcode' );
+function download_shortcode( $atts ) {
+	$attributes = shortcode_atts( array( 'id' => 0, 'category' => 0, 'display' => 'both', 'sort_by' => 'file_id', 'sort_order' => 'asc', 'stream_limit' => 0 ), $atts );
 	if(!is_feed()) {
 		$conditions = array();
-		if($id != 0) {
-			if(strpos($id, ',') !== false) {
-				$conditions[] = "file_id IN ($id)";
+		$id = $attributes['id'];
+		$category = $attributes['category'];
+
+		// To maintain backward compatibility with [download=1].
+		if( !$id ) {
+			$id = trim( $atts[0], '="\'' );
+		}
+
+		if( $id != 0 ) {
+			if( strpos($id, ',') !== false ) {
+				$ids = array_map( 'intval', explode( ',', $id ) );
+				$conditions[] = 'file_id IN (' . implode( ',', $ids ) . ')';
 			} else {
-				$conditions[] = "file_id = $id";
+				$conditions[] = 'file_id = ' . intval( $id );
 			}
 		}
-		if($category != 0) {
-			if(strpos($category, ',') !== false) {
-				$conditions[] = "file_category IN ($category)";
+		if( $category != 0 ) {
+			if( strpos( $category, ',' ) !== false ) {
+				$categories = array_map( 'intval', explode( ',', $category ) );
+				$conditions[] = 'file_category IN (' . implode( ',', $categories ) . ')';
 			} else {
-				$conditions[] = "file_category = $category";
+				$conditions[] = 'file_category = ' . intval( $category );
 			}
 		}
-		if($conditions) {
-			return download_embedded(implode(' AND ', $conditions), $display, $sort_by, $sort_order, $stream_limit);
+		if( $conditions ) {
+			return download_embedded( implode( ' AND ', $conditions ), $attributes['display'], $attributes['sort_by'], $attributes['sort_order'], $attributes['stream_limit'] );
 		}
 		else {
 			return '';
 		}
 	} else {
-		return __('Note: There is a file embedded within this post, please visit this post to download the file.', 'wp-downloadmanager');
+		return __( 'Note: There is a file embedded within this post, please visit this post to download the file.', 'wp-downloadmanager' );
 	}
 }
 
