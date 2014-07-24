@@ -11,6 +11,9 @@ Adds a simple download manager to your WordPress blog.
 
 ## Description
 
+### Build Status
+[![Build Status](https://travis-ci.org/lesterchan/wp-downloadmanager.svg?branch=master)](https://travis-ci.org/lesterchan/wp-downloadmanager)
+
 ### Development
 * [https://github.com/lesterchan/wp-downloadmanager](https://github.com/lesterchan/wp-downloadmanager "https://github.com/lesterchan/wp-downloadmanager")
 
