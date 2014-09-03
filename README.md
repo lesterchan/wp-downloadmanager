@@ -3,7 +3,7 @@ Contributors: GamerZ
 Donate link: http://lesterchan.net/site/donation/  
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
 Requires at least: 3.9  
-Tested up to: 3.9  
+Tested up to: 4.0  
 Stable tag: 1.63  
 License: GPLv2  
 
@@ -21,12 +21,9 @@ Adds a simple download manager to your WordPress blog.
 * [http://dev.wp-plugins.org/browser/wp-downloadmanager/i18n/](http://dev.wp-plugins.org/browser/wp-downloadmanager/i18n/ "http://dev.wp-plugins.org/browser/wp-downloadmanager/i18n/")
 
 ### Credits
+* Plugin icon by [Freepik](http://www.freepik.com) from [Flaticon](http://www.flaticon.com)
 * Icons courtesy of [FamFamFam](http://www.famfamfam.com/ "FamFamFam")
 * Download Icon by [Ryan Zimmerman](http://www.imvain.com/" "Ryan Zimmerman")
-* Page Download Category by [Ryan Mueller](http://www.creativenotice.com/ "Ryan Mueller")
-* File Last Downloaded by [Sevca](http://sevca.cz/ "Sevca")
-* __ngetext() by [Anna Ozeritskaya](http://hweia.ru/ "Anna Ozeritskaya")
-* Right To Left Language Support by [Kambiz R. Khojasteh](http://persian-programming.com/ "Kambiz R. Khojasteh")
 
 ### Donations
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appericiate it. If not feel free to use it without any obligations.
