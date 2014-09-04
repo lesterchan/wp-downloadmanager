@@ -185,8 +185,6 @@ N/A
 7. Admin - Download Templates
 8. Download Embedded
 9. Downloads Page
-10. Downloads Page
-
 
 ## Frequently Asked Questions
 
