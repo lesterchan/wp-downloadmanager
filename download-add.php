@@ -46,7 +46,7 @@ if(!empty($_POST['do'])) {
 					break;
 				case 1:
 					if($_FILES['file_upload']['size'] > get_max_upload_size()) {
-						$text = '<font color="red">'.sprintf(__('File Size Too Large. Maximum Size Is %s', 'wp-downloadmanager'), format_filesize(get_max_upload_size())).'</font>';
+						$text = '<p style="color: red;">'.sprintf(__('File Size Too Large. Maximum Size Is %s', 'wp-downloadmanager'), format_filesize(get_max_upload_size())).'</p>';
 						break;
 					} else {
 						if(is_uploaded_file($_FILES['file_upload']['tmp_name'])) {
@@ -60,11 +60,11 @@ if(!empty($_POST['do'])) {
 								$file = download_rename_file($file_path, $file);
 								$file_size = filesize($file_path.$file);
 							} else {
-								$text = '<font color="red">'.__('Error In Uploading File', 'wp-downloadmanager').'</font>';
+								$text = '<p style="color: red;">'.__('Error In Uploading File', 'wp-downloadmanager').'</p>';
 								break;
 							}
 						} else {
-							$text = '<font color="red">'.__('Error In Uploading File', 'wp-downloadmanager').'</font>';
+							$text = '<p style="color: red;">'.__('Error In Uploading File', 'wp-downloadmanager').'</p>';
 							break;
 						}
 					}
@@ -94,10 +94,10 @@ if(!empty($_POST['do'])) {
 			$file_permission = intval($_POST['file_permission']);
 			$addfile = $wpdb->query("INSERT INTO $wpdb->downloads VALUES (0, '$file', '$file_name', '$file_des', '$file_size', $file_category, '$file_date', '$file_date', '$file_date', $file_hits, $file_permission)");
 			if(!$addfile) {
-				$text = '<font color="red">'.sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</font>';
+				$text = '<p style="color: red;">'.sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
 			} else {
 				$file_id = intval($wpdb->insert_id);
-				$text = '<font color="green">'.sprintf(__('File \'%s (%s) (ID: %s)\' Added Successfully', 'wp-downloadmanager'), $file_name, $file, $file_id).'</font>';
+				$text = '<p style="color: green;">'.sprintf(__('File \'%s (%s) (ID: %s)\' Added Successfully', 'wp-downloadmanager'), $file_name, $file, $file_id).'</p>';
 			}
 			break;
 	}

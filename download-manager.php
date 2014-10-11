@@ -149,7 +149,7 @@ if(!empty($_POST['do'])) {
 					break;
 				case 1:
 					if($_FILES['file_upload']['size'] > get_max_upload_size()) {
-						$text = '<font color="red">'.sprintf(__('File Size Too Large. Maximum Size Is %s', 'wp-downloadmanager'), format_filesize(get_max_upload_size())).'</font>';
+						$text = '<p style="color: red;">'.sprintf(__('File Size Too Large. Maximum Size Is %s', 'wp-downloadmanager'), format_filesize(get_max_upload_size())).'</p>';
 						break;
 					} else {
 						if(is_uploaded_file($_FILES['file_upload']['tmp_name'])) {
@@ -163,11 +163,11 @@ if(!empty($_POST['do'])) {
 								$file = download_rename_file($file_path, $file);
 								$file_size = filesize($file_path.$file);
 							} else {
-								$text = '<font color="red">'.__('Error In Uploading File', 'wp-downloadmanager').'</font>';
+								$text = '<p style="color: red;">'.__('Error In Uploading File', 'wp-downloadmanager').'</p>';
 								break;
 							}
 						} else {
-							$text = '<font color="red">'.__('Error In Uploading File', 'wp-downloadmanager').'</font>';
+							$text = '<p style="color: red;">'.__('Error In Uploading File', 'wp-downloadmanager').'</p>';
 							break;
 						}
 					}
@@ -212,9 +212,9 @@ if(!empty($_POST['do'])) {
 			$file_updated_date = current_time('timestamp');
 			$editfile = $wpdb->query("UPDATE $wpdb->downloads SET $file_sql file_name = '$file_name', file_des = '$file_des', $file_size_sql file_category = $file_category, file_permission = $file_permission, file_updated_date = '$file_updated_date' $timestamp_sql $hits_sql WHERE file_id = $file_id;");
 			if(!$editfile) {
-				$text = '<font color="red">'.sprintf(__('Error In Editing File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</font>';
+				$text = '<p style="color: red;">'.sprintf(__('Error In Editing File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
 			} else {
-				$text = '<font color="green">'.sprintf(__('File \'%s (%s)\' Edited Successfully', 'wp-downloadmanager'), $file_name, $file).'</font>';
+				$text = '<p style="color: green;">'.sprintf(__('File \'%s (%s)\' Edited Successfully', 'wp-downloadmanager'), $file_name, $file).'</p>';
 			}
 			break;
 		// Delete File
@@ -226,16 +226,16 @@ if(!empty($_POST['do'])) {
 			$unlinkfile = intval($_POST['unlinkfile']);
 			if($unlinkfile == 1) {
 				if(!unlink($file_path.$file)) {
-					$text = '<font color="red">'.sprintf(__('Error In Deleting File \'%s (%s)\' From Server', 'wp-downloadmanager'), $file_name, $file).'</font><br />';
+					$text = '<p style="color: red;">'.sprintf(__('Error In Deleting File \'%s (%s)\' From Server', 'wp-downloadmanager'), $file_name, $file).'</p>';
 				} else {
-					$text = '<font color="green">'.sprintf(__('File \'%s (%s)\' Deleted From Server Successfully', 'wp-downloadmanager'), $file_name, $file).'</font><br />';
+					$text = '<p style="color: green;">'.sprintf(__('File \'%s (%s)\' Deleted From Server Successfully', 'wp-downloadmanager'), $file_name, $file).'</p>';
 				}
 			}
 			$deletefile = $wpdb->query("DELETE FROM $wpdb->downloads WHERE file_id = $file_id");
 			if(!$deletefile) {
-				$text .= '<font color="red">'.sprintf(__('Error In Deleting File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</font>';
+				$text .= '<p style="color: red;">'.sprintf(__('Error In Deleting File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
 			} else {
-				$text .= '<font color="green">'.sprintf(__('File \'%s (%s)\' Deleted Successfully', 'wp-downloadmanager'), $file_name, $file).'</font>';
+				$text .= '<p style="color: green;">'.sprintf(__('File \'%s (%s)\' Deleted Successfully', 'wp-downloadmanager'), $file_name, $file).'</p>';
 			}
 			break;
 	}

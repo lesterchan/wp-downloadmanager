@@ -76,12 +76,12 @@ if($_POST['Submit']) {
 	$text = '';
 	foreach($update_download_queries as $update_download_query) {
 		if($update_download_query) {
-			$text .= '<font color="green">'.$update_download_text[$i].' '.__('Updated', 'wp-downloadmanager').'</font><br />';
+			$text .= '<p style="color: green;">'.$update_download_text[$i].' '.__('Updated', 'wp-downloadmanager').'</p>';
 		}
 		$i++;
 	}
 	if(empty($text)) {
-		$text = '<font color="red">'.__('No Download Option Updated', 'wp-downloadmanager').'</font>';
+		$text = '<p style="color: red;">'.__('No Download Option Updated', 'wp-downloadmanager').'</p>';
 	}
 }
 
