@@ -3,7 +3,7 @@
 Plugin Name: WP-DownloadManager
 Plugin URI: http://lesterchan.net/portfolio/programming/php/
 Description: Adds a simple download manager to your WordPress blog.
-Version: 1.63
+Version: 1.64
 Author: Lester 'GaMerZ' Chan
 Author URI: http://lesterchan.net
 Text Domain: wp-downloadmanager
@@ -30,7 +30,7 @@ Text Domain: wp-downloadmanager
 
 
 ### Version
-define( 'WP_DOWNLOADMANAGER_VERSION', 1.63 );
+define( 'WP_DOWNLOADMANAGER_VERSION', 1.64 );
 
 ### Create text domain for translations
 add_action( 'plugins_loaded', 'downloadmanager_textdomain' );
@@ -53,7 +53,6 @@ function downloads_menu() {
 	add_submenu_page('wp-downloadmanager/download-manager.php', __('Add File', 'wp-downloadmanager'), __('Add File', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-add.php');
 	add_submenu_page('wp-downloadmanager/download-manager.php', __('Download Options', 'wp-downloadmanager'), __('Download Options', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-options.php');
 	add_submenu_page('wp-downloadmanager/download-manager.php', __('Download Templates', 'wp-downloadmanager'), __('Download Templates', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-templates.php');
-	add_submenu_page('wp-downloadmanager/download-manager.php', __('Uninstall WP-DownloadManager', 'wp-downloadmanager'), __('Uninstall WP-DownloadManager', 'wp-downloadmanager'), 'manage_downloads', 'wp-downloadmanager/download-uninstall.php');
 }
 
 
@@ -1446,11 +1445,35 @@ function widget_downloadmanager_init() {
 }
 
 
-### Function: Create Downloads Table
-add_action('activate_wp-downloadmanager/wp-downloadmanager.php', 'create_download_table');
-function create_download_table() {
+### Function: Activate Plugin
+register_activation_hook( __FILE__, 'downloadmanager_activation' );
+function downloadmanager_activation( $network_wide )
+{
+	if ( is_multisite() && $network_wide )
+	{
+		$ms_sites = wp_get_sites();
+
+		if( 0 < sizeof( $ms_sites ) )
+		{
+			foreach ( $ms_sites as $ms_site )
+			{
+				switch_to_blog( $ms_site['blog_id'] );
+				downloadmanager_activate();
+			}
+		}
+
+		restore_current_blog();
+	}
+	else
+	{
+		downloadmanager_activate();
+	}
+}
+
+
+function downloadmanager_activate() {
 	global $wpdb, $blog_id;
-	downloadmanager_textdomain();
+
 	if(@is_file(ABSPATH.'/wp-admin/upgrade-functions.php')) {
 		include_once(ABSPATH.'/wp-admin/upgrade-functions.php');
 	} elseif(@is_file(ABSPATH.'/wp-admin/includes/upgrade.php')) {
@@ -1458,6 +1481,7 @@ function create_download_table() {
 	} else {
 		die('We have problem finding your \'/wp-admin/upgrade-functions.php\' and \'/wp-admin/includes/upgrade.php\'');
 	}
+
 	$charset_collate = '';
 	if($wpdb->supports_collation()) {
 		if(!empty($wpdb->charset)) {
