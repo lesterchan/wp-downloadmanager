@@ -29,25 +29,25 @@ $base_page = 'admin.php?page='.$base_name;
 
 
 ### If Form Is Submitted
-if($_POST['Submit']) {
+if( ! empty( $_POST['Submit'] ) ) {
 	check_admin_referer('wp-downloadmanager_templates');
 	$download_template_listing = array();
 	$download_template_embedded = array();
 	$download_template_most = array();
-	$download_template_header = trim($_POST['download_template_header']);
-	$download_template_footer = trim($_POST['download_template_footer']);
-	$download_template_pagingheader = trim($_POST['download_template_pagingheader']);
-	$download_template_pagingfooter = trim($_POST['download_template_pagingfooter']);
-	$download_template_none = trim($_POST['download_template_none']);
-	$download_template_category_header = trim($_POST['download_template_category_header']);
-	$download_template_category_footer = trim($_POST['download_template_category_footer']);
-	$download_template_listing[] = trim($_POST['download_template_listing']);
-	$download_template_listing[] = trim($_POST['download_template_listing_2']);
-	$download_template_embedded[] = trim($_POST['download_template_embedded']);
-	$download_template_embedded[] = trim($_POST['download_template_embedded_2']);
-	$download_template_download_page_link = trim($_POST['download_template_download_page_link']);
-	$download_template_most[] = trim($_POST['download_template_most']);
-	$download_template_most[] = trim($_POST['download_template_most_2']);
+	$download_template_header = ! empty ( $_POST['download_template_header'] ) ? trim( $_POST['download_template_header'] ) : '';
+	$download_template_footer = ! empty ( $_POST['download_template_footer'] ) ? trim( $_POST['download_template_footer'] ) : '';
+	$download_template_pagingheader = ! empty ( $_POST['download_template_pagingheader'] ) ? trim( $_POST['download_template_pagingheader'] ) : '';
+	$download_template_pagingfooter = ! empty ( $_POST['download_template_pagingfooter'] ) ? trim( $_POST['download_template_pagingfooter'] ) : '';
+	$download_template_none = ! empty ( $_POST['download_template_none'] ) ? trim( $_POST['download_template_none'] ) : '';
+	$download_template_category_header = ! empty ( $_POST['download_template_category_header'] ) ? trim( $_POST['download_template_category_header'] ) : '';
+	$download_template_category_footer = ! empty ( $_POST['download_template_category_footer'] ) ? trim( $_POST['download_template_category_footer'] ) : '';
+	$download_template_listing[] = ! empty ( $_POST['download_template_listing'] ) ? trim( $_POST['download_template_listing'] ) : '';
+	$download_template_listing[] = ! empty ( $_POST['download_template_listing_2'] ) ? trim( $_POST['download_template_listing_2'] ) : '';
+	$download_template_embedded[] = ! empty ( $_POST['download_template_embedded'] ) ? trim( $_POST['download_template_embedded'] ) : '';
+	$download_template_embedded[] = ! empty ( $_POST['download_template_embedded_2'] ) ? trim( $_POST['download_template_embedded_2'] ) : '';
+	$download_template_download_page_link = ! empty ( $_POST['download_template_download_page_link'] ) ? trim( $_POST['download_template_download_page_link'] ) : '';
+	$download_template_most[] = ! empty ( $_POST['download_template_most'] ) ? trim( $_POST['download_template_most'] ) : '';
+	$download_template_most[] = ! empty ( $_POST['download_template_most_2'] ) ? trim( $_POST['download_template_most_2'] ) : '';
 	$update_download_queries = array();
 	$update_download_text = array();
 	$update_download_queries[] = update_option('download_template_header', $download_template_header);

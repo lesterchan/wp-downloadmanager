@@ -18,26 +18,26 @@
 
 
 ### Check Whether User Can Manage Downloads
-if(!current_user_can('manage_downloads')) {
-	die('Access Denied');
+if( ! current_user_can( 'manage_downloads' ) ) {
+	die( 'Access Denied' );
 }
 
 
 ### Variables Variables Variables
-$base_name = plugin_basename('wp-downloadmanager/download-manager.php');
+$base_name = plugin_basename( 'wp-downloadmanager/download-manager.php' );
 $base_page = 'admin.php?page='.$base_name;
-$mode = trim($_GET['mode']);
-$file_id = intval($_GET['id']);
-$file_path = get_option('download_path');
-$file_categories = get_option('download_categories');
-$file_page = intval($_GET['filepage']);
-$file_sortby = trim($_GET['by']);
+$mode = ! empty( $_GET['mode'] ) ? trim( $_GET['mode'] ) : '';
+$file_id = ! empty( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+$file_path = get_option( 'download_path' );
+$file_categories = get_option( 'download_categories' );
+$file_page = ! empty( $_GET['filepage'] ) ? intval( $_GET['filepage'] ) : 0;
+$file_sortby = ! empty( $_GET['by'] ) ? trim( $_GET['by'] ) : '';
 $file_sortby_text = '';
-$file_sortorder = trim($_GET['order']);
+$file_sortorder = ! empty( $_GET['order'] ) ? trim( $_GET['order'] ) : '';
 $file_sortorder_text = '';
-$file_perpage = intval($_GET['perpage']);
+$file_perpage = ! empty( $_GET['perpage'] ) ? intval( $_GET['perpage'] ) : 0;
 $file_sort_url = '';
-$file_search = addslashes($_GET['search']);
+$file_search = ! empty( $_GET['search'] ) ? addslashes( $_GET['search'] ) : 0;
 $file_search_query = '';
 
 
@@ -127,12 +127,12 @@ if(!empty($_POST['do'])) {
 			check_admin_referer('wp-downloadmanager_edit-file');
 			$file_size_sql = '';
 			$file_sql = '';
-			$file_id  = intval($_POST['file_id']);
-			$file_type = intval($_POST['file_type']);
-			$file_name = addslashes(trim($_POST['file_name']));
+			$file_id  = ! empty( $_POST['file_id'] ) ? intval( $_POST['file_id'] ) : 0;
+			$file_type = ! empty( $_POST['file_type'] ) ? intval( $_POST['file_type'] ) : 0;
+			$file_name = ! empty( $_POST['file_name'] ) ? addslashes( trim( $_POST['file_name'] ) ) : '';
 			switch($file_type) {
 				case -1:
-					$file = $_POST['old_file'];
+					$file = ! empty( $_POST['old_file'] ) ? $_POST['old_file'] : '';
 					if(is_remote_file($file)) {
 						$file_size = remote_filesize($file);
 						if ($file_size == 'unknown') {
@@ -143,7 +143,7 @@ if(!empty($_POST['do'])) {
 					}
 					break;
 				case 0:
-					$file = addslashes(trim($_POST['file']));
+					$file = ! empty( $_POST['file'] ) ? addslashes( trim( $_POST['file'] ) ) : '';
 					$file = download_rename_file($file_path, $file);
 					$file_size = filesize($file_path.$file);
 					break;
@@ -153,10 +153,9 @@ if(!empty($_POST['do'])) {
 						break;
 					} else {
 						if(is_uploaded_file($_FILES['file_upload']['tmp_name'])) {
-							if($_POST['file_upload_to'] == '/') {
-								$file_upload_to = '/';
-							} else {
-								$file_upload_to = $_POST['file_upload_to'].'/';
+							$file_upload_to = ! empty( $_POST['file_upload_to'] ) ? $_POST['file_upload_to'] : '';
+							if( $file_upload_to !== '/' ) {
+								$file_upload_to = $file_upload_to . '/';
 							}
 							if(move_uploaded_file($_FILES['file_upload']['tmp_name'], $file_path.$file_upload_to.basename($_FILES['file_upload']['name']))) {
 								$file = $file_upload_to.basename($_FILES['file_upload']['name']);
@@ -173,7 +172,7 @@ if(!empty($_POST['do'])) {
 					}
 					break;
 				case 2:
-					$file = addslashes(trim($_POST['file_remote']));
+					$file = ! empty( $_POST['file_remote'] ) ? addslashes( trim( $_POST['file_remote'] ) ) : '';
 					$file_size = remote_filesize($file);
 					break;
 			}
@@ -183,15 +182,15 @@ if(!empty($_POST['do'])) {
 					$file_name = basename($file);
 				}
 			}
-			$file_des = addslashes(trim($_POST['file_des']));
-			$file_category = intval($_POST['file_cat']);
-			$file_hits = intval($_POST['file_hits']);
-			$edit_filetimestamp = intval($_POST['edit_filetimestamp']);
+			$file_des = ! empty( $_POST['file_des'] ) ? addslashes( trim( $_POST['file_des'] ) ) : '';
+			$file_category = ! empty( $_POST['file_cat'] ) ? intval( $_POST['file_cat'] ) : 0;
+			$file_hits = ! empty( $_POST['file_hits'] ) ? intval( $_POST['file_hits'] ) : 0;
+			$edit_filetimestamp = ! empty( $_POST['edit_filetimestamp'] ) ? intval( $_POST['edit_filetimestamp'] ) : 0;
 			if(intval($_POST['auto_filesize']) == 0) {
-				$file_size = intval($_POST['file_size']);
+				$file_size = ! empty( $_POST['file_size'] ) ? intval( $_POST['file_size'] ) : 0;
 			}
 			$file_size_sql = "file_size = '$file_size',";
-			$reset_filehits = intval($_POST['reset_filehits']);
+			$reset_filehits = ! empty( $_POST['reset_filehits'] ) ? intval( $_POST['reset_filehits'] ) : 0;
 			$hits_sql = '';
 			if($reset_filehits == 1) {
 				$hits_sql = ', file_hits = 0';
@@ -200,15 +199,15 @@ if(!empty($_POST['do'])) {
 			}
 			$timestamp_sql = '';
 			if($edit_filetimestamp == 1) {
-				$file_timestamp_day = intval($_POST['file_timestamp_day']);
-				$file_timestamp_month = intval($_POST['file_timestamp_month']);
-				$file_timestamp_year = intval($_POST['file_timestamp_year']);
-				$file_timestamp_hour = intval($_POST['file_timestamp_hour']);
-				$file_timestamp_minute = intval($_POST['file_timestamp_minute']);
-				$file_timestamp_second = intval($_POST['file_timestamp_second']);
+				$file_timestamp_day =    ! empty( $_POST['file_timestamp_day'] ) ? intval( $_POST['file_timestamp_day'] ) : 0;
+				$file_timestamp_month =  ! empty( $_POST['file_timestamp_month'] ) ? intval( $_POST['file_timestamp_month'] ) : 0;
+				$file_timestamp_year =   ! empty( $_POST['file_timestamp_year'] ) ? intval( $_POST['file_timestamp_year'] ) : 0;
+				$file_timestamp_hour =   ! empty( $_POST['file_timestamp_hour'] ) ? intval( $_POST['file_timestamp_hour'] ) : 0;
+				$file_timestamp_minute = ! empty( $_POST['file_timestamp_minute'] ) ? intval( $_POST['file_timestamp_minute'] ) : 0;
+				$file_timestamp_second = ! empty( $_POST['file_timestamp_second'] ) ? intval( $_POST['file_timestamp_second'] ) : 0;
 				$timestamp_sql = ", file_date = '".gmmktime($file_timestamp_hour, $file_timestamp_minute, $file_timestamp_second, $file_timestamp_month, $file_timestamp_day, $file_timestamp_year)."'";
 			}
-			$file_permission = intval($_POST['file_permission']);
+			$file_permission = ! empty( $_POST['file_permission'] ) ? intval( $_POST['file_permission'] ) : 0;
 			$file_updated_date = current_time('timestamp');
 			$editfile = $wpdb->query("UPDATE $wpdb->downloads SET $file_sql file_name = '$file_name', file_des = '$file_des', $file_size_sql file_category = $file_category, file_permission = $file_permission, file_updated_date = '$file_updated_date' $timestamp_sql $hits_sql WHERE file_id = $file_id;");
 			if(!$editfile) {
@@ -220,10 +219,10 @@ if(!empty($_POST['do'])) {
 		// Delete File
 		case __('Delete File', 'wp-downloadmanager');
 			check_admin_referer('wp-downloadmanager_delete-file');
-			$file_id  = intval($_POST['file_id']);
-			$file = trim($_POST['file']);
-			$file_name = trim($_POST['file_name']);
-			$unlinkfile = intval($_POST['unlinkfile']);
+			$file_id  = ! empty( $_POST['file_id'] ) ? intval( $_POST['file_id'] ) : 0;
+			$file = ! empty( $_POST['file'] ) ? trim( $_POST['file'] ) : '';
+			$file_name = ! empty( $_POST['file_name'] ) ? trim( $_POST['file_name'] ) : '';
+			$unlinkfile = ! empty( $_POST['unlinkfile'] ) ? intval( $_POST['unlinkfile'] ) : 0;
 			if($unlinkfile == 1) {
 				if(!unlink($file_path.$file)) {
 					$text = '<p style="color: red;">'.sprintf(__('Error In Deleting File \'%s (%s)\' From Server', 'wp-downloadmanager'), $file_name, $file).'</p>';

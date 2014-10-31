@@ -32,6 +32,7 @@ Adds a simple download manager to your WordPress blog.
 ### Version 1.64
 * NEW: Supports WordPress MultiSite Network Activate
 * NEW: Uses native WordPress uninstall.php
+* FIXED: Notices
 
 ### Version 1.63
 * NEW: Added %FILE_EXT% template variable that  output the file extension
