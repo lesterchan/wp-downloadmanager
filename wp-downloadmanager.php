@@ -1331,9 +1331,9 @@ function downloadmanager_page_most_stats($content) {
 ### Class: WP-DownloadManager Widget
  class WP_Widget_DownloadManager extends WP_Widget {
 	// Constructor
-	function WP_Widget_DownloadManager() {
+	function __construct() {
 		$widget_ops = array('description' => __('WP-DownloadManager downloads statistics', 'wp-downloadmanager'));
-		$this->WP_Widget('downloads', __('Downloads', 'wp-downloadmanager'), $widget_ops);
+		parent::__construct('downloads', __('Downloads', 'wp-downloadmanager'), $widget_ops);
 	}
 
 	// Display Widget
