@@ -3,7 +3,7 @@ Contributors: GamerZ
 Donate link: http://lesterchan.net/site/donation/  
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
 Requires at least: 3.9  
-Tested up to: 4.2  
+Tested up to: 4.3  
 Stable tag: 1.65  
 License: GPLv2  
 
