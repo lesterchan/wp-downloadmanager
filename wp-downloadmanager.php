@@ -465,7 +465,7 @@ function download_shortcode( $atts ) {
 		$category = $attributes['category'];
 
 		// To maintain backward compatibility with [download=1].
-		if( !$id ) {
+		if( ! $id && ! empty( $atts[0] ) ) {
 			$id = trim( $atts[0], '="\'' );
 		}
 
@@ -502,9 +502,9 @@ function downloads_page($category_id = 0) {
 	global $wpdb, $user_ID;
 	// Variables
 	$category_id = intval($category_id);
-	$category = intval($_GET['dl_cat']);
-	$page = intval($_GET['dl_page']);
-	$search_word = strip_tags(addslashes(trim($_GET['dl_search'])));
+	$category = ! empty( $_GET['dl_cat'] ) ? intval( $_GET['dl_cat'] ) : 0;
+	$page = ! empty( $_GET['dl_page'] ) ? intval( $_GET['dl_page'] ) : 0;
+	$search_word = ! empty( $_GET['dl_search'] ) ? strip_tags( addslashes( trim( $_GET['dl_search'] ) ) ) : '';
 	$search_words_array = array();
 	$search = stripslashes($search_word);
 	$download_categories = get_option('download_categories');
