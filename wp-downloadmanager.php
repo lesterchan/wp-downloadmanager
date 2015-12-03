@@ -421,7 +421,7 @@ function download_category_url($cat_id) {
 ### Function: Download Page Link
 function download_page_link($page) {
 	$current_url = $_SERVER['REQUEST_URI'];
-	$curren_downloadpage = intval($_GET['dl_page']);
+	$curren_downloadpage = ! empty( $_GET['dl_page'] ) ? intval( $_GET['dl_page'] ) : 1;
 	$download_page_link = preg_replace('/dl_page=(\d+)/i', 'dl_page='.$page, $current_url);
 	if($curren_downloadpage == 0) {
 		if(strpos($current_url, '?') !== false) {
