@@ -29,6 +29,10 @@ Adds a simple download manager to your WordPress blog.
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
+### Version 1.68
+* NEW: Use translate.wordpress.org to translate the plugin
+* FIXED: Some WP doesn't have wp_user_level because it has been deprecated
+
 ### Version 1.67
 * FIXED: Notices
 
