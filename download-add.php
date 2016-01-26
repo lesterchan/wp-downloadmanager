@@ -59,7 +59,7 @@ if( ! empty( $_POST['do'] ) ) {
             if(empty($file_name)) {
                 $file_name = basename($file);
             }
-            $file_des = ! empty( $_POST['file_des'] ) ? addslashes( wp_kses_post( trim( ( $_POST['file_des'] ) ) ) ) : '';
+            $file_des = ! empty( $_POST['file_des'] ) ? addslashes( wp_kses_post( trim( $_POST['file_des'] ) ) ) : '';
             $file_category = ! empty( $_POST['file_cat'] ) ? intval( $_POST['file_cat'] ) : 0;
             if(!empty($_POST['file_size'])) {
                 $file_size = ! empty( $_POST['file_size'] ) ? intval( $_POST['file_size'] ) : 0;
