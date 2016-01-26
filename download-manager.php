@@ -111,7 +111,7 @@ if(!empty($_POST['do'])) {
             $file_sql = '';
             $file_id  = ! empty( $_POST['file_id'] ) ? intval( $_POST['file_id'] ) : 0;
             $file_type = ! empty( $_POST['file_type'] ) ? intval( $_POST['file_type'] ) : 0;
-            $file_name = ! empty( $_POST['file_name'] ) ? addslashes( trim( $_POST['file_name'] ) ) : '';
+            $file_name = ! empty( $_POST['file_name'] ) ? addslashes( wp_kses_post( trim( $_POST['file_name'] ) ) ) : '';
             switch($file_type) {
                 case -1:
                     $file = ! empty( $_POST['old_file'] ) ? $_POST['old_file'] : '';
@@ -125,7 +125,7 @@ if(!empty($_POST['do'])) {
                     }
                     break;
                 case 0:
-                    $file = ! empty( $_POST['file'] ) ? addslashes( trim( $_POST['file'] ) ) : '';
+                    $file = ! empty( $_POST['file'] ) ? addslashes( wp_kses_post( trim( $_POST['file'] ) ) ) : '';
                     $file = download_rename_file($file_path, $file);
                     $file_size = filesize($file_path.$file);
                     break;
@@ -154,7 +154,7 @@ if(!empty($_POST['do'])) {
                     }
                     break;
                 case 2:
-                    $file = ! empty( $_POST['file_remote'] ) ? addslashes( trim( $_POST['file_remote'] ) ) : '';
+                    $file = ! empty( $_POST['file_remote'] ) ? addslashes( wp_kses_post( trim( $_POST['file_remote'] ) ) ) : '';
                     $file_size = remote_filesize($file);
                     break;
             }
@@ -164,7 +164,7 @@ if(!empty($_POST['do'])) {
                     $file_name = basename($file);
                 }
             }
-            $file_des = ! empty( $_POST['file_des'] ) ? addslashes( trim( $_POST['file_des'] ) ) : '';
+            $file_des = ! empty( $_POST['file_des'] ) ? addslashes( wp_kses_post( trim( $_POST['file_des'] ) ) ) : '';
             $file_category = ! empty( $_POST['file_cat'] ) ? intval( $_POST['file_cat'] ) : 0;
             $file_hits = ! empty( $_POST['file_hits'] ) ? intval( $_POST['file_hits'] ) : 0;
             $edit_filetimestamp = ! empty( $_POST['edit_filetimestamp'] ) ? intval( $_POST['edit_filetimestamp'] ) : 0;
