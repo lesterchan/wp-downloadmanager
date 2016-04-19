@@ -3,7 +3,7 @@
 Plugin Name: WP-DownloadManager
 Plugin URI: http://lesterchan.net/portfolio/programming/php/
 Description: Adds a simple download manager to your WordPress blog.
-Version: 1.68.1
+Version: 1.68.2
 Author: Lester 'GaMerZ' Chan
 Author URI: http://lesterchan.net
 Text Domain: wp-downloadmanager
@@ -30,7 +30,7 @@ Text Domain: wp-downloadmanager
 
 
 ### Version
-define( 'WP_DOWNLOADMANAGER_VERSION', '1.68.1' );
+define( 'WP_DOWNLOADMANAGER_VERSION', '1.68.2' );
 
 ### Create text domain for translations
 add_action( 'plugins_loaded', 'downloadmanager_textdomain' );
@@ -407,39 +407,23 @@ function download_file_url($file_id, $file_name) {
 
 
 ### Function: Download Category URL
-function download_category_url($cat_id) {
-    $download_page_url = get_option('download_page_url');
-    if(strpos($download_page_url, '?') !== false) {
-        $download_page_url = "$download_page_url&amp;dl_cat=$cat_id";
-    } else {
-        $download_page_url = "$download_page_url?dl_cat=$cat_id";
-    }
-    return $download_page_url;
+function download_category_url( $cat_id ) {
+    return get_option( 'download_page_url' ) . '?' . http_build_query( array_merge( $_GET, array( 'dl_cat' => $cat_id ) ) );
 }
 
 
 ### Function: Download Page Link
-function download_page_link($page) {
-    $current_url = $_SERVER['REQUEST_URI'];
-    $curren_downloadpage = ! empty( $_GET['dl_page'] ) ? intval( $_GET['dl_page'] ) : 1;
-    $download_page_link = preg_replace('/dl_page=(\d+)/i', 'dl_page='.$page, $current_url);
-    if($curren_downloadpage == 0) {
-        if(strpos($current_url, '?') !== false) {
-            $download_page_link = "$download_page_link&amp;dl_page=$page";
-        } else {
-            $download_page_link = "$download_page_link?dl_page=$page";
-        }
-    }
-    return $download_page_link;
+function download_page_link( $page ) {
+    return parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ) . '?' . http_build_query( array_merge( $_GET, array( 'dl_page' => $page ) ) );
 }
 
 
 ### Function Highlight Download Search
-function download_search_highlight($search_word, $search_text) {
-    if(!empty($search_word)) {
-        $search_words_array = explode(' ', $search_word);
-        foreach($search_words_array as $search_word_array) {
-            $search_text = eregi_replace('('.quotemeta($search_word_array).')', '<span class="download-search-highlight">\\1</span>', $search_text);
+function download_search_highlight( $search_word, $search_text ) {
+    if( ! empty( $search_word ) ) {
+        $search_words_array = explode( ' ', $search_word );
+        foreach( $search_words_array as $search_word_array ) {
+            $search_text = preg_replace( "/\w*?$search_word_array\w*/i", '<span class="download-search-highlight">$0</span>', $search_text );
         }
     }
     return $search_text;
