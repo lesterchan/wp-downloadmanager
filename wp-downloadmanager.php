@@ -511,7 +511,7 @@ function downloads_page($category_id = 0) {
     if(!empty($search)) {
         $search_words_array = explode(' ', $search_word);
         foreach($search_words_array as $search_word_array) {
-            $search_sql .= " AND ((file_name LIKE('%$search_word_array%') OR file_des LIKE ('%$search_word_array%')))";
+            $search_sql .= " AND ((file_name LIKE('%$search_word_array%') OR file_des LIKE ('%$search_word_array%') OR file LIKE ('%$search_word_array%')))";
         }
     }
     // Calculate Categories And Total Stats
@@ -637,7 +637,7 @@ function downloads_page($category_id = 0) {
             $template_download_listing = str_replace("%FILE_ID%", $file->file_id, $template_download_listing);
             $template_download_listing = str_replace("%FILE%", stripslashes($file->file), $template_download_listing);
             $template_download_listing = str_replace("%FILE_NAME%", download_search_highlight($search, stripslashes($file->file_name)), $template_download_listing);
-            $template_download_listing = str_replace("%FILE_EXT%", file_extension(stripslashes($file->file)), $template_download_listing);
+            $template_download_listing = str_replace("%FILE_EXT%", download_search_highlight($search, file_extension(stripslashes($file->file))), $template_download_listing);
             $template_download_listing = str_replace("%FILE_ICON%", file_extension_image(stripslashes($file->file), $file_extensions_images), $template_download_listing);
             $template_download_listing = str_replace("%FILE_DESCRIPTION%", download_search_highlight($search, stripslashes($file->file_des)), $template_download_listing);
             $template_download_listing = str_replace("%FILE_SIZE%",  format_filesize($file->file_size), $template_download_listing);
