@@ -51,7 +51,7 @@ if( ! empty( $_POST['do'] ) ) {
                     }
                     break;
                 case 2:
-                    $file = ! empty( $_POST['file_remote'] ) ? addslashes( wp_kses_post( trim( $_POST['file_remote'] ) ) ) : '';
+                    $file = ! empty( $_POST['file_remote'] ) ? esc_url_raw( $_POST['file_remote'] ) : '';
                     $file_size = remote_filesize($file);
                     break;
             }
