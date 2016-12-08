@@ -3,7 +3,7 @@ Contributors: GamerZ
 Donate link: https://lesterchan.net/site/donation/  
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
 Requires at least: 4.0  
-Tested up to: 4.6  
+Tested up to: 4.7  
 Stable tag: 1.68.2  
 License: GPLv2  
 
@@ -30,6 +30,7 @@ Adds a simple download manager to your WordPress blog.
 
 ## Changelog
 ### Version 1.68.2
+* NEW: WordPress 4.7
 * FIXED: Pagination not working
 * FIXED: Remove eregi
 * FIXED: Remote file URL will get be broken, if the remote file URL gets really ugly
