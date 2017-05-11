@@ -453,7 +453,7 @@ function download_shortcode( $atts ) {
             $id = trim( $atts[0], '="\'' );
         }
 
-        if( $id != 0 ) {
+        if( $id !== 0 ) {
             if( strpos($id, ',') !== false ) {
                 $ids = array_map( 'intval', explode( ',', $id ) );
                 $conditions[] = 'file_id IN (' . implode( ',', $ids ) . ')';
@@ -461,7 +461,7 @@ function download_shortcode( $atts ) {
                 $conditions[] = 'file_id = ' . intval( $id );
             }
         }
-        if( $category != 0 ) {
+        if( $category !== 0 ) {
             if( strpos( $category, ',' ) !== false ) {
                 $categories = array_map( 'intval', explode( ',', $category ) );
                 $conditions[] = 'file_category IN (' . implode( ',', $categories ) . ')';
@@ -472,12 +472,11 @@ function download_shortcode( $atts ) {
         if( $conditions ) {
             return download_embedded( implode( ' AND ', $conditions ), $attributes['display'], $attributes['sort_by'], $attributes['sort_order'], $attributes['stream_limit'] );
         }
-        else {
-            return '';
-        }
-    } else {
-        return __( 'Note: There is a file embedded within this post, please visit this post to download the file.', 'wp-downloadmanager' );
+
+        return '';
     }
+
+    return __( 'Note: There is a file embedded within this post, please visit this post to download the file.', 'wp-downloadmanager' );
 }
 
 
@@ -518,7 +517,7 @@ function downloads_page($category_id = 0) {
     $categories = $wpdb->get_results("SELECT file_category, COUNT(file_id) as category_files, SUM(file_size) category_size, SUM(file_hits) as category_hits FROM $wpdb->downloads WHERE 1=1 $category_sql $search_sql AND file_permission != -2 GROUP BY file_category");
     if($categories) {
         foreach($categories as $cat) {
-            $cat_id = intval($cat->file_category);
+            $cat_id = (int) $cat->file_category;
             $category_stats[$cat_id]['files'] = $cat->category_files;
             $category_stats[$cat_id]['hits'] = $cat->category_hits;
             $category_stats[$cat_id]['size'] = $cat->category_size;
@@ -1010,13 +1009,13 @@ function download_embedded($condition = '', $display = 'both', $sort_by = 'file_
     global $wpdb, $user_ID;
     $valid_sort_by = array('file_id', 'file', 'file_name', 'file_size', 'file_date', 'file_hits');
     $valid_sort_order = array('asc', 'desc');
-    if (!in_array($sort_by, $valid_sort_by)) {
+    if (!in_array($sort_by, $valid_sort_by, true)) {
         $sort_by = 'file_id';
     }
-    if (!in_array($sort_order, $valid_sort_order)) {
+    if (!in_array($sort_order, $valid_sort_order, true)) {
         $sort_order = 'asc';
     }
-    $stream_limit = max(intval($stream_limit), 0);
+    $stream_limit = max( (int) $stream_limit, 0);
     $output = '';
     if($condition !== '') {
         $condition .= ' AND ';
@@ -1034,7 +1033,7 @@ function download_embedded($condition = '', $display = 'both', $sort_by = 'file_
         $file_extensions_images = file_extension_images();
         $download_categories = get_option('download_categories');
         $template_download_embedded_temp = get_option('download_template_embedded');
-        if (is_single() || $stream_limit == 0)
+        if (is_single() || $stream_limit === 0)
         {
             $stream_limit = count($files);
         }
@@ -1044,9 +1043,9 @@ function download_embedded($condition = '', $display = 'both', $sort_by = 'file_
         }
         for ($i = 0; $i < $stream_limit; $i++) {
             $file = $files[$i];
-            $file_permission = intval($file->file_permission);
+            $file_permission = (int) $file->file_permission;
             $template_download_embedded = $template_download_embedded_temp;
-            if(($file_permission > 0 && get_wp_user_level() >= $file_permission && intval($user_ID) > 0) || ($file_permission == 0 && intval($user_ID) > 0) || $file_permission == -1) {
+            if( $file_permission === -1 || ( $file_permission === 0 && (int) $user_ID > 0 ) || ( $file_permission > 0 && get_wp_user_level() >= $file_permission && (int) $user_ID > 0 ) ) {
                 $template_download_embedded = stripslashes($template_download_embedded[0]);
             } else {
                 $template_download_embedded = stripslashes($template_download_embedded[1]);
@@ -1056,7 +1055,7 @@ function download_embedded($condition = '', $display = 'both', $sort_by = 'file_
             $template_download_embedded = str_replace("%FILE_NAME%", stripslashes($file->file_name), $template_download_embedded);
             $template_download_embedded = str_replace("%FILE_EXT%", file_extension(stripslashes($file->file)), $template_download_embedded);
             $template_download_embedded = str_replace("%FILE_ICON%", file_extension_image(stripslashes($file->file), $file_extensions_images), $template_download_embedded);
-            if($display == 'both') {
+            if( $display === 'both' ) {
                 $template_download_embedded = str_replace("%FILE_DESCRIPTION%",  stripslashes($file->file_des), $template_download_embedded);
             } else {
                 $template_download_embedded = str_replace("%FILE_DESCRIPTION%",  '', $template_download_embedded);
@@ -1093,9 +1092,9 @@ if(!function_exists('get_most_downloaded')) {
             $download_categories = get_option('download_categories');
             $template_download_most_temp = get_option('download_template_most');
             foreach($files as $file) {
-                $file_permission = intval($file->file_permission);
+                $file_permission = (int) $file->file_permission;
                 $template_download_most = $template_download_most_temp;
-                if(($file_permission > 0 && get_wp_user_level() >= $file_permission && intval($user_ID) > 0) || ($file_permission == 0 && intval($user_ID) > 0) || $file_permission == -1) {
+                if( $file_permission === -1 || ( $file_permission === 0 && (int) $user_ID > 0 ) || ( $file_permission > 0 && get_wp_user_level() >= $file_permission && (int) $user_ID > 0) ) {
                     $template_download_most = stripslashes($template_download_most[0]);
                 } else {
                     $template_download_most = stripslashes($template_download_most[1]);
@@ -1147,9 +1146,9 @@ if(!function_exists('get_recent_downloads')) {
             $download_categories = get_option('download_categories');
             $template_download_most_temp = get_option('download_template_most');
             foreach($files as $file) {
-                $file_permission = intval($file->file_permission);
+                $file_permission = (int) $file->file_permission;
                 $template_download_most = $template_download_most_temp;
-                if(($file_permission > 0 && get_wp_user_level() >= $file_permission && intval($user_ID) > 0) || ($file_permission == 0 && intval($user_ID) > 0) || $file_permission == -1) {
+                if( $file_permission === -1 || ( $file_permission === 0 && (int) $user_ID > 0) || ( $file_permission > 0 && get_wp_user_level() >= $file_permission && (int) $user_ID > 0 ) ) {
                     $template_download_most = stripslashes($template_download_most[0]);
                 } else {
                     $template_download_most = stripslashes($template_download_most[1]);
@@ -1194,7 +1193,7 @@ if(!function_exists('get_downloads_category')) {
     function get_downloads_category($cat_id = 0, $limit = 10, $chars = 0, $display = true) {
         global $wpdb, $user_ID;
         if(is_array($cat_id)) {
-            $category_sql = "file_category IN (".join(',', $cat_id).')';
+            $category_sql = "file_category IN (".implode(',', $cat_id).')';
         } else {
             $category_sql = "file_category = $cat_id";
         }
@@ -1206,9 +1205,9 @@ if(!function_exists('get_downloads_category')) {
             $download_categories = get_option('download_categories');
             $template_download_most_temp = get_option('download_template_most');
             foreach($files as $file) {
-                $file_permission = intval($file->file_permission);
+                $file_permission = (int) $file->file_permission;
                 $template_download_most = $template_download_most_temp;
-                if(($file_permission > 0 && get_wp_user_level() >= $file_permission && intval($user_ID) > 0) || ($file_permission == 0 && intval($user_ID) > 0) || $file_permission == -1) {
+                if( $file_permission === -1 || ( $file_permission === 0 && (int) $user_ID > 0) || ( $file_permission > 0 && get_wp_user_level() >= $file_permission && (int) $user_ID > 0 ) ) {
                     $template_download_most = stripslashes($template_download_most[0]);
                 } else {
                     $template_download_most = stripslashes($template_download_most[1]);
@@ -1263,7 +1262,7 @@ function downloadmanager_wp_stats() {
 ### Function: Add WP-DownloadManager General Stats To WP-Stats Page Options
 function downloadmanager_page_admin_general_stats($content) {
     $stats_display = get_option('stats_display');
-    if($stats_display['downloads'] == 1) {
+    if( (int)  $stats_display['downloads'] === 1 ) {
         $content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloads" value="downloads" checked="checked" />&nbsp;&nbsp;<label for="wpstats_downloads">'.__('WP-DownloadManager', 'wp-downloadmanager').'</label><br />'."\n";
     } else {
         $content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloads" value="downloads" />&nbsp;&nbsp;<label for="wpstats_downloads">'.__('WP-DownloadManager', 'wp-downloadmanager').'</label><br />'."\n";
@@ -1275,8 +1274,8 @@ function downloadmanager_page_admin_general_stats($content) {
 ### Function: Add WP-DownloadManager Top Recent Stats To WP-Stats Page Options
 function downloadmanager_page_admin_recent_stats($content) {
     $stats_display = get_option('stats_display');
-    $stats_mostlimit = intval(get_option('stats_mostlimit'));
-    if($stats_display['recent_downloads'] == 1) {
+    $stats_mostlimit = (int) get_option('stats_mostlimit');
+    if( (int) $stats_display['recent_downloads'] === 1) {
         $content .= '<input type="checkbox" name="stats_display[]" id="wpstats_recent_downloads" value="recent_downloads" checked="checked" />&nbsp;&nbsp;<label for="wpstats_recent_downloads">'.sprintf(_n('%s Most Recent Download', '%s Most Recent Downloads', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
     } else {
         $content .= '<input type="checkbox" name="stats_display[]" id="wpstats_recent_downloads" value="recent_downloads" />&nbsp;&nbsp;<label for="wpstats_recent_downloads">'.sprintf(_n('%s Most Recent Download', '%s Most Recent Downloads', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
@@ -1288,8 +1287,8 @@ function downloadmanager_page_admin_recent_stats($content) {
 ### Function: Add WP-DownloadManager Top Most/Highest Stats To WP-Stats Page Options
 function downloadmanager_page_admin_most_stats($content) {
     $stats_display = get_option('stats_display');
-    $stats_mostlimit = intval(get_option('stats_mostlimit'));
-    if($stats_display['downloaded_most'] == 1) {
+    $stats_mostlimit = (int) get_option('stats_mostlimit');
+    if( (int) $stats_display['downloaded_most'] === 1) {
         $content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloaded_most" value="downloaded_most" checked="checked" />&nbsp;&nbsp;<label for="wpstats_downloaded_most">'.sprintf(_n('%s Most Downloaded File', '%s Most Downloaded Files', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
     } else {
         $content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloaded_most" value="downloaded_most" />&nbsp;&nbsp;<label for="wpstats_downloaded_most">'.sprintf(_n('%s Most Downloaded File', '%s Most Downloaded Files', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
@@ -1302,7 +1301,7 @@ function downloadmanager_page_admin_most_stats($content) {
 function downloadmanager_page_general_stats($content) {
     global $wpdb;
     $stats_display = get_option('stats_display');
-    if($stats_display['downloads'] == 1) {
+    if( (int) $stats_display['downloads'] === 1 ) {
         $download_stats = $wpdb->get_row("SELECT COUNT(file_id) as total_files, SUM(file_size) total_size, SUM(file_hits) as total_hits FROM $wpdb->downloads");
         $content .= '<p><strong>'.__('WP-DownloadManager', 'wp-downloadmanager').'</strong></p>'."\n";
         $content .= '<ul>'."\n";
@@ -1318,8 +1317,8 @@ function downloadmanager_page_general_stats($content) {
 ### Function: Add WP-DownloadManager Top Recent Stats To WP-Stats Page
 function downloadmanager_page_recent_stats($content) {
     $stats_display = get_option('stats_display');
-    $stats_mostlimit = intval(get_option('stats_mostlimit'));
-    if($stats_display['recent_downloads'] == 1) {
+    $stats_mostlimit = (int) get_option('stats_mostlimit');
+    if( (int) $stats_display['recent_downloads'] === 1 ) {
         $content .= '<p><strong>'.sprintf(_n('%s Most Recent Download', '%s Most Recent Downloads', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</strong></p>'."\n";
         $content .= '<ul>'."\n";
         $content .= get_recent_downloads($stats_mostlimit, 0, false);
@@ -1332,8 +1331,8 @@ function downloadmanager_page_recent_stats($content) {
 ### Function: Add WP-DownloadManager Top Most/Highest Stats To WP-Stats Page
 function downloadmanager_page_most_stats($content) {
     $stats_display = get_option('stats_display');
-    $stats_mostlimit = intval(get_option('stats_mostlimit'));
-    if($stats_display['downloaded_most'] == 1) {
+    $stats_mostlimit = (int) get_option('stats_mostlimit');
+    if( (int) $stats_display['downloaded_most'] === 1 ) {
         $content .= '<p><strong>'.sprintf(_n('%s Most Downloaded File', '%s Most Downloaded Files', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</strong></p>'."\n";
         $content .= '<ul>'."\n";
         $content .= get_most_downloaded($stats_mostlimit, 0, false);
@@ -1346,13 +1345,13 @@ function downloadmanager_page_most_stats($content) {
 ### Class: WP-DownloadManager Widget
  class WP_Widget_DownloadManager extends WP_Widget {
     // Constructor
-    function __construct() {
+    public function __construct() {
         $widget_ops = array('description' => __('WP-DownloadManager downloads statistics', 'wp-downloadmanager'));
         parent::__construct('downloads', __('Downloads', 'wp-downloadmanager'), $widget_ops);
     }
 
     // Display Widget
-    function widget($args, $instance) {
+    public function widget($args, $instance) {
         $title = apply_filters('widget_title', esc_attr($instance['title']));
         $type = esc_attr($instance['type']);
         $mode = esc_attr($instance['mode']);
@@ -1383,7 +1382,7 @@ function downloadmanager_page_most_stats($content) {
     }
 
     // When Widget Control Form Is Posted
-    function update($new_instance, $old_instance) {
+    public function update($new_instance, $old_instance) {
         if (!isset($new_instance['submit'])) {
             return false;
         }
@@ -1391,15 +1390,15 @@ function downloadmanager_page_most_stats($content) {
         $instance['title'] = strip_tags($new_instance['title']);
         $instance['type'] = strip_tags($new_instance['type']);
         $instance['mode'] = strip_tags($new_instance['mode']);
-        $instance['limit'] = intval($new_instance['limit']);
-        $instance['chars'] = intval($new_instance['chars']);
+        $instance['limit'] = (int) $new_instance['limit'];
+        $instance['chars'] = (int) $new_instance['chars'];
         $instance['cat_ids'] = strip_tags($new_instance['cat_ids']);
-        $instance['link'] = intval($new_instance['link']);
+        $instance['link'] = (int) $new_instance['link'];
         return $instance;
     }
 
     // DIsplay Widget Control Form
-    function form($instance) {
+    public function form($instance) {
         global $wpdb;
         $instance = wp_parse_args((array) $instance, array('title' => __('Downloads', 'wp-downloadmanager'), 'type' => 'most_downloaded', 'limit' => 10, 'chars' => 200, 'cat_ids' => '0', 'link' => 1));
         $title = esc_attr($instance['title']);
