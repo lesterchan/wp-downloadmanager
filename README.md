@@ -122,32 +122,35 @@ Adds a simple download manager to your WordPress blog.
 ## Frequently Asked Questions
 
 ### To Display Most Downloaded
-* Use:
-<code>
+
+```
 <?php if (function_exists('get_most_downloaded')): ?>
 	<?php get_most_downloaded(); ?>
 <?php endif; ?>
-</code>
+```
+
 * The first value you pass in is the maximum number of files you want to get.
 * Default: `get_most_downloaded(10);`
 
 ### To Display Recent Downloads
-* Use:
-<code>
+
+```php
 <?php if (function_exists('get_recent_downloads')): ?>
 	<?php get_recent_downloads(); ?>
 <?php endif; ?>
-</code>
+```
+
 * The first value you pass in is the maximum number of files you want to get.
 * Default: `get_recent_downloads(10);`
 
 ### To Display Downloads By Category
-* Use:
-<code>
+
+```php
 <?php if (function_exists('get_downloads_category')): ?>
 	<?php get_downloads_category(1); ?>
 <?php endif; ?>
-</code>
+```
+
 * The first value you pass in is the category id.
 * The second value you pass in is the maximum number of files you want to get.
 
