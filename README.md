@@ -61,6 +61,8 @@ Adds a simple download manager to your WordPress blog.
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
+### Version 1.68.3
+
 ### Version 1.68.2
 * NEW: WordPress 4.7
 * FIXED: Pagination not working
