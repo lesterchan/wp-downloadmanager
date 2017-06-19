@@ -344,15 +344,7 @@ switch($mode) {
                     <tr>
                         <td><strong><?php _e('Allowed To Download:', 'wp-downloadmanager') ?></strong></td>
                         <td>
-                            <select name="file_permission" size="1">
-                                <option value="-2" <?php selected('-2', $file->file_permission); ?>><?php _e('Hidden', 'wp-downloadmanager'); ?></option>
-                                <option value="-1" <?php selected('-1', $file->file_permission); ?>><?php _e('Everyone', 'wp-downloadmanager'); ?></option>
-                                <option value="0" <?php selected('0', $file->file_permission); ?>><?php _e('Registered Users Only', 'wp-downloadmanager'); ?></option>
-                                <option value="1" <?php selected('1', $file->file_permission); ?>><?php _e('At Least Contributor Role', 'wp-downloadmanager'); ?></option>
-                                <option value="2" <?php selected('2', $file->file_permission); ?>><?php _e('At Least Author Role', 'wp-downloadmanager'); ?></option>
-                                <option value="7" <?php selected('7', $file->file_permission); ?>><?php _e('At Least Editor Role', 'wp-downloadmanager'); ?></option>
-                                <option value="10" <?php selected('10', $file->file_permission); ?>><?php _e('At Least Administrator Role', 'wp-downloadmanager'); ?></option>
-                            </select>
+                            <?php generate_user_roles_select(); ?>
                         </td>
                     </tr>
                     <tr>
