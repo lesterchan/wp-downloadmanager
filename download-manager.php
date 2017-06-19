@@ -344,7 +344,7 @@ switch($mode) {
                     <tr>
                         <td><strong><?php _e('Allowed To Download:', 'wp-downloadmanager') ?></strong></td>
                         <td>
-                            <?php generate_user_roles_select(); ?>
+                            <?php generate_user_roles_select( $file->file_permission, $mode ); ?>
                         </td>
                     </tr>
                     <tr>

@@ -1577,13 +1577,18 @@ function downloadmanager_activate() {
 	flush_rewrite_rules();
 }
 
-function generate_user_roles_select() {
+function generate_user_roles_select( $permission = array(), $mode = 'create' ) {
+
 	$wp_roles = wp_roles();
 	echo 'Administrators will have access to all downloads, that can\'t be protected. <br />';
 	$select = '<select name="file_permission[]" multiple>';
 	$options = '';
+	if ($mode == 'edit' ) {
+		$permission = explode( '+', $permission );
+	}
 	foreach ($wp_roles->role_names as $slug => $name ) {
-		$html = '<option value="' . $slug . '">' . $name . '</option>';
+		$selected = (in_array( $slug, $permission )) ? 'selected' : '';
+		$html = '<option value="' . $slug . '" ' . $selected . '>' . $name . '</option>';
 		$options .= $html;
 	}
 	$options .= '<option value="-1">Everyone</option>';
