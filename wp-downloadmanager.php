@@ -1577,17 +1577,17 @@ function downloadmanager_activate() {
 	flush_rewrite_rules();
 }
 
-function generate_user_roles_select( $permission = array(), $mode = 'create' ) {
+function downloads_generate_user_roles_select( $permission = array(), $mode = 'create' ) {
 
 	$wp_roles = wp_roles();
 	echo 'Administrators will have access to all downloads, that can\'t be protected. <br />';
 	$select = '<select name="file_permission[]" multiple>';
 	$options = '';
-	if ($mode == 'edit' ) {
+	if ( $mode == 'edit' ) {
 		$permission = explode( '+', $permission );
 	}
 	foreach ($wp_roles->role_names as $slug => $name ) {
-		$selected = (in_array( $slug, $permission )) ? 'selected' : '';
+		$selected = ( in_array( $slug, $permission ) ) ? 'selected' : '';
 		$html = '<option value="' . $slug . '" ' . $selected . '>' . $name . '</option>';
 		$options .= $html;
 	}
@@ -1598,10 +1598,11 @@ function generate_user_roles_select( $permission = array(), $mode = 'create' ) {
 }
 
 function get_file_permissions_info() {
-	if ( ! empty( $_POST['file_permission'] ) ) {
+	$permissions = filter_var( $_POST['file_permission'], FILTER_SANITIZE_STRING );
+	if ( ! empty( $permissions ) ) {
 		$permissions = $_POST['file_permission'];
 		if ( is_array( $permissions) ) {
-			return implode('+', $permissions );
+			return implode( '+', $permissions );
 		}
 		return $permissions;
 	} 
@@ -1609,13 +1610,13 @@ function get_file_permissions_info() {
 }
 
 function can_download_file( $permissions ) {
-	$roles = explode('+', $permissions );
+	$roles = explode( '+', $permissions );
 	$roles[] = 'administrator';
 	$current_user = wp_get_current_user();
 	$user_roles = $current_user->roles;
 	$allowed = false;
 	foreach ( $roles as $role ) {
-		$allowed = (in_array( $role, $user_roles)) ? true : false;
+		$allowed = ( in_array( $role, $user_roles ) ) ? true : false;
 	}
 
 	return $allowed;

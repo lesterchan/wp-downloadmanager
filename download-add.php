@@ -167,7 +167,7 @@ if( ! empty( $_POST['do'] ) ) {
                         
                        
                     </select> -->
-                     <?php generate_user_roles_select(); ?>
+                     <?php downloads_generate_user_roles_select(); ?>
                 </td>
             </tr>
             <tr>
