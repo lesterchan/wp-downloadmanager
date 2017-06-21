@@ -1623,11 +1623,7 @@ function can_download_file( $permissions ) {
 	foreach ( $roles as $role ) {
 		if ( in_array( $role, $user_roles ) ) {
 			$allowed = true;
-<<<<<<< HEAD
 			return $allowed;
-=======
-			return;
->>>>>>> f4556218f13ab1c8202147b1cf35e7249066e73f
 		}
 	}
 
