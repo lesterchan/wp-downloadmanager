@@ -1598,7 +1598,12 @@ function downloads_generate_user_roles_select( $permission = array(), $mode = 'c
 }
 
 function get_file_permissions_info() {
-	$permissions = filter_var( $_POST['file_permission'], FILTER_SANITIZE_STRING );
+	$permissoins_post = $_POST['file_permission'];
+	$permissions = array();
+	foreach ( $permissoins_post as $permission ) {
+		$permissions[] = filter_var( $permission, FILTER_SANITIZE_STRING );
+	}
+	
 	if ( ! empty( $permissions ) ) {
 		$permissions = $_POST['file_permission'];
 		if ( is_array( $permissions) ) {
