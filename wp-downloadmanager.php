@@ -1621,7 +1621,10 @@ function can_download_file( $permissions ) {
 	$user_roles = $current_user->roles;
 	$allowed = false;
 	foreach ( $roles as $role ) {
-		$allowed = ( in_array( $role, $user_roles ) ) ? true : false;
+		if ( in_array( $role, $user_roles ) ) {
+			$allowed = true;
+			return;
+		}
 	}
 
 	return $allowed;
