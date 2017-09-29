@@ -295,39 +295,41 @@ if(!function_exists('remote_filesize')) {
 
 
 ### Function: Format Bytes Into TiB/GiB/MiB/KiB/Bytes
-if(!function_exists('format_filesize')) {
+if ( ! function_exists( 'format_filesize' ) ) {
 	function format_filesize($rawSize) {
-		if($rawSize / 1099511627776 > 1) {
-			return number_format_i18n($rawSize/1099511627776, 1).' '.__('TiB', 'wp-downloadmanager');
-		} elseif($rawSize / 1073741824 > 1) {
-			return number_format_i18n($rawSize/1073741824, 1).' '.__('GiB', 'wp-downloadmanager');
-		} elseif($rawSize / 1048576 > 1) {
-			return number_format_i18n($rawSize/1048576, 1).' '.__('MiB', 'wp-downloadmanager');
-		} elseif($rawSize / 1024 > 1) {
-			return number_format_i18n($rawSize/1024, 1).' '.__('KiB', 'wp-downloadmanager');
-		} elseif($rawSize > 1) {
-			return number_format_i18n($rawSize, 0).' '.__('bytes', 'wp-downloadmanager');
+		$rawSize = (int) $rawSize;
+		if ( $rawSize / 1099511627776 > 1 ) {
+			return number_format_i18n( $rawSize/1099511627776, 1 ) . ' ' . __( 'TiB', 'wp-downloadmanager' );
+		} elseif ( $rawSize / 1073741824 > 1 ) {
+			return number_format_i18n( $rawSize/1073741824, 1 ) . ' ' . __( 'GiB', 'wp-downloadmanager' );
+		} elseif ( $rawSize / 1048576 > 1 ) {
+			return number_format_i18n( $rawSize/1048576, 1 ) . ' ' . __( 'MiB', 'wp-downloadmanager' );
+		} elseif ( $rawSize / 1024 > 1 ) {
+			return number_format_i18n( $rawSize/1024, 1 ) . ' ' . __( 'KiB', 'wp-downloadmanager' );
+		} elseif ( $rawSize > 1 ) {
+			return number_format_i18n( $rawSize ) . ' ' . __( 'bytes', 'wp-downloadmanager' );
 		} else {
-			return __('unknown', 'wp-downloadmanager');
+			return __( 'unknown', 'wp-downloadmanager' );
 		}
 	}
 }
 
 ### Function: Format Bytes Into TB/GB/MB/KB/Bytes
-if(!function_exists('format_filesize_dec')) {
-	function format_filesize_dec($rawSize) {
-		if($rawSize / 1000000000000 > 1) {
-			return number_format_i18n($rawSize/1000000000000, 1).' '.__('TB', 'wp-downloadmanager');
-		} elseif($rawSize / 1000000000 > 1) {
-			return number_format_i18n($rawSize/1000000000, 1).' '.__('GB', 'wp-downloadmanager');
-		} elseif($rawSize / 1000000 > 1) {
-			return number_format_i18n($rawSize/1000000, 1).' '.__('MB', 'wp-downloadmanager');
-		} elseif($rawSize / 1000 > 1) {
-			return number_format_i18n($rawSize/1000, 1).' '.__('KB', 'wp-downloadmanager');
-		} elseif($rawSize > 1) {
-			return number_format_i18n($rawSize, 0).' '.__('bytes', 'wp-downloadmanager');
+if ( ! function_exists( 'format_filesize_dec' ) ) {
+	function format_filesize_dec( $rawSize ) {
+		$rawSize = (int) $rawSize;
+		if( $rawSize / 1000000000000 > 1 ) {
+			return number_format_i18n( $rawSize/1000000000000, 1 ) . ' ' . __( 'TB', 'wp-downloadmanager' );
+		} elseif ( $rawSize / 1000000000 > 1 ) {
+			return number_format_i18n( $rawSize/1000000000, 1 ) .' ' . __( 'GB', 'wp-downloadmanager' );
+		} elseif ( $rawSize / 1000000 > 1 ) {
+			return number_format_i18n( $rawSize/1000000, 1 ) . ' ' . __( 'MB', 'wp-downloadmanager' );
+		} elseif ( $rawSize / 1000 > 1 ) {
+			return number_format_i18n( $rawSize/1000, 1 ) . ' ' . __( 'KB', 'wp-downloadmanager' );
+		} elseif ( $rawSize > 1 ) {
+			return number_format_i18n( $rawSize ) . ' ' . __( 'bytes', 'wp-downloadmanager' );
 		} else {
-			return __('unknown', 'wp-downloadmanager');
+			return __( 'unknown', 'wp-downloadmanager' );
 		}
 	}
 }
