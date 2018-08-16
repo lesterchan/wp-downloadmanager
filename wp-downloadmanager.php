@@ -57,7 +57,7 @@ function downloads_menu() {
 
 
 ### Function: Enqueue Downloads Stylesheets
-add_action('wp_print_styles', 'downloads_stylesheets');
+add_action('wp_enqueue_scripts', 'downloads_stylesheets');
 function downloads_stylesheets() {
 	if(@file_exists(TEMPLATEPATH.'/download-css.css')) {
 		wp_enqueue_style('wp-downloadmanager', get_stylesheet_directory_uri().'/download-css.css', false, WP_DOWNLOADMANAGER_VERSION, 'all');
