@@ -69,15 +69,15 @@ switch($file_sortby) {
         $file_sortby_text = __('File Permission', 'wp-downloadmanager');
         break;
     case 'date':
-        $file_sortby = 'file_date';
+        $file_sortby = 'FROM_UNIXTIME(file_date)';
         $file_sortby_text = __('File Date', 'wp-downloadmanager');
         break;
     case 'updated_date':
-        $file_sortby = 'file_updated_date';
+        $file_sortby = 'FROM_UNIXTIME(file_updated_date)';
         $file_sortby_text = __('File Updated Date', 'wp-downloadmanager');
         break;
     case 'last_downloaded_date':
-        $file_sortby = 'file_last_downloaded_date';
+        $file_sortby = 'FROM_UNIXTIME(file_last_downloaded_date)';
         $file_sortby_text = __('File Last Downloaded Date', 'wp-downloadmanager');
         break;
     case 'name':
@@ -604,13 +604,13 @@ switch($mode) {
                         <option value="id"<?php if($file_sortby == 'file_id') { echo ' selected="selected"'; }?>><?php _e('File ID', 'wp-downloadmanager'); ?></option>
                         <option value="file"<?php if($file_sortby == 'file') { echo ' selected="selected"'; }?>><?php _e('File', 'wp-downloadmanager'); ?></option>
                         <option value="name"<?php if($file_sortby == 'file_name') { echo ' selected="selected"'; }?>><?php _e('File Name', 'wp-downloadmanager'); ?></option>
-                        <option value="date"<?php if($file_sortby == 'file_date') { echo ' selected="selected"'; }?>><?php _e('File Date', 'wp-downloadmanager'); ?></option>
-                        <option value="updated_date"<?php if($file_sortby == 'updated_date') { echo ' selected="selected"'; }?>><?php _e('File Updated Date', 'wp-downloadmanager'); ?></option>
-                        <option value="last_downloaded_date"<?php if($file_sortby == 'last_downloaded_date') { echo ' selected="selected"'; }?>><?php _e('File Last Downloaded Date', 'wp-downloadmanager'); ?></option>
+                        <option value="date"<?php if($file_sortby == 'FROM_UNIXTIME(file_date)') { echo ' selected="selected"'; }?>><?php _e('File Date', 'wp-downloadmanager'); ?></option>
+                        <option value="updated_date"<?php if($file_sortby == 'FROM_UNIXTIME(updated_date)') { echo ' selected="selected"'; }?>><?php _e('File Updated Date', 'wp-downloadmanager'); ?></option>
+                        <option value="last_downloaded_date"<?php if($file_sortby == 'FROM_UNIXTIME(last_downloaded_date)') { echo ' selected="selected"'; }?>><?php _e('File Last Downloaded Date', 'wp-downloadmanager'); ?></option>
                         <option value="size"<?php if($file_sortby == '(file_size+0.00)') { echo ' selected="selected"'; }?>><?php _e('File Size', 'wp-downloadmanager'); ?></option>
                         <option value="category"<?php if($file_sortby == 'file_category') { echo ' selected="selected"'; }?>><?php _e('File Category', 'wp-downloadmanager'); ?></option>
                         <option value="hits"<?php if($file_sortby == 'file_hits') { echo ' selected="selected"'; }?>><?php _e('File Hits', 'wp-downloadmanager'); ?></option>
-                        <option value="permission"<?php if($file_sortby == 'file_timestamp') { echo ' selected="selected"'; }?>><?php _e('File Permission', 'wp-downloadmanager'); ?></option>
+                        <option value="permission"<?php if($file_sortby == 'file_permission') { echo ' selected="selected"'; }?>><?php _e('File Permission', 'wp-downloadmanager'); ?></option>
                     </select>
                     &nbsp;&nbsp;&nbsp;
                     <select name="order" size="1">

@@ -497,6 +497,9 @@ function downloads_page($category_id = 0) {
 	$category_stats = array();
 	$total_stats = array('files' => 0, 'size' => 0, 'hits' => 0);
 	$file_sort = get_option('download_sort');
+	if ( $file_sort['by'] === 'file_date' ) {
+		$file_sort['by'] = 'FROM_UNIXTIME(file_date)';
+	}
 	$file_extensions_images = file_extension_images();
 	$current_user = wp_get_current_user();
 	// If There Is Category Set
@@ -1019,6 +1022,9 @@ function download_embedded($condition = '', $display = 'both', $sort_by = 'file_
 	if (!in_array($sort_order, $valid_sort_order, true)) {
 		$sort_order = 'asc';
 	}
+	if ( $sort_by === 'file_date' ) {
+		$sort_by = 'FROM_UNIXTIME(file_date)';
+	}
 	$stream_limit = max( (int) $stream_limit, 0);
 	$output = '';
 	if($condition !== '') {
@@ -1143,7 +1149,7 @@ if(!function_exists('get_recent_downloads')) {
 	function get_recent_downloads($limit = 10, $chars = 0, $display = true) {
 		global $wpdb, $user_ID;
 		$output = '';
-		$files = $wpdb->get_results("SELECT * FROM $wpdb->downloads WHERE file_permission != -2 ORDER BY file_date DESC LIMIT $limit");
+		$files = $wpdb->get_results("SELECT * FROM $wpdb->downloads WHERE file_permission != -2 ORDER BY FROM_UNIXTIME(file_date) DESC LIMIT $limit");
 		if($files) {
 			$current_user = wp_get_current_user();
 			$file_extensions_images = file_extension_images();
@@ -1202,7 +1208,7 @@ if(!function_exists('get_downloads_category')) {
 			$category_sql = "file_category = $cat_id";
 		}
 		$output = '';
-		$files = $wpdb->get_results("SELECT * FROM $wpdb->downloads WHERE $category_sql AND file_permission != -2 ORDER BY file_date DESC LIMIT $limit");
+		$files = $wpdb->get_results("SELECT * FROM $wpdb->downloads WHERE $category_sql AND file_permission != -2 ORDER BY FROM_UNIXTIME(file_date) DESC LIMIT $limit");
 		if($files) {
 			$current_user = wp_get_current_user();
 			$file_extensions_images = file_extension_images();
