@@ -187,9 +187,9 @@ function download_file() {
 		$download_method = (int) get_option('download_method');
 		$file_id = (int) $file->file_id;
 		$file_name = stripslashes($file->file);
-		$file_permission = (int) $file->file_permission;
+		$file_permission = can_download_file( $file->file_permission ) ;
 		$current_user = wp_get_current_user();
-		if( $file_permission === -1 || ( $file_permission === 0 && (int) $user_ID > 0 ) || ($file_permission > 0 && get_wp_user_level() >= $file_permission && (int) $user_ID > 0 ) ) {
+		if( $file_permission  && (int) $user_ID > 0  ) {
 			$update_hits = $wpdb->query("UPDATE $wpdb->downloads SET file_hits = (file_hits + 1), file_last_downloaded_date = '".current_time('timestamp')."' WHERE file_id = $file_id AND file_permission != -2");
 			if(!is_remote_file($file_name)) {
 				if(!is_file($file_path.$file_name)) {
@@ -632,9 +632,9 @@ function downloads_page($category_id = 0) {
 				$need_footer = 1;
 			}
 			// Get Download Listing
-			$file_permission = (int) $file->file_permission;
+			$file_permission = can_download_file( $file->file_permission );
 			$template_download_listing = get_option('download_template_listing');
-			if( $file_permission === -1 || ( $file_permission === 0 && (int) $user_ID > 0 ) || ( $file_permission > 0 && get_wp_user_level() >= $file_permission && (int) $user_ID > 0 ) ) {
+			if( $file_permission ) {
 				$template_download_listing = stripslashes($template_download_listing[0]);
 			} else {
 				$template_download_listing = stripslashes($template_download_listing[1]);
@@ -1053,9 +1053,9 @@ function download_embedded($condition = '', $display = 'both', $sort_by = 'file_
 		}
 		for ($i = 0; $i < $stream_limit; $i++) {
 			$file = $files[$i];
-			$file_permission = (int) $file->file_permission;
+			$file_permission = can_download_file( $file->file_permission );
 			$template_download_embedded = $template_download_embedded_temp;
-			if( $file_permission === -1 || ( $file_permission === 0 && (int) $user_ID > 0 ) || ( $file_permission > 0 && get_wp_user_level() >= $file_permission && (int) $user_ID > 0 ) ) {
+			if( $file_permission ) {
 				$template_download_embedded = stripslashes($template_download_embedded[0]);
 			} else {
 				$template_download_embedded = stripslashes($template_download_embedded[1]);
@@ -1102,9 +1102,9 @@ if(!function_exists('get_most_downloaded')) {
 			$download_categories = get_option('download_categories');
 			$template_download_most_temp = get_option('download_template_most');
 			foreach($files as $file) {
-				$file_permission = (int) $file->file_permission;
+				$file_permission = can_download_file( $file->file_permission ) ;
 				$template_download_most = $template_download_most_temp;
-				if( $file_permission === -1 || ( $file_permission === 0 && (int) $user_ID > 0 ) || ( $file_permission > 0 && get_wp_user_level() >= $file_permission && (int) $user_ID > 0) ) {
+				if( $file_permission === 0 && (int) $user_ID > 0  ) {
 					$template_download_most = stripslashes($template_download_most[0]);
 				} else {
 					$template_download_most = stripslashes($template_download_most[1]);
@@ -1156,9 +1156,9 @@ if(!function_exists('get_recent_downloads')) {
 			$download_categories = get_option('download_categories');
 			$template_download_most_temp = get_option('download_template_most');
 			foreach($files as $file) {
-				$file_permission = (int) $file->file_permission;
+				$file_permission = can_download_file( $file->file_permission );
 				$template_download_most = $template_download_most_temp;
-				if( $file_permission === -1 || ( $file_permission === 0 && (int) $user_ID > 0) || ( $file_permission > 0 && get_wp_user_level() >= $file_permission && (int) $user_ID > 0 ) ) {
+				if( $file_permission ) {
 					$template_download_most = stripslashes($template_download_most[0]);
 				} else {
 					$template_download_most = stripslashes($template_download_most[1]);
@@ -1215,9 +1215,9 @@ if(!function_exists('get_downloads_category')) {
 			$download_categories = get_option('download_categories');
 			$template_download_most_temp = get_option('download_template_most');
 			foreach($files as $file) {
-				$file_permission = (int) $file->file_permission;
+				$file_permission = can_download_file( $file->file_permission );
 				$template_download_most = $template_download_most_temp;
-				if( $file_permission === -1 || ( $file_permission === 0 && (int) $user_ID > 0 ) || ( $file_permission > 0 && get_wp_user_level() >= $file_permission && (int) $user_ID > 0 ) ) {
+				if( $file_permission ) {
 					$template_download_most = stripslashes($template_download_most[0]);
 				} else {
 					$template_download_most = stripslashes($template_download_most[1]);
@@ -1518,7 +1518,7 @@ function downloadmanager_activate() {
 							"file_updated_date varchar(20) NOT NULL default '',".
 							"file_last_downloaded_date varchar(20) NOT NULL default '',".
 							"file_hits int(10) NOT NULL default '0',".
-							"file_permission TINYINT(2) NOT NULL default '0',".
+							"file_permission varchar(255) NOT NULL default '0',".
 							"PRIMARY KEY (file_id)) $charset_collate;";
 	maybe_create_table($wpdb->downloads, $create_table);
 	// WP-Downloads Options
@@ -1584,4 +1584,58 @@ function downloadmanager_activate() {
 	}
 
 	flush_rewrite_rules();
+}
+
+function downloads_generate_user_roles_select( $permission = array(), $mode = 'create' ) {
+
+	$wp_roles = wp_roles();
+	echo 'Administrators will have access to all downloads, that can\'t be protected. <br />';
+	$select = '<select name="file_permission[]" multiple>';
+	$options = '';
+	if ( $mode == 'edit' ) {
+		$permission = explode( '+', $permission );
+	}
+	foreach ($wp_roles->role_names as $slug => $name ) {
+		$selected = ( in_array( $slug, $permission ) ) ? 'selected' : '';
+		$html = '<option value="' . $slug . '" ' . $selected . '>' . $name . '</option>';
+		$options .= $html;
+	}
+	$options .= '<option value="-1">Everyone</option>';
+	$select .= $options;
+	$select .= '</select>';
+	echo $select;
+}
+
+function get_file_permissions_info() {
+	$permissoins_post = $_POST['file_permission'];
+	$permissions = array();
+	foreach ( $permissoins_post as $permission ) {
+		$permissions[] = filter_var( $permission, FILTER_SANITIZE_STRING );
+	}
+	
+	if ( ! empty( $permissions ) ) {
+		$permissions = $_POST['file_permission'];
+		if ( is_array( $permissions) ) {
+			return implode( '+', $permissions );
+		}
+		return $permissions;
+	} 
+	return 0;
+}
+
+function can_download_file( $permissions ) {
+	$roles = explode( '+', $permissions );
+	$roles[] = 'administrator';
+	$current_user = wp_get_current_user();
+	$user_roles = $current_user->roles;
+	$allowed = false;
+	foreach ( $roles as $role ) {
+		if ( in_array( $role, $user_roles ) ) {
+			$allowed = true;
+			return $allowed;
+		}
+	}
+
+	return $allowed;
+
 }

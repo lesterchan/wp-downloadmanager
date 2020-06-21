@@ -72,9 +72,10 @@ if( ! empty( $_POST['do'] ) ) {
             $file_timestamp_minute = ! empty( $_POST['file_timestamp_minute'] ) ? intval( $_POST['file_timestamp_minute'] ) : 0;
             $file_timestamp_second = ! empty( $_POST['file_timestamp_second'] ) ? intval( $_POST['file_timestamp_second'] ) : 0;
             $file_date = gmmktime($file_timestamp_hour, $file_timestamp_minute, $file_timestamp_second, $file_timestamp_month, $file_timestamp_day, $file_timestamp_year);
-            $file_permission = ! empty( $_POST['file_permission'] ) ? intval( $_POST['file_permission'] ) : 0;
+            $file_permission = "'" . get_file_permissions_info(). "'";
             $addfile = $wpdb->query("INSERT INTO $wpdb->downloads VALUES (0, '$file', '$file_name', '$file_des', '$file_size', $file_category, '$file_date', '$file_date', '$file_date', $file_hits, $file_permission)");
             if(!$addfile) {
+                $wpdb->print_error();
                 $text = '<p style="color: red;">'.sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
             } else {
                 $file_id = intval($wpdb->insert_id);
@@ -153,7 +154,9 @@ if( ! empty( $_POST['do'] ) ) {
             <tr>
                 <td><strong><?php _e('Allowed To Download:', 'wp-downloadmanager') ?></strong></td>
                 <td>
+                    <!--
                     <select name="file_permission" size="1">
+                        
                         <option value="-2"><?php _e('Hidden', 'wp-downloadmanager'); ?></option>
                         <option value="-1" selected="selected"><?php _e('Everyone', 'wp-downloadmanager'); ?></option>
                         <option value="0"><?php _e('Registered Users Only', 'wp-downloadmanager'); ?></option>
@@ -161,7 +164,10 @@ if( ! empty( $_POST['do'] ) ) {
                         <option value="2"><?php _e('At Least Author Role', 'wp-downloadmanager'); ?></option>
                         <option value="7"><?php _e('At Least Editor Role', 'wp-downloadmanager'); ?></option>
                         <option value="10"><?php _e('At Least Administrator Role', 'wp-downloadmanager'); ?></option>
-                    </select>
+                        
+                       
+                    </select> -->
+                     <?php downloads_generate_user_roles_select(); ?>
                 </td>
             </tr>
             <tr>

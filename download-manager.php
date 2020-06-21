@@ -189,7 +189,7 @@ if(!empty($_POST['do'])) {
                 $file_timestamp_second = ! empty( $_POST['file_timestamp_second'] ) ? intval( $_POST['file_timestamp_second'] ) : 0;
                 $timestamp_sql = ", file_date = '".gmmktime($file_timestamp_hour, $file_timestamp_minute, $file_timestamp_second, $file_timestamp_month, $file_timestamp_day, $file_timestamp_year)."'";
             }
-            $file_permission = ! empty( $_POST['file_permission'] ) ? intval( $_POST['file_permission'] ) : 0;
+            $file_permission = "'" . get_file_permissions_info() . "'";
             $file_updated_date = current_time('timestamp');
             $editfile = $wpdb->query("UPDATE $wpdb->downloads SET $file_sql file_name = '$file_name', file_des = '$file_des', $file_size_sql file_category = $file_category, file_permission = $file_permission, file_updated_date = '$file_updated_date' $timestamp_sql $hits_sql WHERE file_id = $file_id;");
             if(!$editfile) {
@@ -344,15 +344,7 @@ switch($mode) {
                     <tr>
                         <td><strong><?php _e('Allowed To Download:', 'wp-downloadmanager') ?></strong></td>
                         <td>
-                            <select name="file_permission" size="1">
-                                <option value="-2" <?php selected('-2', $file->file_permission); ?>><?php _e('Hidden', 'wp-downloadmanager'); ?></option>
-                                <option value="-1" <?php selected('-1', $file->file_permission); ?>><?php _e('Everyone', 'wp-downloadmanager'); ?></option>
-                                <option value="0" <?php selected('0', $file->file_permission); ?>><?php _e('Registered Users Only', 'wp-downloadmanager'); ?></option>
-                                <option value="1" <?php selected('1', $file->file_permission); ?>><?php _e('At Least Contributor Role', 'wp-downloadmanager'); ?></option>
-                                <option value="2" <?php selected('2', $file->file_permission); ?>><?php _e('At Least Author Role', 'wp-downloadmanager'); ?></option>
-                                <option value="7" <?php selected('7', $file->file_permission); ?>><?php _e('At Least Editor Role', 'wp-downloadmanager'); ?></option>
-                                <option value="10" <?php selected('10', $file->file_permission); ?>><?php _e('At Least Administrator Role', 'wp-downloadmanager'); ?></option>
-                            </select>
+                            <?php downloads_generate_user_roles_select( $file->file_permission, $mode ); ?>
                         </td>
                     </tr>
                     <tr>
