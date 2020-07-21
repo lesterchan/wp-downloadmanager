@@ -3,7 +3,7 @@
 Plugin Name: WP-DownloadManager
 Plugin URI: http://lesterchan.net/portfolio/programming/php/
 Description: Adds a simple download manager to your WordPress blog.
-Version: 1.68.4
+Version: 1.68.5
 Author: Lester 'GaMerZ' Chan
 Author URI: http://lesterchan.net
 Text Domain: wp-downloadmanager
@@ -11,7 +11,7 @@ Text Domain: wp-downloadmanager
 
 
 /*
-	Copyright 2018  Lester Chan  (email : lesterchan@gmail.com)
+	Copyright 2020  Lester Chan  (email : lesterchan@gmail.com)
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ Text Domain: wp-downloadmanager
 
 
 ### Version
-define( 'WP_DOWNLOADMANAGER_VERSION', '1.68.3' );
+define( 'WP_DOWNLOADMANAGER_VERSION', '1.68.5' );
 
 ### Create text domain for translations
 add_action( 'plugins_loaded', 'downloadmanager_textdomain' );
@@ -1351,6 +1351,29 @@ function downloadmanager_page_most_stats($content) {
 	return $content;
 }
 
+
+### Function: Validate File Remote
+function is_file_remote_valid( $file ) {
+	$file_parsed = parse_url( $file );
+	if ( ! is_array( $file_parsed ) ) {
+		return false;
+	}
+
+	if ( empty( $file_parsed['scheme'] ) ) {
+		return false;
+	}
+	$schemes = apply_filters( 'wp_downloadmanager_schemes', array( 'http', 'https', 'ftp' ) );
+	if ( ! in_array( $file_parsed['scheme'], $schemes, true ) ) {
+		return false;
+	}
+
+	$ports = apply_filters( 'wp_downloadmanager_ports', array( 80, 443, 21 ) );
+	if ( ! empty( $file_parsed['port'] ) && ! in_array( $file_parsed['port'], $ports, true ) ) {
+		return false;
+	}
+
+	return true;
+}
 
 ### Class: WP-DownloadManager Widget
  class WP_Widget_DownloadManager extends WP_Widget {

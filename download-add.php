@@ -27,7 +27,7 @@ if( ! empty( $_POST['do'] ) ) {
 					$file_size = filesize($file_path.$file);
 					break;
 				case 1:
-					if($_FILES['file_upload']['size'] > get_max_upload_size()) {
+					if( $_FILES['file_upload']['size'] > get_max_upload_size() ) {
 						$text = '<p style="color: red;">'.sprintf(__('File Size Too Large. Maximum Size Is %s', 'wp-downloadmanager'), format_filesize(get_max_upload_size())).'</p>';
 						break;
 					} else {
@@ -52,33 +52,39 @@ if( ! empty( $_POST['do'] ) ) {
 					break;
 				case 2:
 					$file = ! empty( $_POST['file_remote'] ) ? esc_url_raw( $_POST['file_remote'] ) : '';
-					$file_size = remote_filesize($file);
+					if ( is_file_remote_valid( $file ) ) {
+						$file_size = remote_filesize( $file );
+					} else {
+						$text = '<p style="color: red;">' . __( 'There Is An Error Parsing Remote File URL', 'wp-downloadmanager' ) . '</p>';
+					}
 					break;
 			}
-			$file_name = ! empty( $_POST['file_name'] ) ? addslashes( wp_kses_post( trim( $_POST['file_name'] ) ) ) : '';
-			if(empty($file_name)) {
-				$file_name = basename($file);
-			}
-			$file_des = ! empty( $_POST['file_des'] ) ? addslashes( wp_kses_post( trim( $_POST['file_des'] ) ) ) : '';
-			$file_category = ! empty( $_POST['file_cat'] ) ? intval( $_POST['file_cat'] ) : 0;
-			if(!empty($_POST['file_size'])) {
-				$file_size = ! empty( $_POST['file_size'] ) ? intval( $_POST['file_size'] ) : 0;
-			}
-			$file_hits = ! empty( $_POST['file_hits'] ) ? intval( $_POST['file_hits'] ) : 0;
-			$file_timestamp_day =    ! empty( $_POST['file_timestamp_day'] ) ? intval( $_POST['file_timestamp_day'] ) : 0;
-			$file_timestamp_month =  ! empty( $_POST['file_timestamp_month'] ) ? intval( $_POST['file_timestamp_month'] ) : 0;
-			$file_timestamp_year =   ! empty( $_POST['file_timestamp_year'] ) ? intval( $_POST['file_timestamp_year'] ) : 0;
-			$file_timestamp_hour =   ! empty( $_POST['file_timestamp_hour'] ) ? intval( $_POST['file_timestamp_hour'] ) : 0;
-			$file_timestamp_minute = ! empty( $_POST['file_timestamp_minute'] ) ? intval( $_POST['file_timestamp_minute'] ) : 0;
-			$file_timestamp_second = ! empty( $_POST['file_timestamp_second'] ) ? intval( $_POST['file_timestamp_second'] ) : 0;
-			$file_date = gmmktime($file_timestamp_hour, $file_timestamp_minute, $file_timestamp_second, $file_timestamp_month, $file_timestamp_day, $file_timestamp_year);
-			$file_permission = ! empty( $_POST['file_permission'] ) ? intval( $_POST['file_permission'] ) : 0;
-			$addfile = $wpdb->query("INSERT INTO $wpdb->downloads VALUES (0, '$file', '$file_name', '$file_des', '$file_size', $file_category, '$file_date', '$file_date', '$file_date', $file_hits, $file_permission)");
-			if(!$addfile) {
-				$text = '<p style="color: red;">'.sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
-			} else {
-				$file_id = intval($wpdb->insert_id);
-				$text = '<p style="color: green;">'.sprintf(__('File \'%s (%s) (ID: %s)\' Added Successfully', 'wp-downloadmanager'), $file_name, $file, $file_id).'</p>';
+			if ( empty( $text ) ) {
+				$file_name = ! empty( $_POST['file_name'] ) ? addslashes( wp_kses_post( trim( $_POST['file_name'] ) ) ) : '';
+				if(empty($file_name)) {
+					$file_name = basename($file);
+				}
+				$file_des = ! empty( $_POST['file_des'] ) ? addslashes( wp_kses_post( trim( $_POST['file_des'] ) ) ) : '';
+				$file_category = ! empty( $_POST['file_cat'] ) ? intval( $_POST['file_cat'] ) : 0;
+				if(!empty($_POST['file_size'])) {
+					$file_size = ! empty( $_POST['file_size'] ) ? intval( $_POST['file_size'] ) : 0;
+				}
+				$file_hits = ! empty( $_POST['file_hits'] ) ? intval( $_POST['file_hits'] ) : 0;
+				$file_timestamp_day =    ! empty( $_POST['file_timestamp_day'] ) ? intval( $_POST['file_timestamp_day'] ) : 0;
+				$file_timestamp_month =  ! empty( $_POST['file_timestamp_month'] ) ? intval( $_POST['file_timestamp_month'] ) : 0;
+				$file_timestamp_year =   ! empty( $_POST['file_timestamp_year'] ) ? intval( $_POST['file_timestamp_year'] ) : 0;
+				$file_timestamp_hour =   ! empty( $_POST['file_timestamp_hour'] ) ? intval( $_POST['file_timestamp_hour'] ) : 0;
+				$file_timestamp_minute = ! empty( $_POST['file_timestamp_minute'] ) ? intval( $_POST['file_timestamp_minute'] ) : 0;
+				$file_timestamp_second = ! empty( $_POST['file_timestamp_second'] ) ? intval( $_POST['file_timestamp_second'] ) : 0;
+				$file_date = gmmktime($file_timestamp_hour, $file_timestamp_minute, $file_timestamp_second, $file_timestamp_month, $file_timestamp_day, $file_timestamp_year);
+				$file_permission = ! empty( $_POST['file_permission'] ) ? intval( $_POST['file_permission'] ) : 0;
+				$addfile = $wpdb->query("INSERT INTO $wpdb->downloads VALUES (0, '$file', '$file_name', '$file_des', '$file_size', $file_category, '$file_date', '$file_date', '$file_date', $file_hits, $file_permission)");
+				if(!$addfile) {
+					$text = '<p style="color: red;">'.sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
+				} else {
+					$file_id = intval($wpdb->insert_id);
+					$text = '<p style="color: green;">'.sprintf(__('File \'%s (%s) (ID: %s)\' Added Successfully', 'wp-downloadmanager'), $file_name, $file, $file_id).'</p>';
+				}
 			}
 			break;
 	}
