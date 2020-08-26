@@ -62,7 +62,7 @@ Adds a simple download manager to your WordPress blog.
 
 ## Changelog
 ### Version 1.68.6
-* NEW: Add filter wp_downloadmanager_file_extension_image
+* NEW: Add filter wp_downloadmanager_file_extension_image and wp_downloadmanager_file_extension_images_path
 
 ### Version 1.68.5
 * FIXED: Validation of remote file to prevent Server Side Request Forgery (SSRF) as reported by WordPress Plugin Review Team

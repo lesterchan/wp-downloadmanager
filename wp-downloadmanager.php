@@ -241,8 +241,7 @@ function download_file() {
 
 ### Function: Print Out File Extension Image
 function file_extension_image( $file_name, $file_ext_images ) {
-	$file_ext = file_extension( $file_name );
-	$file_ext .= '.gif';
+	$file_ext = file_extension( $file_name ) . '.gif';
 	$file_extension_image = 'unknown.gif';
 	if( in_array( $file_ext, $file_ext_images, true ) ) {
 		$file_extension_image = $file_ext;
@@ -255,7 +254,7 @@ function file_extension_image( $file_name, $file_ext_images ) {
 ### Function: Get File Extension Images
 function file_extension_images() {
 	$file_ext_images = array();
-	$dir = WP_PLUGIN_DIR . '/wp-downloadmanager/images/ext';
+	$dir = apply_filters( 'wp_downloadmanager_file_extension_images_path', WP_PLUGIN_DIR . '/wp-downloadmanager/images/ext' );
 	if ( is_dir( $dir ) ) {
 		if ( $dh = opendir( $dir ) ) {
 			while ( ( $file = readdir( $dh ) ) !== false ) {
