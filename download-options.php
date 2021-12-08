@@ -99,15 +99,15 @@ $download_options = get_option('download_options');
         <table class="form-table">
              <tr valign="top">
                 <th><?php _e('Download Path:', 'wp-downloadmanager'); ?></th>
-                <td><input type="text" name="download_path" value="<?php echo stripslashes(get_option('download_path')); ?>" size="50" dir="ltr" /><br /><?php _e('The absolute path to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager'); ?></td>
+                <td><input type="text" name="download_path" value="<?php echo esc_attr( removeslashes( get_option( 'download_path' ) ) ); ?>" size="50" dir="ltr" /><br /><?php _e('The absolute path to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager'); ?></td>
             </tr>
              <tr valign="top">
                 <th><?php _e('Download Path URL:', 'wp-downloadmanager'); ?></th>
-                <td><input type="text" name="download_path_url" value="<?php echo stripslashes(get_option('download_path_url')); ?>" size="50" dir="ltr" /><br /><?php _e('The url to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager'); ?></td>
+                <td><input type="text" name="download_path_url" value="<?php echo esc_attr( removeslashes( get_option( 'download_path_url' ) ) ); ?>" size="50" dir="ltr" /><br /><?php _e('The url to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager'); ?></td>
             </tr>
             <tr valign="top">
                 <th><?php _e('Download Page URL:', 'wp-downloadmanager'); ?></th>
-                <td><input type="text" name="download_page_url" value="<?php echo stripslashes(get_option('download_page_url')); ?>" size="50" dir="ltr" /><br /><?php _e('The url to the downloads page (without trailing slash).', 'wp-downloadmanager'); ?></td>
+                <td><input type="text" name="download_page_url" value="<?php echo esc_attr( removeslashes( get_option( 'download_page_url' ) ) ); ?>" size="50" dir="ltr" /><br /><?php _e('The url to the downloads page (without trailing slash).', 'wp-downloadmanager'); ?></td>
             </tr>
             <tr valign="top">
                 <th><?php _e('Download Nice Permalink:', 'wp-downloadmanager'); ?></th>

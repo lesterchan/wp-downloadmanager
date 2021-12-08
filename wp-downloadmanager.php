@@ -3,7 +3,7 @@
 Plugin Name: WP-DownloadManager
 Plugin URI: http://lesterchan.net/portfolio/programming/php/
 Description: Adds a simple download manager to your WordPress blog.
-Version: 1.68.6
+Version: 1.68.7
 Author: Lester 'GaMerZ' Chan
 Author URI: http://lesterchan.net
 Text Domain: wp-downloadmanager
@@ -1373,6 +1373,13 @@ function is_file_remote_valid( $file ) {
 	}
 
 	return true;
+}
+
+if( ! function_exists( 'removeslashes' ) ) {
+	function removeslashes( $string ) {
+		$string = implode( '', explode( '\\', $string ) );
+		return stripslashes( trim( $string ) );
+	}
 }
 
 ### Class: WP-DownloadManager Widget

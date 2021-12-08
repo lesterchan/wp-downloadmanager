@@ -62,6 +62,9 @@ Adds a simple download manager to your WordPress blog.
 
 ## Changelog
 
+### Version 1.68.7
+* FIXED: esc_attr()
+
 ### Version 1.68.6
 * NEW: Add filter wp_downloadmanager_file_extension_image and wp_downloadmanager_file_extension_images_path
 * FIXED: XSS in download-manager.php. Props to Ngo Van Thien and Patchstack.

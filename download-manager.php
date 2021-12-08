@@ -269,7 +269,7 @@ switch($mode) {
 		<form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__).'&amp;mode=edit&amp;id='.intval($file->file_id)); ?>" enctype="multipart/form-data">
 			<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo get_max_upload_size(); ?>" />
 			<input type="hidden" name="file_id" value="<?php echo intval($file->file_id); ?>" />
-			<input type="hidden" name="old_file" value="<?php echo stripslashes($file->file); ?>" />
+			<input type="hidden" name="old_file" value="<?php echo esc_attr( removeslashes( $file->file ) ); ?>" />
 			<?php wp_nonce_field('wp-downloadmanager_edit-file'); ?>
 			<div class="wrap">
 				<h2><?php _e('Edit A File', 'wp-downloadmanager'); ?></h2>
@@ -303,11 +303,11 @@ switch($mode) {
 					</tr>
 					<tr>
 						<td><strong><?php _e('File Name:', 'wp-downloadmanager'); ?></strong></td>
-						<td><input type="text" size="50" maxlength="200" name="file_name" value="<?php echo htmlspecialchars(stripslashes($file->file_name)); ?>" /></td>
+						<td><input type="text" size="50" maxlength="200" name="file_name" value="<?php echo esc_attr( removeslashes( $file->file_name ) ); ?>" /></td>
 					</tr>
 					<tr>
 						<td valign="top"><strong><?php _e('File Description:', 'wp-downloadmanager'); ?></strong></td>
-						<td><textarea rows="5" cols="50" name="file_des"><?php echo htmlspecialchars(stripslashes($file->file_des)); ?></textarea></td>
+						<td><textarea rows="5" cols="50" name="file_des"><?php echo esc_attr( removeslashes( $file->file_des ) ); ?></textarea></td>
 					</tr>
 					<tr>
 						<td><strong><?php _e('File Category:', 'wp-downloadmanager'); ?></strong></td>
@@ -377,8 +377,8 @@ switch($mode) {
 		<!-- Delete A File -->
 		<form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>">
 			<input type="hidden" name="file_id" value="<?php echo intval($file->file_id); ?>" />
-			<input type="hidden" name="file" value="<?php echo stripslashes($file->file); ?>" />
-			<input type="hidden" name="file_name" value="<?php echo htmlspecialchars(stripslashes($file->file_name)); ?>" />
+			<input type="hidden" name="file" value="<?php echo esc_attr( removeslashes( $file->file ) ); ?>" />
+			<input type="hidden" name="file_name" value="<?php echo esc_attr( removeslashes( $file->file_name ) ); ?>" />
 			<?php wp_nonce_field('wp-downloadmanager_delete-file'); ?>
 			<div class="wrap">
 				<h2><?php _e('Delete A File', 'wp-downloadmanager'); ?></h2>
@@ -430,7 +430,7 @@ switch($mode) {
 						</tr>
 					<?php endif; ?>
 					<tr class="alternate">
-						<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e('Delete File', 'wp-downloadmanager'); ?>" class="button"  onclick="return confirm('You Are About To The Delete This File \'<?php echo stripslashes(strip_tags($file->file_name)); ?> (<?php echo stripslashes($file->file); ?>)\'.\nThis Action Is Not Reversible.\n\n Choose \'Cancel\' to stop, \'OK\' to delete.')"/>&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-downloadmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
+						<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e('Delete File', 'wp-downloadmanager'); ?>" class="button"  onclick="return confirm('You Are About To The Delete This File \'<?php echo esc_attr( removeslashes( $file->file_name ) ); ?> (<?php echo esc_attr( removeslashes( $file->file ) ); ?>)\'.\nThis Action Is Not Reversible.\n\n Choose \'Cancel\' to stop, \'OK\' to delete.')"/>&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-downloadmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
 					</tr>
 				</table>
 			</div>
@@ -600,7 +600,7 @@ switch($mode) {
 				<table class="widefat">
 					<tr>
 						<th><?php _e('Filter Options: ', 'wp-downloadmanager'); ?></th>
-						<td><?php _e('Keywords:', 'wp-downloadmanager'); ?><input type="text" name="search" size="30" maxlength="200" value="<?php echo stripslashes($file_search); ?>" /></td>
+						<td><?php _e('Keywords:', 'wp-downloadmanager'); ?><input type="text" name="search" size="30" maxlength="200" value="<?php echo esc_attr( $file_search ); ?>" /></td>
 					</tr>
 					<tr>
 						<th><?php _e('Sort Options:', 'wp-downloadmanager'); ?></th>
