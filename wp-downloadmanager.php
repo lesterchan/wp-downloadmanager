@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: WP-DownloadManager
-Plugin URI: http://lesterchan.net/portfolio/programming/php/
+Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Adds a simple download manager to your WordPress blog.
 Version: 1.68.7
 Author: Lester 'GaMerZ' Chan
-Author URI: http://lesterchan.net
+Author URI: https://lesterchan.net
 Text Domain: wp-downloadmanager
 */
 
@@ -30,7 +30,7 @@ Text Domain: wp-downloadmanager
 
 
 ### Version
-define( 'WP_DOWNLOADMANAGER_VERSION', '1.68.6' );
+define( 'WP_DOWNLOADMANAGER_VERSION', '1.68.7' );
 
 ### Create text domain for translations
 add_action( 'plugins_loaded', 'downloadmanager_textdomain' );
