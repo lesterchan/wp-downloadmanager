@@ -3,8 +3,8 @@ Contributors: GamerZ
 Donate link: https://lesterchan.net/site/donation/  
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
 Requires at least: 4.0  
-Tested up to: 5.5  
-Stable tag: 1.68.6  
+Tested up to: 5.8  
+Stable tag: 1.68.7  
 License: GPLv2  
 
 Adds a simple download manager to your WordPress blog.
@@ -61,8 +61,10 @@ Adds a simple download manager to your WordPress blog.
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
+
 ### Version 1.68.6
 * NEW: Add filter wp_downloadmanager_file_extension_image and wp_downloadmanager_file_extension_images_path
+* FIXED: XSS in download-manager.php. Props to Ngo Van Thien and Patchstack.
 
 ### Version 1.68.5
 * FIXED: Validation of remote file to prevent Server Side Request Forgery (SSRF) as reported by WordPress Plugin Review Team

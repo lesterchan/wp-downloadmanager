@@ -8,18 +8,18 @@ if( ! current_user_can( 'manage_downloads' ) ) {
 ### Variables Variables Variables
 $base_name = plugin_basename( 'wp-downloadmanager/download-manager.php' );
 $base_page = 'admin.php?page='.$base_name;
-$mode = ! empty( $_GET['mode'] ) ? trim( $_GET['mode'] ) : '';
+$mode = ! empty( $_GET['mode'] ) ? sanitize_text_field( $_GET['mode'] ) : '';
 $file_id = ! empty( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
 $file_path = get_option( 'download_path' );
 $file_categories = get_option( 'download_categories' );
 $file_page = ! empty( $_GET['filepage'] ) ? intval( $_GET['filepage'] ) : 0;
-$file_sortby = ! empty( $_GET['by'] ) ? trim( $_GET['by'] ) : '';
+$file_sortby = ! empty( $_GET['by'] ) ? sanitize_text_field( $_GET['by'] ) : '';
 $file_sortby_text = '';
-$file_sortorder = ! empty( $_GET['order'] ) ? trim( $_GET['order'] ) : '';
+$file_sortorder = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : '';
 $file_sortorder_text = '';
 $file_perpage = ! empty( $_GET['perpage'] ) ? intval( $_GET['perpage'] ) : 0;
 $file_sort_url = '';
-$file_search = ! empty( $_GET['search'] ) ? addslashes( $_GET['search'] ) : 0;
+$file_search = ! empty( $_GET['search'] ) ? sanitize_text_field( $_GET['search'] ) : 0;
 $file_search_query = '';
 
 
@@ -208,8 +208,8 @@ if(!empty($_POST['do'])) {
 		case __('Delete File', 'wp-downloadmanager');
 			check_admin_referer('wp-downloadmanager_delete-file');
 			$file_id  = ! empty( $_POST['file_id'] ) ? intval( $_POST['file_id'] ) : 0;
-			$file = ! empty( $_POST['file'] ) ? trim( $_POST['file'] ) : '';
-			$file_name = ! empty( $_POST['file_name'] ) ? trim( $_POST['file_name'] ) : '';
+			$file = ! empty( $_POST['file'] ) ? sanitize_text_field( $_POST['file'] ) : '';
+			$file_name = ! empty( $_POST['file_name'] ) ? sanitize_text_field( $_POST['file_name'] ) : '';
 			$unlinkfile = ! empty( $_POST['unlinkfile'] ) ? intval( $_POST['unlinkfile'] ) : 0;
 			if($unlinkfile == 1) {
 				if(!unlink($file_path.$file)) {
