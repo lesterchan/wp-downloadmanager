@@ -4,7 +4,7 @@ Donate link: https://lesterchan.net/site/donation/
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
 Requires at least: 4.0  
 Tested up to: 5.8  
-Stable tag: 1.68.7  
+Stable tag: 1.68.8  
 License: GPLv2  
 
 Adds a simple download manager to your WordPress blog.
@@ -61,6 +61,9 @@ Adds a simple download manager to your WordPress blog.
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
+
+### Version 1.68.8
+* FIXED: Download Categories not parsing properly.
 
 ### Version 1.68.7
 * FIXED: esc_attr()
