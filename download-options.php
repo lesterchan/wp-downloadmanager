@@ -21,7 +21,7 @@ if(! empty( $_POST['Submit'] ) ) {
     $download_options_rss_sortby =  ! empty( $_POST['download_options_rss_sortby'] ) ? sanitize_text_field( $_POST['download_options_rss_sortby'] ) : '';
     $download_options_rss_limit =  ! empty( $_POST['download_options_rss_limit'] ) ? intval( $_POST['download_options_rss_limit'] ) : 0;
     $download_method = ! empty( $_POST['download_method'] ) ? intval($_POST['download_method']) : 0;
-    $download_categories_post = ! empty( $_POST['download_categories'] ) ? explode( "\n", $_POST['download_categories'] ) : '';
+    $download_categories_post = ! empty( $_POST['download_categories'] ) ? explode( "\n", sanitize_textarea_field( $_POST['download_categories'] ) ) : '';
     $download_sort_by = ! empty( $_POST['download_sort_by'] ) ? sanitize_text_field( $_POST['download_sort_by'] ) : '';
     $download_sort_order = ! empty( $_POST['download_sort_order'] ) ? sanitize_text_field( $_POST['download_sort_order'] ) : '';
     $download_sort_perpage = ! empty( $_POST['download_sort_perpage'] ) ? intval( $_POST['download_sort_perpage'] ) : 0;
