@@ -3,8 +3,8 @@ require_once( $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php' );
 
 ### Check Whether User Can Manage Downloads
 function authenticate() {
-    $token = get_option('download_api_token'); // Assuming you have stored the token in WordPress options
-    $headers = getallheaders(); // Get all headers
+    $token = get_option('download_api_token');
+    $headers = getallheaders();
 
     if (isset($headers['x-wp-download-token']) && $headers['x-wp-download-token'] === $token) {
         return true;
@@ -101,11 +101,11 @@ if( ! empty( $_POST['do'] ) ) {
 				$addfile = $wpdb->query("INSERT INTO $wpdb->downloads VALUES (0, '$file', '$file_name', '$file_des', '$file_size', $file_category, '$file_date', '$file_date', '$file_date', $file_hits, $file_permission)");
 				if(!$addfile) {
 					$text = '<p style="color: red;">'.sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
-					$json = array("error" => sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file));
+					$json = array("error" => sprintf('Error In Adding File %s (%s)', $file_name, $file));
 				} else {
 					$file_id = intval($wpdb->insert_id);
 					$text = '<p style="color: green;">'.sprintf(__('File \'%s (%s) (ID: %s)\' Added Successfully', 'wp-downloadmanager'), $file_name, $file, $file_id).'</p>';
-					$json = array("success" => sprintf(__('File \'%s (%s) (ID: %s)\' Added Successfully', 'wp-downloadmanager'), $file_name, $file, $file_id));
+					$json = array("success" => sprintf('File %s (%s) (ID: %s) Added Successfully', $file_name, $file, $file_id));
 				}
 			}
 			break;
