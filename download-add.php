@@ -1,7 +1,24 @@
 <?php
+require_once( $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php' );
+
 ### Check Whether User Can Manage Downloads
-if(!current_user_can('manage_downloads')) {
-	die('Access Denied');
+function authenticate() {
+    $token = get_option('download_api_token'); // Assuming you have stored the token in WordPress options
+    $headers = getallheaders(); // Get all headers
+
+    if (isset($headers['x-wp-download-token']) && $headers['x-wp-download-token'] === $token) {
+        return true;
+    }
+
+    if (current_user_can('manage_downloads')) {
+        return true;
+    }
+
+    return false;
+}
+
+if (!authenticate()) {
+    die('Access Denied');
 }
 
 
@@ -11,10 +28,9 @@ $base_page = 'admin.php?page='.$base_name;
 $file_path = get_option('download_path');
 $file_categories = get_option( 'download_categories' );
 
-
 ### Form Processing
 if( ! empty( $_POST['do'] ) ) {
-	check_admin_referer('wp-downloadmanager_add-file');
+	// check_admin_referer('wp-downloadmanager_add-file');
 	// Decide What To Do
 	switch( $_POST['do'] ) {
 		// Add File
@@ -29,6 +45,7 @@ if( ! empty( $_POST['do'] ) ) {
 				case 1:
 					if( $_FILES['file_upload']['size'] > get_max_upload_size() ) {
 						$text = '<p style="color: red;">'.sprintf(__('File Size Too Large. Maximum Size Is %s', 'wp-downloadmanager'), format_filesize(get_max_upload_size())).'</p>';
+						$json = array("error" => "File Size Too Large. Maximum Size Is ".format_filesize(get_max_upload_size()));
 						break;
 					} else {
 						if(is_uploaded_file($_FILES['file_upload']['tmp_name'])) {
@@ -42,10 +59,12 @@ if( ! empty( $_POST['do'] ) ) {
 								$file_size = filesize($file_path.$file);
 							} else {
 								$text = '<p style="color: red;">'.__('Error In Uploading File', 'wp-downloadmanager').'</p>';
+								$json = array("error" => "Error In Uploading File");
 								break;
 							}
 						} else {
 							$text = '<p style="color: red;">'.__('Error In Uploading File', 'wp-downloadmanager').'</p>';
+							$json = array("error" => "Error In Uploading File");
 							break;
 						}
 					}
@@ -56,6 +75,7 @@ if( ! empty( $_POST['do'] ) ) {
 						$file_size = remote_filesize( $file );
 					} else {
 						$text = '<p style="color: red;">' . __( 'There Is An Error Parsing Remote File URL', 'wp-downloadmanager' ) . '</p>';
+						$json = array("error" => "There Is An Error Parsing Remote File URL");
 					}
 					break;
 			}
@@ -81,16 +101,28 @@ if( ! empty( $_POST['do'] ) ) {
 				$addfile = $wpdb->query("INSERT INTO $wpdb->downloads VALUES (0, '$file', '$file_name', '$file_des', '$file_size', $file_category, '$file_date', '$file_date', '$file_date', $file_hits, $file_permission)");
 				if(!$addfile) {
 					$text = '<p style="color: red;">'.sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
+					$json = array("error" => sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file));
 				} else {
 					$file_id = intval($wpdb->insert_id);
 					$text = '<p style="color: green;">'.sprintf(__('File \'%s (%s) (ID: %s)\' Added Successfully', 'wp-downloadmanager'), $file_name, $file, $file_id).'</p>';
+					$json = array("success" => sprintf(__('File \'%s (%s) (ID: %s)\' Added Successfully', 'wp-downloadmanager'), $file_name, $file, $file_id));
 				}
 			}
 			break;
 	}
 }
 ?>
-<?php if(!empty($text)) { echo '<!-- Last Action --><div id="message" class="updated fade"><p>'.stripslashes($text).'</p></div>'; } ?>
+
+<?php 
+if(!empty($text)) { 
+    if(isset($_POST['output']) && $_POST['output'] == 'json') {
+        header('Content-Type: application/json');
+        die(json_encode($json));
+    } else {
+        echo '<!-- Last Action --><div id="message" class="updated fade"><p>'.stripslashes($text).'</p></div>'; 
+    }
+}
+?>
 <!-- Add A File -->
 <form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>" enctype="multipart/form-data">
 	<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo get_max_upload_size(); ?>" />
