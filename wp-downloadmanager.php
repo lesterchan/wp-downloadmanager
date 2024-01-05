@@ -1559,6 +1559,8 @@ function downloadmanager_activate() {
 		add_option('download_path', WP_CONTENT_DIR.'/files', 'Download Path');
 		add_option('download_path_url', content_url('files'), 'Download Path URL');
 	}
+	$api_token = bin2hex(openssl_random_pseudo_bytes(32));
+	add_option('download_api_token', $api_token, 'Download API Token');
 	add_option('download_page_url', site_url('downloads'), 'Download Page URL');
 	add_option('download_method', 1, 'Download Type');
 	add_option('download_categories', array('General'), 'Download Categories');

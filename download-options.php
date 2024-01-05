@@ -17,6 +17,7 @@ if(! empty( $_POST['Submit'] ) ) {
     $download_path_url = ! empty( $_POST['download_path_url'] ) ? sanitize_text_field( $_POST['download_path_url'] ) : '';
     $download_page_url = ! empty( $_POST['download_page_url'] ) ? sanitize_text_field( $_POST['download_page_url'] ) : '';
     $download_nice_permalink = ! empty( $_POST['download_nice_permalink'] ) ? intval( $_POST['download_nice_permalink'] ) : 0;
+    $download_api_token = ! empty( $_POST['download_api_token'] ) ? sanitize_text_field( $_POST['download_api_token'] ) : bin2hex(openssl_random_pseudo_bytes(32));
     $download_options_use_filename =  ! empty( $_POST['download_options_use_filename'] ) ? intval( $_POST['download_options_use_filename'] ) : 0;
     $download_options_rss_sortby =  ! empty( $_POST['download_options_rss_sortby'] ) ? sanitize_text_field( $_POST['download_options_rss_sortby'] ) : '';
     $download_options_rss_limit =  ! empty( $_POST['download_options_rss_limit'] ) ? intval( $_POST['download_options_rss_limit'] ) : 0;
@@ -47,6 +48,7 @@ if(! empty( $_POST['Submit'] ) ) {
     $update_download_queries[] = update_option('download_method', $download_method);
     $update_download_queries[] = update_option('download_categories', $download_categories);
     $update_download_queries[] = update_option('download_sort', $download_sort);
+    $update_download_queries[] = update_option('download_api_token', $download_api_token);
     $update_download_text[] = __('Download Path', 'wp-downloadmanager');
     $update_download_text[] = __('Download Path URL', 'wp-downloadmanager');
     $update_download_text[] = __('Download Page URL', 'wp-downloadmanager');
@@ -55,6 +57,7 @@ if(! empty( $_POST['Submit'] ) ) {
     $update_download_text[] = __('Download Method', 'wp-downloadmanager');
     $update_download_text[] = __('Download Categories', 'wp-downloadmanager');
     $update_download_text[] = __('Download Sorting', 'wp-downloadmanager');
+    $update_download_text[] = __('Download API Token', 'wp-downloadmanager');
     $i=0;
     $text = '';
     foreach($update_download_queries as $update_download_query) {
@@ -100,6 +103,10 @@ $download_options = get_option('download_options');
              <tr valign="top">
                 <th><?php _e('Download Path:', 'wp-downloadmanager'); ?></th>
                 <td><input type="text" name="download_path" value="<?php echo esc_attr( removeslashes( get_option( 'download_path' ) ) ); ?>" size="50" dir="ltr" /><br /><?php _e('The absolute path to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager'); ?></td>
+            </tr>
+             <tr valign="top">
+                <th><?php _e('API Token:', 'wp-downloadmanager'); ?></th>
+                <td><input type="text" name="download_api_token" value="<?php echo esc_attr( removeslashes( get_option( 'download_api_token' ) ) ); ?>" size="50" dir="ltr" /><br /><?php _e('API Token to upload files over HTTP API. To generate a secure token run "openssl rand -hex 32" in your terminal.', 'wp-downloadmanager'); ?></td>
             </tr>
              <tr valign="top">
                 <th><?php _e('Download Path URL:', 'wp-downloadmanager'); ?></th>
