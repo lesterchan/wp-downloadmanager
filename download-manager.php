@@ -7,7 +7,7 @@ if( ! current_user_can( 'manage_downloads' ) ) {
 
 ### Variables Variables Variables
 $base_name = plugin_basename( 'wp-downloadmanager/download-manager.php' );
-$base_page = 'admin.php?page='.$base_name;
+$base_page = 'admin.php?page=' . $base_name;
 $mode = ! empty( $_GET['mode'] ) ? sanitize_text_field( $_GET['mode'] ) : '';
 $file_id = ! empty( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
 $file_path = get_option( 'download_path' );
@@ -21,24 +21,24 @@ $file_perpage = ! empty( $_GET['perpage'] ) ? intval( $_GET['perpage'] ) : 0;
 $file_sort_url = '';
 $file_search = ! empty( $_GET['search'] ) ? sanitize_text_field( $_GET['search'] ) : 0;
 $file_search_query = '';
-
+$text_direction = ! empty ( $text_direction ) ? $text_direction : '';
 
 ### Form Sorting URL
-if(!empty($file_sortby)) {
-	$file_sort_url .= '&amp;by='.$file_sortby;
+if ( ! empty( $file_sortby ) ) {
+	$file_sort_url .= '&by=' . $file_sortby;
 }
-if(!empty($file_sortorder)) {
-	$file_sort_url .= '&amp;order='.$file_sortorder;
+if ( ! empty( $file_sortorder ) ) {
+	$file_sort_url .= '&order=' . $file_sortorder;
 }
-if(!empty($file_perpage)) {
-	$file_sort_url .= '&amp;perpage='.$file_perpage;
+if ( ! empty( $file_perpage ) ) {
+	$file_sort_url .= '&perpage='. $file_perpage;
 }
 
 
 ### Searching
-if(!empty($file_search)) {
+if ( ! empty( $file_search ) ) {
 	$file_search_query = "AND (file LIKE ('%$file_search%') OR file_name LIKE('%$file_search%') OR file_des LIKE ('%$file_search%'))";
-	$file_sort_url .= '&amp;search='.stripslashes($file_search);
+	$file_sort_url .= '&search=' . stripslashes( $file_search );
 }
 
 
@@ -362,7 +362,7 @@ switch($mode) {
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e('Edit File', 'wp-downloadmanager'); ?>"  class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-downloadmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
+						<td colspan="2" style="text-align: center;"><input type="submit" name="do" value="<?php _e('Edit File', 'wp-downloadmanager'); ?>"  class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-downloadmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
 					</tr>
 				</table>
 			</div>
@@ -426,11 +426,11 @@ switch($mode) {
 					</tr>
 					<?php if(!is_remote_file(stripslashes($file->file))): ?>
 						<tr>
-							<td colspan="2" align="center"><input type="checkbox" id="unlinkfile" name="unlinkfile" value="1" />&nbsp;<label for="unlinkfile"><?php _e('Delete File From Server?', 'wp-downloadmanager'); ?></label></td>
+							<td colspan="2" style="text-align: center;"><input type="checkbox" id="unlinkfile" name="unlinkfile" value="1" />&nbsp;<label for="unlinkfile"><?php _e('Delete File From Server?', 'wp-downloadmanager'); ?></label></td>
 						</tr>
 					<?php endif; ?>
 					<tr class="alternate">
-						<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e('Delete File', 'wp-downloadmanager'); ?>" class="button"  onclick="return confirm('You Are About To The Delete This File \'<?php echo esc_attr( removeslashes( $file->file_name ) ); ?> (<?php echo esc_attr( removeslashes( $file->file ) ); ?>)\'.\nThis Action Is Not Reversible.\n\n Choose \'Cancel\' to stop, \'OK\' to delete.')"/>&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-downloadmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
+						<td colspan="2" style="text-align: center;"><input type="submit" name="do" value="<?php _e('Delete File', 'wp-downloadmanager'); ?>" class="button"  onclick="return confirm('You Are About To The Delete This File \'<?php echo esc_attr( removeslashes( $file->file_name ) ); ?> (<?php echo esc_attr( removeslashes( $file->file ) ); ?>)\'.\nThis Action Is Not Reversible.\n\n Choose \'Cancel\' to stop, \'OK\' to delete.')"/>&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-downloadmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
 					</tr>
 				</table>
 			</div>
@@ -504,6 +504,7 @@ switch($mode) {
 						$file_des = stripslashes($file->file_des);
 						$file_size = $file->file_size;
 						$file_cat = intval($file->file_category);
+						$file_category = ! empty( $file_categories[$file_cat] ) ? $file_categories[$file_cat] : __( 'N/A', 'wp-downloadmanager' );
 						$file_date = mysql2date(get_option('date_format'), gmdate('Y-m-d H:i:s', $file->file_date));
 						$file_time = mysql2date(get_option('time_format'), gmdate('Y-m-d H:i:s', $file->file_date));
 						$file_updated_date = mysql2date(get_option('date_format'), gmdate('Y-m-d H:i:s', $file->file_updated_date));
@@ -519,12 +520,12 @@ switch($mode) {
 							$style = ' class="alternate"';
 						}
 						echo "<tr$style>\n";
-						echo '<td valign="top">'.number_format_i18n($file_id).'</td>'."\n";
+						echo '<td valign="top">' . number_format_i18n( $file_id ) . '</td>' . "\n";
 						echo "<td>$file_nicename<br /><strong>&raquo;</strong> <i dir=\"ltr\">".snippet_text($file_name, 45)."</i><br /><br /><i>".sprintf(__('Last Updated: %s, %s', 'wp-downloadmanager'), $file_updated_time, $file_updated_date)."</i><br /><i>".sprintf(__('Last Downloaded: %s, %s', 'wp-downloadmanager'), $file_last_downloaded_time, $file_last_downloaded_date)."</i></td>\n";
-						echo '<td style="text-align: center;">'.format_filesize($file_size).'</td>'."\n";
-						echo '<td style="text-align: center;">'.number_format_i18n($file_hits).'</td>'."\n";
-						echo '<td style="text-align: center;">'.$file_permission.'</td>'."\n";
-						echo '<td style="text-align: center;">'.$file_categories[$file_cat].'</td>'."\n";
+						echo '<td style="text-align: center;">' . format_filesize( $file_size ) . '</td>' . "\n";
+						echo '<td style="text-align: center;">' . number_format_i18n( $file_hits ) . '</td>' . "\n";
+						echo '<td style="text-align: center;">' . $file_permission . '</td>' . "\n";
+						echo '<td style="text-align: center;">' . $file_category . '</td>' . "\n";
 						echo "<td>$file_time, $file_date</td>\n";
 						echo "<td style=\"text-align: center;\"><a href=\"$base_page&amp;mode=edit&amp;id=$file_id\" class=\"edit\">".__('Edit', 'wp-downloadmanager')."</a></td>\n";
 						echo "<td style=\"text-align: center;\"><a href=\"$base_page&amp;mode=delete&amp;id=$file_id\" class=\"delete\">".__('Delete', 'wp-downloadmanager')."</a></td>\n";
@@ -532,7 +533,7 @@ switch($mode) {
 						$i++;
 					}
 				} else {
-					echo '<tr><td colspan="9" align="center"><strong>'.__('No Files Found', 'wp-downloadmanager').'</strong></td></tr>';
+					echo '<tr><td colspan="9" style="text-align: center;"><strong>'.__('No Files Found', 'wp-downloadmanager').'</strong></td></tr>';
 				}
 				?>
 			</table>
@@ -543,19 +544,19 @@ switch($mode) {
 				<br />
 				<table class="widefat">
 					<tr>
-						<td align="<?php echo ('rtl' == $text_direction) ? 'right' : 'left'; ?>" width="50%">
+						<td style="text-align: <?php echo ('rtl' == $text_direction) ? 'right' : 'left'; ?>" width="50%">
 							<?php
 							if($file_page > 1 && ((($file_page*$file_perpage)-($file_perpage-1)) <= $get_total_files)) {
-								echo '<strong>&laquo;</strong> <a href="'.$base_page.'&amp;filepage='.($file_page-1).$file_sort_url.'" title="&laquo; '.__('Previous Page', 'wp-downloadmanager').'">'.__('Previous Page', 'wp-downloadmanager').'</a>';
+								echo '<strong>&laquo;</strong> <a href="' . esc_url( $base_page . '&filepage=' . ( $file_page - 1 ) . $file_sort_url ) . '" title="&laquo; '.__('Previous Page', 'wp-downloadmanager').'">'.__('Previous Page', 'wp-downloadmanager').'</a>';
 							} else {
 								echo '&nbsp;';
 							}
 							?>
 						</td>
-						<td align="<?php echo ('rtl' == $text_direction) ? 'left' : 'right'; ?>" width="50%">
+						<td style="text-align: <?php echo ('rtl' == $text_direction) ? 'left' : 'right'; ?>" width="50%">
 							<?php
 							if($file_page >= 1 && ((($file_page*$file_perpage)+1) <= $get_total_files)) {
-								echo '<a href="'.$base_page.'&amp;filepage='.($file_page+1).$file_sort_url.'" title="'.__('Next Page', 'wp-downloadmanager').' &raquo;">'.__('Next Page', 'wp-downloadmanager').'</a> <strong>&raquo;</strong>';
+								echo '<a href="' . esc_url( $base_page . '&filepage=' . ( $file_page + 1 ) . $file_sort_url ) . '" title="'.__('Next Page', 'wp-downloadmanager').' &raquo;">'.__('Next Page', 'wp-downloadmanager').'</a> <strong>&raquo;</strong>';
 							} else {
 								echo '&nbsp;';
 							}
@@ -563,29 +564,29 @@ switch($mode) {
 						</td>
 					</tr>
 					<tr class="alternate">
-						<td colspan="2" align="center">
+						<td colspan="2" style="text-align: center;">
 							<?php _e('Pages', 'wp-downloadmanager'); ?> (<?php echo number_format_i18n($total_pages); ?>):
 							<?php
 							if ($file_page >= 4) {
-								echo '<strong><a href="'.$base_page.'&amp;filepage=1'.$file_sort_url.'" title="'.__('Go to First Page', 'wp-downloadmanager').'">&laquo; '.__('First', 'wp-downloadmanager').'</a></strong> ... ';
+								echo '<strong><a href="' . esc_url( $base_page . '&filepage=1' . $file_sort_url ) . '" title="'.__('Go to First Page', 'wp-downloadmanager').'">&laquo; '.__('First', 'wp-downloadmanager').'</a></strong> ... ';
 							}
 							if($file_page > 1) {
-								echo ' <strong><a href="'.$base_page.'&amp;filepage='.($file_page-1).$file_sort_url.'" title="&laquo; '.__('Go to Page', 'wp-downloadmanager').' '.number_format_i18n($file_page-1).'">&laquo;</a></strong> ';
+								echo ' <strong><a href="' . esc_url( $base_page . '&filepage=' . ( $file_page - 1 ) . $file_sort_url ) . '" title="&laquo; '.__('Go to Page', 'wp-downloadmanager').' '.number_format_i18n($file_page-1).'">&laquo;</a></strong> ';
 							}
 							for($i = $file_page - 2 ; $i  <= $file_page +2; $i++) {
 								if ($i >= 1 && $i <= $total_pages) {
 									if($i == $file_page) {
 										echo '<strong>['.number_format_i18n($i).']</strong> ';
 									} else {
-										echo '<a href="'.$base_page.'&amp;filepage='.($i).$file_sort_url.'" title="'.__('Page', 'wp-downloadmanager').' '.number_format_i18n($i).'">'.number_format_i18n($i).'</a> ';
+										echo '<a href="' . esc_url( $base_page . '&filepage=' . $i . $file_sort_url ) . '" title="'.__('Page', 'wp-downloadmanager').' '.number_format_i18n($i).'">'.number_format_i18n($i).'</a> ';
 									}
 								}
 							}
 							if($file_page < $total_pages) {
-								echo ' <strong><a href="'.$base_page.'&amp;filepage='.($file_page+1).$file_sort_url.'" title="'.__('Go to Page', 'wp-downloadmanager').' '.number_format_i18n($file_page+1).' &raquo;">&raquo;</a></strong> ';
+								echo ' <strong><a href="' . esc_url( $base_page . '&amp;filepage=' . ( $file_page + 1 ) . $file_sort_url ) . '" title="'.__('Go to Page', 'wp-downloadmanager').' '.number_format_i18n($file_page+1).' &raquo;">&raquo;</a></strong> ';
 							}
 							if (($file_page+2) < $total_pages) {
-								echo ' ... <strong><a href="'.$base_page.'&amp;filepage='.($total_pages).$file_sort_url.'" title="'.__('Go to Last Page', 'wp-downloadmanager'), 'wp-downloadmanager'.'">'.__('Last', 'wp-downloadmanager').' &raquo;</a></strong>';
+								echo ' ... <strong><a href="' . esc_url( $base_page . '&amp;filepage=' . $total_pages . $file_sort_url ) . '" title="'.__('Go to Last Page', 'wp-downloadmanager'), 'wp-downloadmanager'.'">'.__('Last', 'wp-downloadmanager').' &raquo;</a></strong>';
 							}
 							?>
 						</td>
@@ -638,7 +639,7 @@ switch($mode) {
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2" align="center"><input type="submit" value="<?php _e('Go', 'wp-downloadmanager'); ?>" class="button" /></td>
+						<td colspan="2" style="text-align: center;"><input type="submit" value="<?php _e('Go', 'wp-downloadmanager'); ?>" class="button" /></td>
 					</tr>
 				</table>
 			</form>
