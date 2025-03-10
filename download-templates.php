@@ -21,9 +21,9 @@ $allowed_tags['input'] = array(
 $allowed_tags['form'] = array(
 	'action'    => true,
 	'class'     => true,
+	'id'        => true,
 	'method'    => true,
 	'name'      => true,
-    'id'        => true,
 );
 
 ### If Form Is Submitted
