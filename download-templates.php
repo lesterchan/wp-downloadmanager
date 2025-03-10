@@ -9,6 +9,22 @@ if(!current_user_can('manage_downloads')) {
 $base_name = plugin_basename('wp-downloadmanager/download-manager.php');
 $base_page = 'admin.php?page='.$base_name;
 
+### Allow Tags
+$allowed_tags = wp_kses_allowed_html( 'post' );
+$allowed_tags['input'] = array(
+	'class'     => true,
+	'id'        => true,
+	'name'      => true,
+	'type'      => true,
+	'value'     => true,
+);
+$allowed_tags['form'] = array(
+	'action'    => true,
+	'class'     => true,
+	'method'    => true,
+	'name'      => true,
+    'id'        => true,
+);
 
 ### If Form Is Submitted
 if( ! empty( $_POST['Submit'] ) ) {
@@ -17,7 +33,7 @@ if( ! empty( $_POST['Submit'] ) ) {
     $download_template_embedded = array();
     $download_template_most = array();
     $download_template_header = ! empty ( $_POST['download_template_header'] ) ? wp_kses_post( trim( $_POST['download_template_header'] ) ) : '';
-    $download_template_footer = ! empty ( $_POST['download_template_footer'] ) ? wp_kses_post( trim( $_POST['download_template_footer'] ) )  : '';
+    $download_template_footer = ! empty ( $_POST['download_template_footer'] ) ? wp_kses( trim( $_POST['download_template_footer'] ), $allowed_tags )  : '';
     $download_template_pagingheader = ! empty ( $_POST['download_template_pagingheader'] ) ? wp_kses_post( trim( $_POST['download_template_pagingheader'] ) )  : '';
     $download_template_pagingfooter = ! empty ( $_POST['download_template_pagingfooter'] ) ? wp_kses_post( trim( $_POST['download_template_pagingfooter'] ) )  : '';
     $download_template_none = ! empty ( $_POST['download_template_none'] ) ? wp_kses_post( trim( $_POST['download_template_none'] ) )  : '';
