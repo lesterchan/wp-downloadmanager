@@ -37,6 +37,12 @@ if(! empty( $_POST['Submit'] ) ) {
         }
     }
     $download_options = array('use_filename' => $download_options_use_filename, 'rss_sortby' => $download_options_rss_sortby, 'rss_limit' => $download_options_rss_limit);
+    
+    // Validate
+    if ( substr( $download_path, 0, strlen( WP_CONTENT_DIR ) ) !== WP_CONTENT_DIR ) {
+        $download_path = WP_CONTENT_DIR;
+    }
+    
     $update_download_queries = array();
     $update_download_text = array();
     $update_download_queries[] = update_option('download_path', $download_path);
@@ -99,7 +105,7 @@ $download_options = get_option('download_options');
         <table class="form-table">
              <tr valign="top">
                 <th><?php _e('Download Path:', 'wp-downloadmanager'); ?></th>
-                <td><input type="text" name="download_path" value="<?php echo esc_attr( removeslashes( get_option( 'download_path' ) ) ); ?>" size="50" dir="ltr" /><br /><?php _e('The absolute path to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager'); ?></td>
+                <td><input type="text" name="download_path" value="<?php echo esc_attr( removeslashes( get_option( 'download_path' ) ) ); ?>" size="50" dir="ltr" /><br /><?php _e('The absolute path to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager'); ?><br /><?php printf( __('Due to security reasons, the path has to start inside your wp-content folder, which is %s', 'wp-downloadmanager' ), WP_CONTENT_DIR ); ?></td>
             </tr>
              <tr valign="top">
                 <th><?php _e('Download Path URL:', 'wp-downloadmanager'); ?></th>

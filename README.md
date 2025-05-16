@@ -3,8 +3,8 @@ Contributors: GamerZ
 Donate link: https://lesterchan.net/site/donation/  
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
 Requires at least: 4.0  
-Tested up to: 6.7  
-Stable tag: 1.68.10  
+Tested up to: 6.8  
+Stable tag: 1.68.11  
 License: GPLv2  
 
 Adds a simple download manager to your WordPress blog.
@@ -43,9 +43,6 @@ Adds a simple download manager to your WordPress blog.
 1. Go to `WP-Admin -> Appearance -> Widgets`
 1. The widget name is `Downloads`.
 
-### Build Status
-[![Build Status](https://travis-ci.org/lesterchan/wp-downloadmanager.svg?branch=master)](https://travis-ci.org/lesterchan/wp-downloadmanager)
-
 ### Development
 * [https://github.com/lesterchan/wp-downloadmanager](https://github.com/lesterchan/wp-downloadmanager "https://github.com/lesterchan/wp-downloadmanager")
 
@@ -61,6 +58,10 @@ Adds a simple download manager to your WordPress blog.
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
+### Version 1.68.11
+* FIXED: Ensure that Download Path starts only with your wp-content folder for additional security.
+
+### Version 1.68.10
 * FIXED: Allow form in Download Page Footer template.
 
 ### Version 1.68.9
