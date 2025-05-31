@@ -1,98 +1,100 @@
 <?php
 ### Check Whether User Can Manage Downloads
-if(!current_user_can('manage_downloads')) {
+if (!current_user_can('manage_downloads')) {
 	die('Access Denied');
 }
 
 
 ### Variables Variables Variables
-$base_name = plugin_basename( 'wp-downloadmanager/download-manager.php' );
-$base_page = 'admin.php?page='.$base_name;
+$base_name = plugin_basename('wp-downloadmanager/download-manager.php');
+$base_page = 'admin.php?page=' . $base_name;
 $file_path = get_option('download_path');
-$file_categories = get_option( 'download_categories' );
+$file_categories = get_option('download_categories');
 
 
 ### Form Processing
-if( ! empty( $_POST['do'] ) ) {
+if (! empty($_POST['do'])) {
 	check_admin_referer('wp-downloadmanager_add-file');
 	// Decide What To Do
-	switch( $_POST['do'] ) {
+	switch ($_POST['do']) {
 		// Add File
 		case __('Add File', 'wp-downloadmanager'):
-			$file_type = ! empty( $_POST['file_type']) ? intval( $_POST['file_type'] ) : 0;
-			switch($file_type) {
+			$file_type = ! empty($_POST['file_type']) ? intval($_POST['file_type']) : 0;
+			switch ($file_type) {
 				case 0:
-					$file = ! empty( $_POST['file'] ) ? addslashes( wp_kses_post( trim( $_POST['file'] ) ) ) : '';
+					$file = ! empty($_POST['file']) ? addslashes(wp_kses_post(trim($_POST['file']))) : '';
 					$file = download_rename_file($file_path, $file);
-					$file_size = filesize($file_path.$file);
+					$file_size = filesize($file_path . $file);
 					break;
 				case 1:
-					if( $_FILES['file_upload']['size'] > get_max_upload_size() ) {
-						$text = '<p style="color: red;">'.sprintf(__('File Size Too Large. Maximum Size Is %s', 'wp-downloadmanager'), format_filesize(get_max_upload_size())).'</p>';
+					if ($_FILES['file_upload']['size'] > get_max_upload_size()) {
+						$text = '<p style="color: red;">' . sprintf(__('File Size Too Large. Maximum Size Is %s', 'wp-downloadmanager'), format_filesize(get_max_upload_size())) . '</p>';
 						break;
 					} else {
-						if(is_uploaded_file($_FILES['file_upload']['tmp_name'])) {
-							$file_upload_to = ! empty( $_POST['file_upload_to'] ) ? $_POST['file_upload_to'] : '';
-							if( $file_upload_to !== '/' ) {
+						if (is_uploaded_file($_FILES['file_upload']['tmp_name'])) {
+							$file_upload_to = ! empty($_POST['file_upload_to']) ? $_POST['file_upload_to'] : '';
+							if ($file_upload_to !== '/') {
 								$file_upload_to = $file_upload_to . '/';
 							}
-							if(move_uploaded_file($_FILES['file_upload']['tmp_name'], $file_path.$file_upload_to.basename($_FILES['file_upload']['name']))) {
-								$file = $file_upload_to.basename($_FILES['file_upload']['name']);
+							if (move_uploaded_file($_FILES['file_upload']['tmp_name'], $file_path . $file_upload_to . basename($_FILES['file_upload']['name']))) {
+								$file = $file_upload_to . basename($_FILES['file_upload']['name']);
 								$file = download_rename_file($file_path, $file);
-								$file_size = filesize($file_path.$file);
+								$file_size = filesize($file_path . $file);
 							} else {
-								$text = '<p style="color: red;">'.__('Error In Uploading File', 'wp-downloadmanager').'</p>';
+								$text = '<p style="color: red;">' . __('Error In Uploading File', 'wp-downloadmanager') . '</p>';
 								break;
 							}
 						} else {
-							$text = '<p style="color: red;">'.__('Error In Uploading File', 'wp-downloadmanager').'</p>';
+							$text = '<p style="color: red;">' . __('Error In Uploading File', 'wp-downloadmanager') . '</p>';
 							break;
 						}
 					}
 					break;
 				case 2:
-					$file = ! empty( $_POST['file_remote'] ) ? esc_url_raw( $_POST['file_remote'] ) : '';
-					if ( is_file_remote_valid( $file ) ) {
-						$file_size = remote_filesize( $file );
+					$file = ! empty($_POST['file_remote']) ? esc_url_raw($_POST['file_remote']) : '';
+					if (is_file_remote_valid($file)) {
+						$file_size = remote_filesize($file);
 					} else {
-						$text = '<p style="color: red;">' . __( 'There Is An Error Parsing Remote File URL', 'wp-downloadmanager' ) . '</p>';
+						$text = '<p style="color: red;">' . __('There Is An Error Parsing Remote File URL', 'wp-downloadmanager') . '</p>';
 					}
 					break;
 			}
-			if ( empty( $text ) ) {
-				$file_name = ! empty( $_POST['file_name'] ) ? addslashes( wp_kses_post( trim( $_POST['file_name'] ) ) ) : '';
-				if(empty($file_name)) {
+			if (empty($text)) {
+				$file_name = ! empty($_POST['file_name']) ? addslashes(wp_kses_post(trim($_POST['file_name']))) : '';
+				if (empty($file_name)) {
 					$file_name = basename($file);
 				}
-				$file_des = ! empty( $_POST['file_des'] ) ? addslashes( wp_kses_post( trim( $_POST['file_des'] ) ) ) : '';
-				$file_category = ! empty( $_POST['file_cat'] ) ? intval( $_POST['file_cat'] ) : 0;
-				if(!empty($_POST['file_size'])) {
-					$file_size = ! empty( $_POST['file_size'] ) ? intval( $_POST['file_size'] ) : 0;
+				$file_des = ! empty($_POST['file_des']) ? addslashes(wp_kses_post(trim($_POST['file_des']))) : '';
+				$file_category = ! empty($_POST['file_cat']) ? intval($_POST['file_cat']) : 0;
+				if (!empty($_POST['file_size'])) {
+					$file_size = ! empty($_POST['file_size']) ? intval($_POST['file_size']) : 0;
 				}
-				$file_hits = ! empty( $_POST['file_hits'] ) ? intval( $_POST['file_hits'] ) : 0;
-				$file_timestamp_day =    ! empty( $_POST['file_timestamp_day'] ) ? intval( $_POST['file_timestamp_day'] ) : 0;
-				$file_timestamp_month =  ! empty( $_POST['file_timestamp_month'] ) ? intval( $_POST['file_timestamp_month'] ) : 0;
-				$file_timestamp_year =   ! empty( $_POST['file_timestamp_year'] ) ? intval( $_POST['file_timestamp_year'] ) : 0;
-				$file_timestamp_hour =   ! empty( $_POST['file_timestamp_hour'] ) ? intval( $_POST['file_timestamp_hour'] ) : 0;
-				$file_timestamp_minute = ! empty( $_POST['file_timestamp_minute'] ) ? intval( $_POST['file_timestamp_minute'] ) : 0;
-				$file_timestamp_second = ! empty( $_POST['file_timestamp_second'] ) ? intval( $_POST['file_timestamp_second'] ) : 0;
+				$file_hits = ! empty($_POST['file_hits']) ? intval($_POST['file_hits']) : 0;
+				$file_timestamp_day =    ! empty($_POST['file_timestamp_day']) ? intval($_POST['file_timestamp_day']) : 0;
+				$file_timestamp_month =  ! empty($_POST['file_timestamp_month']) ? intval($_POST['file_timestamp_month']) : 0;
+				$file_timestamp_year =   ! empty($_POST['file_timestamp_year']) ? intval($_POST['file_timestamp_year']) : 0;
+				$file_timestamp_hour =   ! empty($_POST['file_timestamp_hour']) ? intval($_POST['file_timestamp_hour']) : 0;
+				$file_timestamp_minute = ! empty($_POST['file_timestamp_minute']) ? intval($_POST['file_timestamp_minute']) : 0;
+				$file_timestamp_second = ! empty($_POST['file_timestamp_second']) ? intval($_POST['file_timestamp_second']) : 0;
 				$file_date = gmmktime($file_timestamp_hour, $file_timestamp_minute, $file_timestamp_second, $file_timestamp_month, $file_timestamp_day, $file_timestamp_year);
-				$file_permission = ! empty( $_POST['file_permission'] ) ? intval( $_POST['file_permission'] ) : 0;
+				$file_permission = ! empty($_POST['file_permission']) ? intval($_POST['file_permission']) : 0;
 				$addfile = $wpdb->query("INSERT INTO $wpdb->downloads VALUES (0, '$file', '$file_name', '$file_des', '$file_size', $file_category, '$file_date', '$file_date', '$file_date', $file_hits, $file_permission)");
-				if(!$addfile) {
-					$text = '<p style="color: red;">'.sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
+				if (!$addfile) {
+					$text = '<p style="color: red;">' . sprintf(__('Error In Adding File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file) . '</p>';
 				} else {
 					$file_id = intval($wpdb->insert_id);
-					$text = '<p style="color: green;">'.sprintf(__('File \'%s (%s) (ID: %s)\' Added Successfully', 'wp-downloadmanager'), $file_name, $file, $file_id).'</p>';
+					$text = '<p style="color: green;">' . sprintf(__('File \'%s (%s) (ID: %s)\' Added Successfully', 'wp-downloadmanager'), $file_name, $file, $file_id) . '</p>';
 				}
 			}
 			break;
 	}
 }
 ?>
-<?php if(!empty($text)) { echo '<!-- Last Action --><div id="message" class="updated fade"><p>'.stripslashes($text).'</p></div>'; } ?>
+<?php if (!empty($text)) {
+	echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . stripslashes($text) . '</p></div>';
+} ?>
 <!-- Add A File -->
-<form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>" enctype="multipart/form-data">
+<form method="post" action="<?php echo admin_url('admin.php?page=' . plugin_basename(__FILE__)); ?>" enctype="multipart/form-data">
 	<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo get_max_upload_size(); ?>" />
 	<?php wp_nonce_field('wp-downloadmanager_add-file'); ?>
 	<div class="wrap">
@@ -135,9 +137,9 @@ if( ! empty( $_POST['do'] ) ) {
 				<td>
 					<select name="file_cat" size="1">
 						<?php
-						for($i=0; $i<sizeof($file_categories); $i++) {
-							if(!empty($file_categories[$i])) {
-								echo '<option value="'.$i.'">'.$file_categories[$i].'</option>'."\n";
+						for ($i = 0; $i < sizeof($file_categories); $i++) {
+							if (!empty($file_categories[$i])) {
+								echo '<option value="' . $i . '">' . $file_categories[$i] . '</option>' . "\n";
 							}
 						}
 						?>
@@ -168,10 +170,13 @@ if( ! empty( $_POST['do'] ) ) {
 						<option value="7"><?php _e('At Least Editor Role', 'wp-downloadmanager'); ?></option>
 						<option value="10"><?php _e('At Least Administrator Role', 'wp-downloadmanager'); ?></option>
 					</select>
+					<p>
+						<?php _e('Note: While role-based authentication is enforced, users who directly guess the file URL may still be able to access the file without authorization.', 'wp-downloadmanager'); ?>
+					</p>
 				</td>
 			</tr>
 			<tr>
-				<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e('Add File', 'wp-downloadmanager'); ?>"  class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-downloadmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
+				<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e('Add File', 'wp-downloadmanager'); ?>" class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-downloadmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
 			</tr>
 		</table>
 	</div>
