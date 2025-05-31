@@ -4,7 +4,7 @@ Donate link: https://lesterchan.net/site/donation/
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
 Requires at least: 4.0  
 Tested up to: 6.8  
-Stable tag: 1.68.11  
+Stable tag: 1.68.12  
 License: GPLv2  
 
 Adds a simple download manager to your WordPress blog.
@@ -58,6 +58,9 @@ Adds a simple download manager to your WordPress blog.
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
+### Version 1.68.12
+* FIXED: Add a warning to let user know that if any users manage to guess the direct file URI, he will be able to download the file as well.
+
 ### Version 1.68.11
 * FIXED: Ensure that Download Path starts only with your wp-content folder for additional security.
 
