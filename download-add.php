@@ -30,24 +30,29 @@ if (! empty($_POST['do'])) {
 					if ($_FILES['file_upload']['size'] > get_max_upload_size()) {
 						$text = '<p style="color: red;">' . sprintf(__('File Size Too Large. Maximum Size Is %s', 'wp-downloadmanager'), format_filesize(get_max_upload_size())) . '</p>';
 						break;
-					} else {
-						if (is_uploaded_file($_FILES['file_upload']['tmp_name'])) {
-							$file_upload_to = ! empty($_POST['file_upload_to']) ? $_POST['file_upload_to'] : '';
-							if ($file_upload_to !== '/') {
-								$file_upload_to = $file_upload_to . '/';
-							}
-							if (move_uploaded_file($_FILES['file_upload']['tmp_name'], $file_path . $file_upload_to . basename($_FILES['file_upload']['name']))) {
-								$file = $file_upload_to . basename($_FILES['file_upload']['name']);
-								$file = download_rename_file($file_path, $file);
-								$file_size = filesize($file_path . $file);
-							} else {
-								$text = '<p style="color: red;">' . __('Error In Uploading File', 'wp-downloadmanager') . '</p>';
-								break;
-							}
+					}
+					$file_name = ! empty($_FILES['file_upload']['name']) ? basename( $_FILES['file_upload']['name'] ) : '';
+					$validate = wp_check_filetype_and_ext( $_FILES['file_upload']['tmp_name'], $file_name );
+					if ( $validate['type'] === false ) {
+							$text = '<p style="color: red;">' . __('File type is invalid', 'wp-downloadmanager') . '</p>';
+							break;
+					}
+					if (is_uploaded_file($_FILES['file_upload']['tmp_name'])) {
+						$file_upload_to = ! empty($_POST['file_upload_to']) ? $_POST['file_upload_to'] : '';
+						if ($file_upload_to !== '/') {
+							$file_upload_to = $file_upload_to . '/';
+						}
+						if (move_uploaded_file($_FILES['file_upload']['tmp_name'], $file_path . $file_upload_to . $file_name)) {
+							$file = $file_upload_to . $file_name;
+							$file = download_rename_file($file_path, $file);
+							$file_size = filesize($file_path . $file);
 						} else {
 							$text = '<p style="color: red;">' . __('Error In Uploading File', 'wp-downloadmanager') . '</p>';
 							break;
 						}
+					} else {
+						$text = '<p style="color: red;">' . __('Error In Uploading File', 'wp-downloadmanager') . '</p>';
+						break;
 					}
 					break;
 				case 2:
