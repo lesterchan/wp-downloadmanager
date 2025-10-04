@@ -1074,10 +1074,10 @@ function download_embedded($condition = '', $display = 'both', $sort_by = 'file_
 			$template_download_embedded = str_replace("%FILE_SIZE_DEC%",  format_filesize_dec($file->file_size), $template_download_embedded);
 			$template_download_embedded = str_replace("%FILE_CATEGORY_ID%", (int) $file->file_category, $template_download_embedded);
 			$template_download_embedded = str_replace("%FILE_CATEGORY_NAME%", stripslashes($download_categories[(int) $file->file_category]), $template_download_embedded);
-			$template_download_embedded = str_replace("%FILE_DATE%",  mysql2date(get_option('date_format'), gmdate('Y-m-d H:i:s', $file->file_date)), $template_download_embedded);
-			$template_download_embedded = str_replace("%FILE_TIME%",  mysql2date(get_option('time_format'), gmdate('Y-m-d H:i:s', $file->file_date)), $template_download_embedded);
-			$template_download_embedded = str_replace("%FILE_UPDATED_DATE%",  mysql2date(get_option('date_format'), gmdate('Y-m-d H:i:s', $file->file_updated_date)), $template_download_embedded);
-			$template_download_embedded = str_replace("%FILE_UPDATED_TIME%",  mysql2date(get_option('time_format'), gmdate('Y-m-d H:i:s', $file->file_updated_date)), $template_download_embedded);
+			$template_download_embedded = str_replace("%FILE_DATE%",  mysql2date(get_option('date_format'), gmdate('Y-m-d H:i:s', (int) $file->file_date)), $template_download_embedded);
+			$template_download_embedded = str_replace("%FILE_TIME%",  mysql2date(get_option('time_format'), gmdate('Y-m-d H:i:s', (int) $file->file_date)), $template_download_embedded);
+			$template_download_embedded = str_replace("%FILE_UPDATED_DATE%",  mysql2date(get_option('date_format'), gmdate('Y-m-d H:i:s', (int) $file->file_updated_date)), $template_download_embedded);
+			$template_download_embedded = str_replace("%FILE_UPDATED_TIME%",  mysql2date(get_option('time_format'), gmdate('Y-m-d H:i:s', (int) $file->file_updated_date)), $template_download_embedded);
 			$template_download_embedded = str_replace("%FILE_HITS%", number_format_i18n($file->file_hits), $template_download_embedded);
 			$template_download_embedded = str_replace("%FILE_DOWNLOAD_URL%", download_file_url($file->file_id, $file->file), $template_download_embedded);
 			$output .= $template_download_embedded;
