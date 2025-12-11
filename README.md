@@ -3,8 +3,8 @@ Contributors: GamerZ
 Donate link: https://lesterchan.net/site/donation/  
 Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
 Requires at least: 4.0  
-Tested up to: 6.8  
-Stable tag: 1.69   
+Tested up to: 6.9  
+Stable tag: 1.69.1  
 License: GPLv2  
 
 Adds a simple download manager to your WordPress blog.
@@ -58,6 +58,9 @@ Adds a simple download manager to your WordPress blog.
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
+### Version 1.69.1
+* FIXED: Use file_id to fetch file again before deleting files.
+
 ### Version 1.69
 * FIXED: Only allow certain files to be uploaded based on `wp_check_filetype_and_ext()`
 

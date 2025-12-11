@@ -139,16 +139,21 @@ if(!empty($_POST['do'])) {
 							if( $file_upload_to !== '/' ) {
 								$file_upload_to = $file_upload_to . '/';
 							}
-							if(move_uploaded_file($_FILES['file_upload']['tmp_name'], $file_path.$file_upload_to.basename($_FILES['file_upload']['name']))) {
-								$file = $file_upload_to.basename($_FILES['file_upload']['name']);
-								$file = download_rename_file($file_path, $file);
-								$file_size = filesize($file_path.$file);
+							$validate = wp_check_filetype_and_ext( $_FILES['file_upload']['tmp_name'], basename( $_FILES['file_upload']['name'] ) );
+							if ( $validate['type'] === false ) {
+									$text = '<p style="color: red;">' . __('File type is invalid', 'wp-downloadmanager') . '</p>';
+									break;
+							}
+							if( move_uploaded_file( $_FILES['file_upload']['tmp_name'], $file_path.$file_upload_to . basename( $_FILES['file_upload']['name'] ) ) ) {
+								$file = $file_upload_to . basename( $_FILES['file_upload']['name'] );
+								$file = download_rename_file( $file_path, $file );
+								$file_size = filesize( $file_path . $file );
 							} else {
-								$text = '<p style="color: red;">'.__('Error In Uploading File', 'wp-downloadmanager').'</p>';
+								$text = '<p style="color: red;">' . __('Error In Uploading File', 'wp-downloadmanager') . '</p>';
 								break;
 							}
 						} else {
-							$text = '<p style="color: red;">'.__('Error In Uploading File', 'wp-downloadmanager').'</p>';
+							$text = '<p style="color: red;">' . __('Error In Uploading File', 'wp-downloadmanager') . '</p>';
 							break;
 						}
 					}
@@ -208,21 +213,20 @@ if(!empty($_POST['do'])) {
 		case __('Delete File', 'wp-downloadmanager');
 			check_admin_referer('wp-downloadmanager_delete-file');
 			$file_id  = ! empty( $_POST['file_id'] ) ? intval( $_POST['file_id'] ) : 0;
-			$file = ! empty( $_POST['file'] ) ? sanitize_text_field( $_POST['file'] ) : '';
-			$file_name = ! empty( $_POST['file_name'] ) ? sanitize_text_field( $_POST['file_name'] ) : '';
+			$file = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $wpdb->downloads WHERE file_id = %d", $file_id ) );
 			$unlinkfile = ! empty( $_POST['unlinkfile'] ) ? intval( $_POST['unlinkfile'] ) : 0;
-			if($unlinkfile == 1) {
-				if(!unlink($file_path.$file)) {
-					$text = '<p style="color: red;">'.sprintf(__('Error In Deleting File \'%s (%s)\' From Server', 'wp-downloadmanager'), $file_name, $file).'</p>';
+			if ( $unlinkfile === 1 ) {
+				if ( ! unlink( $file_path . $file->file ) ) {
+					$text = '<p style="color: red;">' . sprintf( __( 'Error In Deleting File \'%s (%s)\' From Server', 'wp-downloadmanager' ), $file->file_name, $file->file ) . '</p>';
 				} else {
-					$text = '<p style="color: green;">'.sprintf(__('File \'%s (%s)\' Deleted From Server Successfully', 'wp-downloadmanager'), $file_name, $file).'</p>';
+					$text = '<p style="color: green;">' . sprintf( __( 'File \'%s (%s)\' Deleted From Server Successfully', 'wp-downloadmanager' ), $file->file_name, $file->file ) . '</p>';
 				}
 			}
-			$deletefile = $wpdb->query("DELETE FROM $wpdb->downloads WHERE file_id = $file_id");
-			if(!$deletefile) {
-				$text .= '<p style="color: red;">'.sprintf(__('Error In Deleting File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
+			$deletefile = $wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->downloads WHERE file_id = %d", $file->file_id ) );
+			if ( ! $deletefile ) {
+				$text .= '<p style="color: red;">' . sprintf( __('Error In Deleting File \'%s (%s)\'', 'wp-downloadmanager'), $file->file_name, $file->file) . '</p>';
 			} else {
-				$text .= '<p style="color: green;">'.sprintf(__('File \'%s (%s)\' Deleted Successfully', 'wp-downloadmanager'), $file_name, $file).'</p>';
+				$text .= '<p style="color: green;">' . sprintf( __('File \'%s (%s)\' Deleted Successfully', 'wp-downloadmanager'), $file->file_name, $file->file) . '</p>';
 			}
 			break;
 	}
@@ -376,9 +380,7 @@ switch($mode) {
 		<?php if(!empty($text)) { echo '<!-- Last Action --><div id="message" class="updated fade"><p>'.stripslashes($text).'</p></div>'; } ?>
 		<!-- Delete A File -->
 		<form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>">
-			<input type="hidden" name="file_id" value="<?php echo intval($file->file_id); ?>" />
-			<input type="hidden" name="file" value="<?php echo esc_attr( removeslashes( $file->file ) ); ?>" />
-			<input type="hidden" name="file_name" value="<?php echo esc_attr( removeslashes( $file->file_name ) ); ?>" />
+			<input type="hidden" name="file_id" value="<?php echo esc_attr( intval( $file->file_id ) ); ?>" />
 			<?php wp_nonce_field('wp-downloadmanager_delete-file'); ?>
 			<div class="wrap">
 				<h2><?php _e('Delete A File', 'wp-downloadmanager'); ?></h2>
