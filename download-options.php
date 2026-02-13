@@ -39,7 +39,10 @@ if(! empty( $_POST['Submit'] ) ) {
     $download_options = array('use_filename' => $download_options_use_filename, 'rss_sortby' => $download_options_rss_sortby, 'rss_limit' => $download_options_rss_limit);
     
     // Validate
-    if ( substr( $download_path, 0, strlen( WP_CONTENT_DIR ) ) !== WP_CONTENT_DIR ) {
+    $real_download_path = realpath( $download_path );
+    $real_wp_content_dir = realpath( WP_CONTENT_DIR );
+
+    if ( false === $real_download_path || false === $real_wp_content_dir || strpos( $real_download_path . DIRECTORY_SEPARATOR, $real_wp_content_dir ) !== 0 || strpos( $download_path, '../' ) !== false ) {
         $download_path = WP_CONTENT_DIR;
     }
     

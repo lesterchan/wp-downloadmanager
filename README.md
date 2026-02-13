@@ -58,8 +58,10 @@ Adds a simple download manager to your WordPress blog.
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
+
 ### Version 1.69.1
 * FIXED: Use file_id to fetch file again before deleting files.
+* FIXED: Don't allow directory traversal for download_path
 
 ### Version 1.69
 * FIXED: Only allow certain files to be uploaded based on `wp_check_filetype_and_ext()`
