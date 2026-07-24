@@ -3,7 +3,7 @@
 Plugin Name: WP-DownloadManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Adds a simple download manager to your WordPress blog.
-Version: 1.69.1
+Version: 1.69.2
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-downloadmanager
@@ -11,7 +11,7 @@ Text Domain: wp-downloadmanager
 
 
 /*
-	Copyright 2025  Lester Chan  (email : lesterchan@gmail.com)
+	Copyright 2026  Lester Chan  (email : lesterchan@gmail.com)
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ Text Domain: wp-downloadmanager
 
 
 ### Version
-define( 'WP_DOWNLOADMANAGER_VERSION', '1.69.1' );
+define( 'WP_DOWNLOADMANAGER_VERSION', '1.69.2' );
 
 ### Create text domain for translations
 add_action( 'plugins_loaded', 'downloadmanager_textdomain' );
@@ -410,13 +410,13 @@ function download_file_url($file_id, $file_name) {
 
 ### Function: Download Category URL
 function download_category_url( $cat_id ) {
-	return get_option( 'download_page_url' ) . '?' . http_build_query( array_merge( $_GET, array( 'dl_cat' => $cat_id ) ) );
+	return esc_url( get_option( 'download_page_url' ) . '?' . http_build_query( array_merge( $_GET, array( 'dl_cat' => $cat_id ) ) ) );
 }
 
 
 ### Function: Download Page Link
 function download_page_link( $page ) {
-	return parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ) . '?' . http_build_query( array_merge( $_GET, array( 'dl_page' => $page ) ) );
+	return esc_url( parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ) . '?' . http_build_query( array_merge( $_GET, array( 'dl_page' => $page ) ) ) );
 }
 
 
@@ -592,7 +592,7 @@ function downloads_page($category_id = 0) {
 		$template_download_header = str_replace("%RECORD_END%", number_format_i18n($max_on_page), $template_download_header);
 		$template_download_header = str_replace("%CATEGORY_ID%", $category, $template_download_header);
 		$template_download_header = str_replace("%FILE_CATEGORY_NAME%", stripslashes($download_categories[$category]), $template_download_header);
-		$template_download_header = str_replace("%FILE_SEARCH_WORD%", $search, $template_download_header);
+		$template_download_header = str_replace("%FILE_SEARCH_WORD%", esc_attr($search), $template_download_header);
 		$template_download_header = str_replace("%DOWNLOAD_PAGE_URL%", get_option('download_page_url'), $template_download_header);
 		$output = $template_download_header;
 		// Loop Through Files
@@ -687,7 +687,7 @@ function downloads_page($category_id = 0) {
 		$template_download_footer = str_replace("%TOTAL_SIZE_DEC%", format_filesize_dec($total_stats['size']), $template_download_footer);
 		$template_download_footer = str_replace("%CATEGORY_ID%", $category, $template_download_footer);
 		$template_download_footer = str_replace("%FILE_CATEGORY_NAME%", stripslashes($download_categories[$category]), $template_download_footer);
-		$template_download_footer = str_replace("%FILE_SEARCH_WORD%", $search, $template_download_footer);
+		$template_download_footer = str_replace("%FILE_SEARCH_WORD%", esc_attr($search), $template_download_footer);
 		$template_download_footer = str_replace("%DOWNLOAD_PAGE_URL%", get_option('download_page_url'), $template_download_footer);
 		$output .= $template_download_footer;
 	} else {
@@ -790,18 +790,18 @@ function print_list_files($dir, $orginal_dir, $selected = '') {
 	if($download_files) {
 		foreach($download_files as $download_file) {
 			if($download_file == $selected) {
-				echo '<option value="'.$download_file.'" selected="selected">'.$download_file.'</option>'."\n";
+				echo '<option value="'.esc_attr($download_file).'" selected="selected">'.esc_html($download_file).'</option>'."\n";
 			} else {
-				echo '<option value="'.$download_file.'">'.$download_file.'</option>'."\n";
+				echo '<option value="'.esc_attr($download_file).'">'.esc_html($download_file).'</option>'."\n";
 			}
 		}
 	}
 	if($download_files_subfolder) {
 		foreach($download_files_subfolder as $download_file_subfolder) {
 			if($download_file_subfolder == $selected) {
-				echo '<option value="'.$download_file_subfolder.'" selected="selected">'.$download_file_subfolder.'</option>'."\n";
+				echo '<option value="'.esc_attr($download_file_subfolder).'" selected="selected">'.esc_html($download_file_subfolder).'</option>'."\n";
 			} else {
-				echo '<option value="'.$download_file_subfolder.'">'.$download_file_subfolder.'</option>'."\n";
+				echo '<option value="'.esc_attr($download_file_subfolder).'">'.esc_html($download_file_subfolder).'</option>'."\n";
 			}
 		}
 	}
@@ -816,7 +816,7 @@ function print_list_folders($dir, $orginal_dir) {
 		natcasesort($download_folders);
 		echo '<option value="/">/</option>'."\n";
 		foreach($download_folders as $download_folder) {
-			echo '<option value="'.$download_folder.'">'.$download_folder.'</option>'."\n";
+			echo '<option value="'.esc_attr($download_folder).'">'.esc_html($download_folder).'</option>'."\n";
 		}
 	}
 }

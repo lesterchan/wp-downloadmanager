@@ -35,7 +35,7 @@ header('Content-Type: '.feed_content_type('rss2').'; charset='.get_option('blog_
     <?php if($files): ?>
         <?php foreach($files as $file): ?>
             <item>
-                <title><?php echo stripslashes($file->file_name); ?></title>
+                <title><?php echo esc_html(stripslashes($file->file_name)); ?></title>
                 <link><?php echo download_file_url($file->file_id, $file->file) ?></link>
                 <pubDate><?php echo mysql2date('D, d M Y H:i:s +0000', gmdate('Y-m-d H:i:s', $file->file_date), false); ?></pubDate>
                 <category><![CDATA[<?php echo stripslashes($download_categories[intval($file->file_category)]); ?>]]></category>

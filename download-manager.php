@@ -392,11 +392,11 @@ switch($mode) {
 					</tr>
 					<tr class="alternate">
 						<td><strong><?php _e('File Name:', 'wp-downloadmanager'); ?></strong></td>
-						<td><?php echo stripslashes($file->file_name); ?></td>
+						<td><?php echo wp_kses_post(stripslashes($file->file_name)); ?></td>
 					</tr>
 					<tr>
 						<td valign="top"><strong><?php _e('File Description:', 'wp-downloadmanager'); ?></strong></td>
-						<td><?php echo stripslashes($file->file_des); ?></td>
+						<td><?php echo wp_kses_post(stripslashes($file->file_des)); ?></td>
 					</tr>
 					<tr class="alternate">
 						<td><strong><?php _e('File Category:', 'wp-downloadmanager'); ?></strong></td>
@@ -432,7 +432,7 @@ switch($mode) {
 						</tr>
 					<?php endif; ?>
 					<tr class="alternate">
-						<td colspan="2" style="text-align: center;"><input type="submit" name="do" value="<?php _e('Delete File', 'wp-downloadmanager'); ?>" class="button"  onclick="return confirm('You Are About To The Delete This File \'<?php echo esc_attr( removeslashes( $file->file_name ) ); ?> (<?php echo esc_attr( removeslashes( $file->file ) ); ?>)\'.\nThis Action Is Not Reversible.\n\n Choose \'Cancel\' to stop, \'OK\' to delete.')"/>&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-downloadmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
+						<td colspan="2" style="text-align: center;"><input type="submit" name="do" value="<?php _e('Delete File', 'wp-downloadmanager'); ?>" class="button"  onclick="return confirm('You Are About To The Delete This File \'<?php echo esc_js( removeslashes( $file->file_name ) ); ?> (<?php echo esc_js( removeslashes( $file->file ) ); ?>)\'.\nThis Action Is Not Reversible.\n\n Choose \'Cancel\' to stop, \'OK\' to delete.')"/>&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-downloadmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
 					</tr>
 				</table>
 			</div>
@@ -502,7 +502,7 @@ switch($mode) {
 					foreach($files as $file) {
 						$file_id = intval($file->file_id);
 						$file_name = stripslashes($file->file);
-						$file_nicename = stripslashes($file->file_name);
+						$file_nicename = wp_kses_post(stripslashes($file->file_name));
 						$file_des = stripslashes($file->file_des);
 						$file_size = $file->file_size;
 						$file_cat = intval($file->file_category);
