@@ -1272,7 +1272,7 @@ function downloadmanager_wp_stats() {
 ### Function: Add WP-DownloadManager General Stats To WP-Stats Page Options
 function downloadmanager_page_admin_general_stats($content) {
 	$stats_display = get_option('stats_display');
-	if( (int)  $stats_display['downloads'] === 1 ) {
+	if( (int) ($stats_display['downloads'] ?? 0) === 1 ) {
 		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloads" value="downloads" checked="checked" />&nbsp;&nbsp;<label for="wpstats_downloads">'.__('WP-DownloadManager', 'wp-downloadmanager').'</label><br />'."\n";
 	} else {
 		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloads" value="downloads" />&nbsp;&nbsp;<label for="wpstats_downloads">'.__('WP-DownloadManager', 'wp-downloadmanager').'</label><br />'."\n";
@@ -1285,7 +1285,7 @@ function downloadmanager_page_admin_general_stats($content) {
 function downloadmanager_page_admin_recent_stats($content) {
 	$stats_display = get_option('stats_display');
 	$stats_mostlimit = (int) get_option('stats_mostlimit');
-	if( (int) $stats_display['recent_downloads'] === 1) {
+	if( (int) ($stats_display['recent_downloads'] ?? 0) === 1) {
 		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_recent_downloads" value="recent_downloads" checked="checked" />&nbsp;&nbsp;<label for="wpstats_recent_downloads">'.sprintf(_n('%s Most Recent Download', '%s Most Recent Downloads', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
 	} else {
 		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_recent_downloads" value="recent_downloads" />&nbsp;&nbsp;<label for="wpstats_recent_downloads">'.sprintf(_n('%s Most Recent Download', '%s Most Recent Downloads', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
@@ -1298,7 +1298,7 @@ function downloadmanager_page_admin_recent_stats($content) {
 function downloadmanager_page_admin_most_stats($content) {
 	$stats_display = get_option('stats_display');
 	$stats_mostlimit = (int) get_option('stats_mostlimit');
-	if( (int) $stats_display['downloaded_most'] === 1) {
+	if( (int) ($stats_display['downloaded_most'] ?? 0) === 1) {
 		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloaded_most" value="downloaded_most" checked="checked" />&nbsp;&nbsp;<label for="wpstats_downloaded_most">'.sprintf(_n('%s Most Downloaded File', '%s Most Downloaded Files', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
 	} else {
 		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloaded_most" value="downloaded_most" />&nbsp;&nbsp;<label for="wpstats_downloaded_most">'.sprintf(_n('%s Most Downloaded File', '%s Most Downloaded Files', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
@@ -1311,7 +1311,7 @@ function downloadmanager_page_admin_most_stats($content) {
 function downloadmanager_page_general_stats($content) {
 	global $wpdb;
 	$stats_display = get_option('stats_display');
-	if( (int) $stats_display['downloads'] === 1 ) {
+	if( (int) ($stats_display['downloads'] ?? 0) === 1 ) {
 		$download_stats = $wpdb->get_row("SELECT COUNT(file_id) as total_files, SUM(file_size) total_size, SUM(file_hits) as total_hits FROM $wpdb->downloads");
 		$content .= '<p><strong>'.__('WP-DownloadManager', 'wp-downloadmanager').'</strong></p>'."\n";
 		$content .= '<ul>'."\n";
@@ -1328,7 +1328,7 @@ function downloadmanager_page_general_stats($content) {
 function downloadmanager_page_recent_stats($content) {
 	$stats_display = get_option('stats_display');
 	$stats_mostlimit = (int) get_option('stats_mostlimit');
-	if( (int) $stats_display['recent_downloads'] === 1 ) {
+	if( (int) ($stats_display['recent_downloads'] ?? 0) === 1 ) {
 		$content .= '<p><strong>'.sprintf(_n('%s Most Recent Download', '%s Most Recent Downloads', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</strong></p>'."\n";
 		$content .= '<ul>'."\n";
 		$content .= get_recent_downloads($stats_mostlimit, 0, false);
@@ -1342,7 +1342,7 @@ function downloadmanager_page_recent_stats($content) {
 function downloadmanager_page_most_stats($content) {
 	$stats_display = get_option('stats_display');
 	$stats_mostlimit = (int) get_option('stats_mostlimit');
-	if( (int) $stats_display['downloaded_most'] === 1 ) {
+	if( (int) ($stats_display['downloaded_most'] ?? 0) === 1 ) {
 		$content .= '<p><strong>'.sprintf(_n('%s Most Downloaded File', '%s Most Downloaded Files', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</strong></p>'."\n";
 		$content .= '<ul>'."\n";
 		$content .= get_most_downloaded($stats_mostlimit, 0, false);
