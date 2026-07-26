@@ -1260,6 +1260,7 @@ if(!function_exists('get_downloads_category')) {
 ### Function: Plug Into WP-Stats
 add_action( 'plugins_loaded','downloadmanager_wp_stats' );
 function downloadmanager_wp_stats() {
+	add_filter( 'wp_stats_display_defaults', 'downloadmanager_wp_stats_defaults' );
 	add_filter( 'wp_stats_page_admin_plugins', 'downloadmanager_page_admin_general_stats' );
 	add_filter( 'wp_stats_page_admin_recent', 'downloadmanager_page_admin_recent_stats' );
 	add_filter( 'wp_stats_page_admin_most', 'downloadmanager_page_admin_most_stats' );
@@ -1269,49 +1270,92 @@ function downloadmanager_wp_stats() {
 }
 
 
+### Function: Tell WP-Stats About The Toggles This Plugin Owns
+# These three keys were never registered with WP-Stats, so they only existed
+# once someone had saved the options screen. Registering them means the panels
+# are on by default on a fresh install, as the other companion plugins are.
+function downloadmanager_wp_stats_defaults( $defaults ) {
+	// WP-Stats' own defaults win, so this only ever adds.
+	return array_merge(
+		array(
+			'downloads'        => 1,
+			'recent_downloads' => 1,
+			'downloaded_most'  => 1,
+		),
+		(array) $defaults
+	);
+}
+
+
+### Function: Whether A WP-Stats Display Toggle Is On
+function downloadmanager_wp_stats_enabled( $key ) {
+	if ( function_exists( 'wp_stats_display_enabled' ) ) {
+		return wp_stats_display_enabled( $key );
+	}
+
+	// WP-Stats before 3.0.0 kept the toggles in their own option row.
+	$stats_display = get_option( 'stats_display' );
+
+	return is_array( $stats_display ) && 1 === (int) ( $stats_display[ $key ] ?? 0 );
+}
+
+
+### Function: How Many "Most" Entries WP-Stats Shows
+function downloadmanager_wp_stats_limit() {
+	if ( function_exists( 'wp_stats_most_limit' ) ) {
+		return wp_stats_most_limit();
+	}
+
+	return (int) get_option( 'stats_mostlimit' );
+}
+
+
+### Function: One Checkbox On The WP-Stats Options Screen
+function downloadmanager_wp_stats_checkbox( $value, $label ) {
+	// WP-Stats 3.0.0 owns the field name, which changed when it consolidated its
+	// option rows.
+	if ( function_exists( 'wp_stats_checkbox' ) ) {
+		return wp_stats_checkbox( $value, $label );
+	}
+
+	return '<input type="checkbox" name="stats_display[]" id="wpstats_' . esc_attr( $value ) . '" value="' . esc_attr( $value ) . '"' .
+		checked( downloadmanager_wp_stats_enabled( $value ), true, false ) .
+		' />&nbsp;&nbsp;<label for="wpstats_' . esc_attr( $value ) . '">' . esc_html( $label ) . '</label><br />' . "\n";
+}
+
+
 ### Function: Add WP-DownloadManager General Stats To WP-Stats Page Options
 function downloadmanager_page_admin_general_stats($content) {
-	$stats_display = get_option('stats_display');
-	if( (int) ($stats_display['downloads'] ?? 0) === 1 ) {
-		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloads" value="downloads" checked="checked" />&nbsp;&nbsp;<label for="wpstats_downloads">'.__('WP-DownloadManager', 'wp-downloadmanager').'</label><br />'."\n";
-	} else {
-		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloads" value="downloads" />&nbsp;&nbsp;<label for="wpstats_downloads">'.__('WP-DownloadManager', 'wp-downloadmanager').'</label><br />'."\n";
-	}
-	return $content;
+	return $content . downloadmanager_wp_stats_checkbox( 'downloads', __( 'WP-DownloadManager', 'wp-downloadmanager' ) );
 }
 
 
 ### Function: Add WP-DownloadManager Top Recent Stats To WP-Stats Page Options
 function downloadmanager_page_admin_recent_stats($content) {
-	$stats_display = get_option('stats_display');
-	$stats_mostlimit = (int) get_option('stats_mostlimit');
-	if( (int) ($stats_display['recent_downloads'] ?? 0) === 1) {
-		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_recent_downloads" value="recent_downloads" checked="checked" />&nbsp;&nbsp;<label for="wpstats_recent_downloads">'.sprintf(_n('%s Most Recent Download', '%s Most Recent Downloads', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
-	} else {
-		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_recent_downloads" value="recent_downloads" />&nbsp;&nbsp;<label for="wpstats_recent_downloads">'.sprintf(_n('%s Most Recent Download', '%s Most Recent Downloads', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
-	}
-	return $content;
+	$stats_mostlimit = downloadmanager_wp_stats_limit();
+
+	/* translators: %s: number of downloads. */
+	$label = _n( '%s Most Recent Download', '%s Most Recent Downloads', $stats_mostlimit, 'wp-downloadmanager' );
+
+	return $content . downloadmanager_wp_stats_checkbox( 'recent_downloads', sprintf( $label, number_format_i18n( $stats_mostlimit ) ) );
 }
 
 
 ### Function: Add WP-DownloadManager Top Most/Highest Stats To WP-Stats Page Options
 function downloadmanager_page_admin_most_stats($content) {
-	$stats_display = get_option('stats_display');
-	$stats_mostlimit = (int) get_option('stats_mostlimit');
-	if( (int) ($stats_display['downloaded_most'] ?? 0) === 1) {
-		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloaded_most" value="downloaded_most" checked="checked" />&nbsp;&nbsp;<label for="wpstats_downloaded_most">'.sprintf(_n('%s Most Downloaded File', '%s Most Downloaded Files', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
-	} else {
-		$content .= '<input type="checkbox" name="stats_display[]" id="wpstats_downloaded_most" value="downloaded_most" />&nbsp;&nbsp;<label for="wpstats_downloaded_most">'.sprintf(_n('%s Most Downloaded File', '%s Most Downloaded Files', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</label><br />'."\n";
-	}
-	return $content;
+	$stats_mostlimit = downloadmanager_wp_stats_limit();
+
+	/* translators: %s: number of files. */
+	$label = _n( '%s Most Downloaded File', '%s Most Downloaded Files', $stats_mostlimit, 'wp-downloadmanager' );
+
+	return $content . downloadmanager_wp_stats_checkbox( 'downloaded_most', sprintf( $label, number_format_i18n( $stats_mostlimit ) ) );
 }
 
 
 ### Function: Add WP-DownloadManager General Stats To WP-Stats Page
 function downloadmanager_page_general_stats($content) {
 	global $wpdb;
-	$stats_display = get_option('stats_display');
-	if( (int) ($stats_display['downloads'] ?? 0) === 1 ) {
+	if ( downloadmanager_wp_stats_enabled( 'downloads' ) ) {
 		$download_stats = $wpdb->get_row("SELECT COUNT(file_id) as total_files, SUM(file_size) total_size, SUM(file_hits) as total_hits FROM $wpdb->downloads");
 		$content .= '<p><strong>'.__('WP-DownloadManager', 'wp-downloadmanager').'</strong></p>'."\n";
 		$content .= '<ul>'."\n";
@@ -1326,9 +1370,8 @@ function downloadmanager_page_general_stats($content) {
 
 ### Function: Add WP-DownloadManager Top Recent Stats To WP-Stats Page
 function downloadmanager_page_recent_stats($content) {
-	$stats_display = get_option('stats_display');
-	$stats_mostlimit = (int) get_option('stats_mostlimit');
-	if( (int) ($stats_display['recent_downloads'] ?? 0) === 1 ) {
+	$stats_mostlimit = downloadmanager_wp_stats_limit();
+	if ( downloadmanager_wp_stats_enabled( 'recent_downloads' ) ) {
 		$content .= '<p><strong>'.sprintf(_n('%s Most Recent Download', '%s Most Recent Downloads', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</strong></p>'."\n";
 		$content .= '<ul>'."\n";
 		$content .= get_recent_downloads($stats_mostlimit, 0, false);
@@ -1340,9 +1383,8 @@ function downloadmanager_page_recent_stats($content) {
 
 ### Function: Add WP-DownloadManager Top Most/Highest Stats To WP-Stats Page
 function downloadmanager_page_most_stats($content) {
-	$stats_display = get_option('stats_display');
-	$stats_mostlimit = (int) get_option('stats_mostlimit');
-	if( (int) ($stats_display['downloaded_most'] ?? 0) === 1 ) {
+	$stats_mostlimit = downloadmanager_wp_stats_limit();
+	if ( downloadmanager_wp_stats_enabled( 'downloaded_most' ) ) {
 		$content .= '<p><strong>'.sprintf(_n('%s Most Downloaded File', '%s Most Downloaded Files', $stats_mostlimit, 'wp-downloadmanager'), number_format_i18n($stats_mostlimit)).'</strong></p>'."\n";
 		$content .= '<ul>'."\n";
 		$content .= get_most_downloaded($stats_mostlimit, 0, false);
