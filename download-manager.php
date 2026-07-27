@@ -527,9 +527,11 @@ switch ( $dl_mode ) {
 		// Totals for the stats panel.
 		$get_total_files = $wpdb->get_var( "SELECT COUNT(file_id) FROM $wpdb->downloads WHERE 1=1 $file_search_query" );
 		$total_file      = $wpdb->get_var( "SELECT COUNT(file_id) FROM $wpdb->downloads WHERE 1=1" );
-		$total_bandwidth = $wpdb->get_var( $wpdb->prepare( "SELECT SUM(file_hits*file_size) AS total_bandwidth FROM {$wpdb->downloads} WHERE file_size != %s", __( 'unknown', 'wp-downloadmanager' ) ) );
-		$total_filesize  = $wpdb->get_var( $wpdb->prepare( "SELECT SUM(file_size) AS total_filesize FROM {$wpdb->downloads} WHERE file_size != %s", __( 'unknown', 'wp-downloadmanager' ) ) );
-		$total_filehits  = $wpdb->get_var( "SELECT SUM(file_hits) AS total_filehits FROM $wpdb->downloads" );
+		// Cast: SUM() is NULL on an empty table, and passing that to
+		// number_format() is deprecated on PHP 8.1 and later.
+		$total_bandwidth = (int) $wpdb->get_var( $wpdb->prepare( "SELECT SUM(file_hits*file_size) AS total_bandwidth FROM {$wpdb->downloads} WHERE file_size != %s", __( 'unknown', 'wp-downloadmanager' ) ) );
+		$total_filesize  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT SUM(file_size) AS total_filesize FROM {$wpdb->downloads} WHERE file_size != %s", __( 'unknown', 'wp-downloadmanager' ) ) );
+		$total_filehits  = (int) $wpdb->get_var( "SELECT SUM(file_hits) AS total_filehits FROM $wpdb->downloads" );
 
 		// Normalise the page and per-page values.
 		if ( empty( $file_page ) || 0 === $file_page ) {

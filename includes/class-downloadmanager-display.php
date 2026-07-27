@@ -321,13 +321,13 @@ class DownloadManager_Display {
 		foreach ( (array) $rows as $row ) {
 			$cat_id                    = (int) $row->file_category;
 			$category_stats[ $cat_id ] = array(
-				'files' => $row->category_files,
-				'hits'  => $row->category_hits,
-				'size'  => $row->category_size,
+				'files' => (int) $row->category_files,
+				'hits'  => (int) $row->category_hits,
+				'size'  => (int) $row->category_size,
 			);
-			$totals['files']          += $row->category_files;
-			$totals['hits']           += $row->category_hits;
-			$totals['size']           += $row->category_size;
+			$totals['files']          += (int) $row->category_files;
+			$totals['hits']           += (int) $row->category_hits;
+			$totals['size']           += (int) $row->category_size;
 		}
 
 		$paging = self::paging( $totals['files'], $per_page, $page );
@@ -336,8 +336,9 @@ class DownloadManager_Display {
 		$group_sql = 1 === $group ? 'file_category ASC,' : '';
 
 		// The placeholder count is dynamic - three per search term, plus the two
-		// LIMIT bounds - so the sniff cannot count them statically.
-		// phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		// LIMIT bounds - which is why phpcs.xml exempts this file from the
+		// replacement-count sniff.
+		// phpcs:ignore WordPress.DB
 		$files = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->downloads} WHERE 1=1 {$category_sql} {$search_sql} AND file_permission != -2 ORDER BY {$group_sql} {$order_by_column} {$sort_order} LIMIT %d, %d",
@@ -728,7 +729,7 @@ class DownloadManager_Display {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB
-		return self::output( number_format_i18n( $wpdb->get_var( "SELECT COUNT(file_id) FROM {$wpdb->downloads}" ) ), $display );
+		return self::output( number_format_i18n( (int) $wpdb->get_var( "SELECT COUNT(file_id) FROM {$wpdb->downloads}" ) ), $display );
 	}
 
 	/**
@@ -741,7 +742,8 @@ class DownloadManager_Display {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB
-		return self::output( DownloadManager_File::format_size( $wpdb->get_var( "SELECT SUM(file_size) FROM {$wpdb->downloads}" ) ), $display );
+		// Cast: SUM() is NULL on an empty table.
+		return self::output( DownloadManager_File::format_size( (int) $wpdb->get_var( "SELECT SUM(file_size) FROM {$wpdb->downloads}" ) ), $display );
 	}
 
 	/**
@@ -754,7 +756,9 @@ class DownloadManager_Display {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB
-		return self::output( number_format_i18n( $wpdb->get_var( "SELECT SUM(file_hits) FROM {$wpdb->downloads}" ) ), $display );
+		// Cast: SUM() is NULL on an empty table, and number_format_i18n( null )
+		// is deprecated on PHP 8.1 and later.
+		return self::output( number_format_i18n( (int) $wpdb->get_var( "SELECT SUM(file_hits) FROM {$wpdb->downloads}" ) ), $display );
 	}
 
 	/**

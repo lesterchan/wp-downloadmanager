@@ -92,4 +92,12 @@
 		</properties>
 	</rule>
 
+	<!-- Polls_Display::downloads_page() builds its search clause as a
+	     placeholder fragment plus an argument list, so the number of
+	     placeholders is dynamic - three per search term, plus the two LIMIT
+	     bounds. The sniff can only count them statically. -->
+	<rule ref="WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber">
+		<exclude-pattern>/includes/class-downloadmanager-display.php</exclude-pattern>
+	</rule>
+
 </ruleset>

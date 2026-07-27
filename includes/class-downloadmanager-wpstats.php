@@ -164,22 +164,28 @@ class DownloadManager_WPStats {
 		// phpcs:ignore WordPress.DB
 		$stats = $wpdb->get_row( "SELECT COUNT(file_id) as total_files, SUM(file_size) total_size, SUM(file_hits) as total_hits FROM {$wpdb->downloads}" );
 
+		// SUM() is NULL on an empty table, which _n() and number_format_i18n()
+		// are both deprecated for on PHP 8.1 and later.
+		$total_files = (int) $stats->total_files;
+		$total_size  = (int) $stats->total_size;
+		$total_hits  = (int) $stats->total_hits;
+
 		$content .= '<p><strong>' . __( 'WP-DownloadManager', 'wp-downloadmanager' ) . '</strong></p>' . "\n";
 		$content .= '<ul>' . "\n";
 		$content .= '<li>' . sprintf(
 			/* translators: %s: number of files. */
-			_n( '<strong>%s</strong> file was added.', '<strong>%s</strong> files were added.', $stats->total_files, 'wp-downloadmanager' ),
-			number_format_i18n( $stats->total_files )
+			_n( '<strong>%s</strong> file was added.', '<strong>%s</strong> files were added.', $total_files, 'wp-downloadmanager' ),
+			number_format_i18n( $total_files )
 		) . '</li>' . "\n";
 		$content .= '<li>' . sprintf(
 			/* translators: %s: total size of all files. */
-			_n( '<strong>%s</strong> worth of files.', '<strong>%s</strong> worth of files.', $stats->total_size, 'wp-downloadmanager' ),
-			DownloadManager_File::format_size( $stats->total_size )
+			_n( '<strong>%s</strong> worth of files.', '<strong>%s</strong> worth of files.', $total_size, 'wp-downloadmanager' ),
+			DownloadManager_File::format_size( $total_size )
 		) . '</li>' . "\n";
 		$content .= '<li>' . sprintf(
 			/* translators: %s: number of hits. */
-			_n( '<strong>%s</strong> hit was generated.', '<strong>%s</strong> hits were generated.', $stats->total_hits, 'wp-downloadmanager' ),
-			number_format_i18n( $stats->total_hits )
+			_n( '<strong>%s</strong> hit was generated.', '<strong>%s</strong> hits were generated.', $total_hits, 'wp-downloadmanager' ),
+			number_format_i18n( $total_hits )
 		) . '</li>' . "\n";
 		$content .= '</ul>' . "\n";
 

@@ -253,8 +253,13 @@ class Test_WPStats extends DownloadManager_TestCase {
 
 		$this->assertStringContainsString( 'N/A', DownloadManager_WPStats::page_recent( '' ) );
 		$this->assertStringContainsString( 'N/A', DownloadManager_WPStats::page_most( '' ) );
-		// The general panel reports zeroes rather than warning on null sums.
-		$this->assertStringContainsString( 'WP-DownloadManager', DownloadManager_WPStats::page_general( '' ) );
+
+		// SUM() is NULL with no rows, and _n() and number_format() are both
+		// deprecated for null on PHP 8.1 and later. The panel must report zeroes.
+		$general = DownloadManager_WPStats::page_general( '' );
+		$this->assertStringContainsString( 'WP-DownloadManager', $general );
+		$this->assertStringContainsString( '<strong>0</strong> files were added.', $general );
+		$this->assertStringContainsString( '<strong>0</strong> hits were generated.', $general );
 	}
 
 	/**

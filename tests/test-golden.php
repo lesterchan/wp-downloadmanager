@@ -187,6 +187,35 @@ class Test_Golden extends DownloadManager_TestCase {
 	}
 
 	/**
+	 * The totals report zero on an empty table rather than warning.
+	 *
+	 * SUM() returns NULL when there are no rows, and passing that to
+	 * number_format() is deprecated on PHP 8.1 and later - which only shows on
+	 * the newer half of the CI matrix, so it is asserted here directly.
+	 */
+	public function test_totals_on_an_empty_table() {
+		global $wpdb;
+		$wpdb->query( "TRUNCATE TABLE {$wpdb->downloads}" ); // phpcs:ignore WordPress.DB
+
+		$this->assertSame( '0', get_download_files( false ) );
+		$this->assertSame( '0', get_download_hits( false ) );
+		$this->assertSame( 'unknown', get_download_size( false ) );
+	}
+
+	/**
+	 * The downloads page survives an empty table without warning.
+	 */
+	public function test_downloads_page_totals_on_an_empty_table() {
+		global $wpdb;
+		$wpdb->query( "TRUNCATE TABLE {$wpdb->downloads}" ); // phpcs:ignore WordPress.DB
+
+		$out = downloads_page();
+
+		$this->assertStringContainsString( 'No Files Found.', $out );
+		$this->assertDoesNotMatchRegularExpression( '/%[A-Z_]+%/', $out );
+	}
+
+	/**
 	 * The embedded template renders the download link for a permitted file.
 	 */
 	public function test_download_embedded_permitted() {
