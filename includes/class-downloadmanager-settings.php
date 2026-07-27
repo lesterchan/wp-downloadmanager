@@ -56,6 +56,8 @@ class DownloadManager_Settings {
 
 		register_setting( self::GROUP_OPTIONS, DownloadManager_Options::OPTION, $args );
 		register_setting( self::GROUP_TEMPLATES, DownloadManager_Options::OPTION, $args );
+
+		self::register_fields();
 	}
 
 	/**
@@ -251,195 +253,339 @@ class DownloadManager_Settings {
 	}
 
 	/**
-	 * The Download Options screen.
+	 * Register every section and field with the Settings API.
+	 *
+	 * The field names are unchanged - they still post into the one consolidated
+	 * option as download_options[sort][perpage] and so on - so the sanitize
+	 * callback and the save path are exactly as before. What changes is that
+	 * core lays the screens out from this registration rather than the class
+	 * printing its own form-table markup.
 	 *
 	 * @return void
 	 */
-	public static function render_options_page() {
-		if ( ! current_user_can( 'manage_downloads' ) ) {
-			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'wp-downloadmanager' ) );
-		}
+	public static function register_fields() {
+		foreach ( self::option_sections() as $section => $spec ) {
+			add_settings_section(
+				$section,
+				$spec['title'],
+				isset( $spec['description'] ) ? $spec['description'] : '__return_false',
+				self::GROUP_OPTIONS
+			);
 
-		$home          = get_option( 'home' );
-		$categories    = (array) DownloadManager_Options::get( 'categories', array() );
-		$category_text = '';
-		foreach ( $categories as $category ) {
-			if ( '' !== trim( (string) $category ) ) {
-				$category_text .= $category . "\n";
+			foreach ( $spec['fields'] as $field ) {
+				add_settings_field(
+					$field['id'],
+					$field['label'],
+					array( __CLASS__, 'render_field' ),
+					self::GROUP_OPTIONS,
+					$section,
+					// label_for makes core wrap the title in a <label>, which only
+					// makes sense for the fields that are a single control.
+					in_array( $field['type'], array( 'radio' ), true )
+						? $field
+						: array_merge( $field, array( 'label_for' => $field['id'] ) )
+				);
 			}
 		}
-		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Download Options', 'wp-downloadmanager' ); ?></h1>
-			<?php
-			// A custom menu page has to render its own settings errors; WordPress
-			// only does it automatically on the built-in Settings screens. Without
-			// this a rejected value is corrected silently.
-			settings_errors( DownloadManager_Options::OPTION );
-			?>
-			<form method="post" action="options.php">
-				<?php settings_fields( self::GROUP_OPTIONS ); ?>
 
-				<h2><?php esc_html_e( 'Download Options', 'wp-downloadmanager' ); ?></h2>
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="download_path"><?php esc_html_e( 'Download Path:', 'wp-downloadmanager' ); ?></label></th>
-						<td>
-							<input type="text" id="download_path" name="<?php echo esc_attr( self::name( 'path.dir' ) ); ?>" value="<?php echo esc_attr( DownloadManager_Options::get( 'path.dir' ) ); ?>" size="50" dir="ltr" class="regular-text" />
-							<p class="description">
-								<?php esc_html_e( 'The absolute path to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager' ); ?><br />
-								<?php
-								printf(
-									/* translators: %s: the wp-content directory. */
-									esc_html__( 'Due to security reasons, the path has to start inside your wp-content folder, which is %s', 'wp-downloadmanager' ),
-									'<code>' . esc_html( WP_CONTENT_DIR ) . '</code>'
-								);
-								?>
-							</p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="download_path_url"><?php esc_html_e( 'Download Path URL:', 'wp-downloadmanager' ); ?></label></th>
-						<td>
-							<input type="text" id="download_path_url" name="<?php echo esc_attr( self::name( 'path.url' ) ); ?>" value="<?php echo esc_attr( DownloadManager_Options::get( 'path.url' ) ); ?>" size="50" dir="ltr" class="regular-text" />
-							<p class="description"><?php esc_html_e( 'The url to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="download_page_url"><?php esc_html_e( 'Download Page URL:', 'wp-downloadmanager' ); ?></label></th>
-						<td>
-							<input type="text" id="download_page_url" name="<?php echo esc_attr( self::name( 'page_url' ) ); ?>" value="<?php echo esc_attr( DownloadManager_Options::get( 'page_url' ) ); ?>" size="50" dir="ltr" class="regular-text" />
-							<p class="description"><?php esc_html_e( 'The url to the downloads page (without trailing slash).', 'wp-downloadmanager' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Download Nice Permalink:', 'wp-downloadmanager' ); ?></th>
-						<td>
-							<?php $nice = (int) DownloadManager_Options::get( 'nice_permalink', 1 ); ?>
-							<label><input type="radio" name="<?php echo esc_attr( self::name( 'nice_permalink' ) ); ?>" value="1" <?php checked( 1, $nice ); ?> />
-								<?php esc_html_e( 'Yes', 'wp-downloadmanager' ); ?>
-								<br /><span dir="ltr">- <?php echo esc_html( $home ); ?>/download/1/</span>
-								<br /><span dir="ltr">- <?php echo esc_html( $home ); ?>/download/filename.ext</span>
-							</label><br />
-							<label><input type="radio" name="<?php echo esc_attr( self::name( 'nice_permalink' ) ); ?>" value="0" <?php checked( 0, $nice ); ?> />
-								<?php esc_html_e( 'No', 'wp-downloadmanager' ); ?>
-								<br /><span dir="ltr">- <?php echo esc_html( $home ); ?>/?dl_id=1</span>
-								<br /><span dir="ltr">- <?php echo esc_html( $home ); ?>/?dl_name=filename.ext</span>
-							</label>
-							<p class="description"><?php echo wp_kses_post( __( 'Change it to <strong>No</strong> when you encounter 404 error.', 'wp-downloadmanager' ) ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Use File Name Or File ID In Download URL?', 'wp-downloadmanager' ); ?></th>
-						<td>
-							<?php $use_filename = (int) DownloadManager_Options::get( 'use_filename', 0 ); ?>
-							<label><input type="radio" name="<?php echo esc_attr( self::name( 'use_filename' ) ); ?>" value="0" <?php checked( 0, $use_filename ); ?> />
-								<?php esc_html_e( 'File ID', 'wp-downloadmanager' ); ?>
-								<br /><span dir="ltr">- <?php echo esc_html( $home ); ?>/download/1/</span>
-								<br /><span dir="ltr">- <?php echo esc_html( $home ); ?>/?dl_id=1</span>
-							</label><br />
-							<label><input type="radio" name="<?php echo esc_attr( self::name( 'use_filename' ) ); ?>" value="1" <?php checked( 1, $use_filename ); ?> />
-								<?php esc_html_e( 'File Name', 'wp-downloadmanager' ); ?>
-								<br /><span dir="ltr">- <?php echo esc_html( $home ); ?>/download/filename.ext</span>
-								<br /><span dir="ltr">- <?php echo esc_html( $home ); ?>/?dl_name=filename.ext</span>
-							</label>
-							<p class="description"><?php echo wp_kses_post( __( 'Change it to <strong>File ID</strong> when you encounter 404 error.', 'wp-downloadmanager' ) ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="download_method"><?php esc_html_e( 'Download Method:', 'wp-downloadmanager' ); ?></label></th>
-						<td>
-							<?php $method = (int) DownloadManager_Options::get( 'method', 1 ); ?>
-							<select id="download_method" name="<?php echo esc_attr( self::name( 'method' ) ); ?>">
-								<option value="0" <?php selected( 0, $method ); ?>><?php esc_html_e( 'Output File', 'wp-downloadmanager' ); ?></option>
-								<option value="1" <?php selected( 1, $method ); ?>><?php esc_html_e( 'Redirect To File', 'wp-downloadmanager' ); ?></option>
-							</select>
-							<p class="description"><?php echo wp_kses_post( __( 'Change it to <strong>Redirect To File</strong> when you have problem with large files.', 'wp-downloadmanager' ) ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="download_categories"><?php esc_html_e( 'Download Categories:', 'wp-downloadmanager' ); ?></label></th>
-						<td>
-							<textarea id="download_categories" cols="30" rows="10" name="<?php echo esc_attr( self::name( 'categories' ) ); ?>"><?php echo esc_textarea( $category_text ); ?></textarea>
-							<p class="description">
-								<?php esc_html_e( 'Start each entry on a new line.', 'wp-downloadmanager' ); ?><br />
-								<?php echo wp_kses_post( __( 'The <strong>first line</strong> will have a category id of <strong>1</strong>.', 'wp-downloadmanager' ) ); ?><br />
-								<?php echo wp_kses_post( __( 'The <strong>2nd line</strong> will have a category id of <strong>2</strong>.', 'wp-downloadmanager' ) ); ?><br />
-								<?php esc_html_e( 'And so on and so forth.', 'wp-downloadmanager' ); ?>
-							</p>
-						</td>
-					</tr>
-				</table>
+		$index = 0;
+		foreach ( self::template_fields() as $title => $fields ) {
+			$section = 'downloadmanager_templates_' . $index;
+			++$index;
 
-				<h2><?php esc_html_e( 'Download Listing Options', 'wp-downloadmanager' ); ?></h2>
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="download_sort_by"><?php esc_html_e( 'Sort Downloads By:', 'wp-downloadmanager' ); ?></label></th>
-						<td>
-							<select id="download_sort_by" name="<?php echo esc_attr( self::name( 'sort.by' ) ); ?>">
-								<?php self::sort_column_options( DownloadManager_Options::get( 'sort.by' ) ); ?>
-							</select>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="download_sort_order"><?php esc_html_e( 'Sort Order Of Downloads:', 'wp-downloadmanager' ); ?></label></th>
-						<td>
-							<?php $order = DownloadManager_Options::get( 'sort.order' ); ?>
-							<select id="download_sort_order" name="<?php echo esc_attr( self::name( 'sort.order' ) ); ?>">
-								<option value="asc" <?php selected( 'asc', $order ); ?>><?php esc_html_e( 'Ascending', 'wp-downloadmanager' ); ?></option>
-								<option value="desc" <?php selected( 'desc', $order ); ?>><?php esc_html_e( 'Descending', 'wp-downloadmanager' ); ?></option>
-							</select>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="download_sort_perpage"><?php esc_html_e( 'No. Of Downloads Per Page:', 'wp-downloadmanager' ); ?></label></th>
-						<td><input type="number" min="1" id="download_sort_perpage" name="<?php echo esc_attr( self::name( 'sort.perpage' ) ); ?>" value="<?php echo esc_attr( DownloadManager_Options::get( 'sort.perpage' ) ); ?>" class="small-text" /></td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="download_sort_group"><?php esc_html_e( 'Group By:', 'wp-downloadmanager' ); ?></label></th>
-						<td>
-							<?php $group = (int) DownloadManager_Options::get( 'sort.group', 0 ); ?>
-							<select id="download_sort_group" name="<?php echo esc_attr( self::name( 'sort.group' ) ); ?>">
-								<option value="0" <?php selected( 0, $group ); ?>><?php esc_html_e( 'None', 'wp-downloadmanager' ); ?></option>
-								<option value="1" <?php selected( 1, $group ); ?>><?php esc_html_e( 'Categories', 'wp-downloadmanager' ); ?></option>
-							</select>
-						</td>
-					</tr>
-				</table>
+			add_settings_section( $section, $title, '__return_false', self::GROUP_TEMPLATES );
 
-				<h2><?php esc_html_e( 'Download RSS Options', 'wp-downloadmanager' ); ?></h2>
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="download_rss_sortby"><?php esc_html_e( 'Sort Downloads In Feed By:', 'wp-downloadmanager' ); ?></label></th>
-						<td>
-							<select id="download_rss_sortby" name="<?php echo esc_attr( self::name( 'rss.sortby' ) ); ?>">
-								<?php self::sort_column_options( DownloadManager_Options::get( 'rss.sortby' ) ); ?>
-							</select>
-							<p class="description"><?php esc_html_e( 'Sorting are done in descending order.', 'wp-downloadmanager' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="download_rss_limit"><?php esc_html_e( 'No. Of Downloads In Feed:', 'wp-downloadmanager' ); ?></label></th>
-						<td><input type="number" min="1" id="download_rss_limit" name="<?php echo esc_attr( self::name( 'rss.limit' ) ); ?>" value="<?php echo esc_attr( DownloadManager_Options::get( 'rss.limit' ) ); ?>" class="small-text" /></td>
-					</tr>
-				</table>
+			foreach ( $fields as $field ) {
+				$field['index']  = isset( $field['index'] ) ? (int) $field['index'] : 0;
+				$paired          = in_array( $field['key'], DownloadManager_Templates::paired_keys(), true );
+				$field['id']     = 'download_template_' . $field['key'] . ( $paired && $field['index'] ? '_2' : '' );
+				$field['reset']  = $field['key'] . ( $paired && $field['index'] ? '_2' : '' );
+				$field['name']   = $paired
+					? self::name( 'templates.' . $field['key'] ) . '[' . $field['index'] . ']'
+					: self::name( 'templates.' . $field['key'] );
+				$field['paired'] = $paired;
 
-				<?php submit_button(); ?>
-			</form>
-		</div>
-		<?php
+				add_settings_field(
+					$field['id'],
+					$field['label'],
+					array( __CLASS__, 'render_template_field' ),
+					self::GROUP_TEMPLATES,
+					$section,
+					array_merge( $field, array( 'label_for' => $field['id'] ) )
+				);
+			}
+		}
 	}
 
 	/**
-	 * The sort column options, labelled.
+	 * The Download Options screen, as sections and fields.
 	 *
-	 * Derived from the same allow list the query trusts, so the screen can never
-	 * offer a value the sanitizer rejects.
+	 * Declarative so the markup is generated once in render_field() rather than
+	 * written out per control - which is what let the sort select and the
+	 * sanitizer's allow list drift apart in the first place.
 	 *
-	 * @param string $selected Currently selected column.
+	 * @return array
+	 */
+	protected static function option_sections() {
+		$home = get_option( 'home' );
+
+		return array(
+			'downloadmanager_general' => array(
+				'title'  => __( 'Download Options', 'wp-downloadmanager' ),
+				'fields' => array(
+					array(
+						'id'    => 'download_path',
+						'path'  => 'path.dir',
+						'type'  => 'text',
+						'label' => __( 'Download Path:', 'wp-downloadmanager' ),
+						'desc'  => __( 'The absolute path to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager' ) . '<br />' . sprintf(
+							/* translators: %s: the wp-content directory. */
+							esc_html__( 'Due to security reasons, the path has to start inside your wp-content folder, which is %s', 'wp-downloadmanager' ),
+							'<code>' . esc_html( WP_CONTENT_DIR ) . '</code>'
+						),
+					),
+					array(
+						'id'    => 'download_path_url',
+						'path'  => 'path.url',
+						'type'  => 'text',
+						'label' => __( 'Download Path URL:', 'wp-downloadmanager' ),
+						'desc'  => __( 'The url to the directory where all the files are stored (without trailing slash).', 'wp-downloadmanager' ),
+					),
+					array(
+						'id'    => 'download_page_url',
+						'path'  => 'page_url',
+						'type'  => 'text',
+						'label' => __( 'Download Page URL:', 'wp-downloadmanager' ),
+						'desc'  => __( 'The url to the downloads page (without trailing slash).', 'wp-downloadmanager' ),
+					),
+					array(
+						'id'      => 'download_nice_permalink',
+						'path'    => 'nice_permalink',
+						'type'    => 'radio',
+						'label'   => __( 'Download Nice Permalink:', 'wp-downloadmanager' ),
+						'choices' => array(
+							1 => __( 'Yes', 'wp-downloadmanager' ) . '<br /><span dir="ltr">- ' . esc_html( $home ) . '/download/1/</span><br /><span dir="ltr">- ' . esc_html( $home ) . '/download/filename.ext</span>',
+							0 => __( 'No', 'wp-downloadmanager' ) . '<br /><span dir="ltr">- ' . esc_html( $home ) . '/?dl_id=1</span><br /><span dir="ltr">- ' . esc_html( $home ) . '/?dl_name=filename.ext</span>',
+						),
+						'desc'    => __( 'Change it to <strong>No</strong> when you encounter 404 error.', 'wp-downloadmanager' ),
+					),
+					array(
+						'id'      => 'download_use_filename',
+						'path'    => 'use_filename',
+						'type'    => 'radio',
+						'label'   => __( 'Use File Name Or File ID In Download URL?', 'wp-downloadmanager' ),
+						'choices' => array(
+							0 => __( 'File ID', 'wp-downloadmanager' ) . '<br /><span dir="ltr">- ' . esc_html( $home ) . '/download/1/</span><br /><span dir="ltr">- ' . esc_html( $home ) . '/?dl_id=1</span>',
+							1 => __( 'File Name', 'wp-downloadmanager' ) . '<br /><span dir="ltr">- ' . esc_html( $home ) . '/download/filename.ext</span><br /><span dir="ltr">- ' . esc_html( $home ) . '/?dl_name=filename.ext</span>',
+						),
+						'desc'    => __( 'Change it to <strong>File ID</strong> when you encounter 404 error.', 'wp-downloadmanager' ),
+					),
+					array(
+						'id'      => 'download_method',
+						'path'    => 'method',
+						'type'    => 'select',
+						'label'   => __( 'Download Method:', 'wp-downloadmanager' ),
+						'choices' => array(
+							0 => __( 'Output File', 'wp-downloadmanager' ),
+							1 => __( 'Redirect To File', 'wp-downloadmanager' ),
+						),
+						'desc'    => __( 'Change it to <strong>Redirect To File</strong> when you have problem with large files.', 'wp-downloadmanager' ),
+					),
+					array(
+						'id'    => 'download_categories',
+						'path'  => 'categories',
+						'type'  => 'categories',
+						'label' => __( 'Download Categories:', 'wp-downloadmanager' ),
+						'desc'  => __( 'Start each entry on a new line.', 'wp-downloadmanager' ) . '<br />' .
+							__( 'The <strong>first line</strong> will have a category id of <strong>1</strong>.', 'wp-downloadmanager' ) . '<br />' .
+							__( 'The <strong>2nd line</strong> will have a category id of <strong>2</strong>.', 'wp-downloadmanager' ) . '<br />' .
+							__( 'And so on and so forth.', 'wp-downloadmanager' ),
+					),
+				),
+			),
+			'downloadmanager_listing' => array(
+				'title'  => __( 'Download Listing Options', 'wp-downloadmanager' ),
+				'fields' => array(
+					array(
+						'id'      => 'download_sort_by',
+						'path'    => 'sort.by',
+						'type'    => 'select',
+						'label'   => __( 'Sort Downloads By:', 'wp-downloadmanager' ),
+						'choices' => 'sort_columns',
+					),
+					array(
+						'id'      => 'download_sort_order',
+						'path'    => 'sort.order',
+						'type'    => 'select',
+						'label'   => __( 'Sort Order Of Downloads:', 'wp-downloadmanager' ),
+						'choices' => array(
+							'asc'  => __( 'Ascending', 'wp-downloadmanager' ),
+							'desc' => __( 'Descending', 'wp-downloadmanager' ),
+						),
+					),
+					array(
+						'id'    => 'download_sort_perpage',
+						'path'  => 'sort.perpage',
+						'type'  => 'number',
+						'label' => __( 'No. Of Downloads Per Page:', 'wp-downloadmanager' ),
+					),
+					array(
+						'id'      => 'download_sort_group',
+						'path'    => 'sort.group',
+						'type'    => 'select',
+						'label'   => __( 'Group By:', 'wp-downloadmanager' ),
+						'choices' => array(
+							0 => __( 'None', 'wp-downloadmanager' ),
+							1 => __( 'Categories', 'wp-downloadmanager' ),
+						),
+					),
+				),
+			),
+			'downloadmanager_rss'     => array(
+				'title'  => __( 'Download RSS Options', 'wp-downloadmanager' ),
+				'fields' => array(
+					array(
+						'id'      => 'download_rss_sortby',
+						'path'    => 'rss.sortby',
+						'type'    => 'select',
+						'label'   => __( 'Sort Downloads In Feed By:', 'wp-downloadmanager' ),
+						'choices' => 'sort_columns',
+						'desc'    => __( 'Sorting are done in descending order.', 'wp-downloadmanager' ),
+					),
+					array(
+						'id'    => 'download_rss_limit',
+						'path'  => 'rss.limit',
+						'type'  => 'number',
+						'label' => __( 'No. Of Downloads In Feed:', 'wp-downloadmanager' ),
+					),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Render one field of the Download Options screen.
+	 *
+	 * @param array $args Field spec, as registered.
 	 * @return void
 	 */
-	protected static function sort_column_options( $selected ) {
+	public static function render_field( $args ) {
+		$name    = self::name( $args['path'] );
+		$value   = DownloadManager_Options::get( $args['path'] );
+		$choices = isset( $args['choices'] ) ? $args['choices'] : array();
+
+		// The sort selects take their options from the same allow list the query
+		// trusts, so the screen can never offer a value the sanitizer rejects.
+		if ( 'sort_columns' === $choices ) {
+			$choices = self::sort_column_labels();
+		}
+
+		switch ( $args['type'] ) {
+			case 'number':
+				printf(
+					'<input type="number" min="1" id="%1$s" name="%2$s" value="%3$s" class="small-text" />',
+					esc_attr( $args['id'] ),
+					esc_attr( $name ),
+					esc_attr( $value )
+				);
+				break;
+
+			case 'select':
+				printf( '<select id="%1$s" name="%2$s">', esc_attr( $args['id'] ), esc_attr( $name ) );
+				foreach ( $choices as $choice => $label ) {
+					printf(
+						'<option value="%1$s"%2$s>%3$s</option>' . "\n",
+						esc_attr( $choice ),
+						selected( (string) $choice, (string) $value, false ),
+						esc_html( $label )
+					);
+				}
+				echo '</select>';
+				break;
+
+			case 'radio':
+				foreach ( $choices as $choice => $label ) {
+					printf(
+						'<label><input type="radio" name="%1$s" value="%2$s"%3$s /> %4$s</label><br />',
+						esc_attr( $name ),
+						esc_attr( $choice ),
+						checked( (string) $choice, (string) $value, false ),
+						wp_kses_post( $label )
+					);
+				}
+				break;
+
+			case 'categories':
+				$text = '';
+				foreach ( (array) $value as $category ) {
+					if ( '' !== trim( (string) $category ) ) {
+						$text .= $category . "\n";
+					}
+				}
+				printf(
+					'<textarea id="%1$s" name="%2$s" cols="30" rows="10">%3$s</textarea>',
+					esc_attr( $args['id'] ),
+					esc_attr( $name ),
+					esc_textarea( $text )
+				);
+				break;
+
+			default:
+				printf(
+					'<input type="text" id="%1$s" name="%2$s" value="%3$s" size="50" dir="ltr" class="regular-text" />',
+					esc_attr( $args['id'] ),
+					esc_attr( $name ),
+					esc_attr( $value )
+				);
+		}
+
+		if ( ! empty( $args['desc'] ) ) {
+			printf( '<p class="description">%s</p>', wp_kses_post( $args['desc'] ) );
+		}
+	}
+
+	/**
+	 * Render one template textarea, with its variables and reset button.
+	 *
+	 * @param array $args Field spec, as registered.
+	 * @return void
+	 */
+	public static function render_template_field( $args ) {
+		printf(
+			'<textarea cols="80" rows="12" class="large-text code" id="%1$s" name="%2$s">%3$s</textarea>',
+			esc_attr( $args['id'] ),
+			esc_attr( $args['name'] ),
+			esc_textarea( DownloadManager_Options::template( $args['key'], $args['index'] ) )
+		);
+
+		if ( ! empty( $args['desc'] ) ) {
+			printf( '<p class="description">%s</p>', esc_html( $args['desc'] ) );
+		}
+
+		echo '<p class="description">' . esc_html__( 'Allowed Variables:', 'wp-downloadmanager' ) . '<br />';
+		if ( empty( $args['vars'] ) ) {
+			echo '- ' . esc_html__( 'N/A', 'wp-downloadmanager' ) . '<br />';
+		} else {
+			foreach ( $args['vars'] as $var ) {
+				echo '- ' . esc_html( $var ) . '<br />';
+			}
+		}
+		echo '</p>';
+
+		printf(
+			'<button type="button" class="button download-template-reset" data-template="%1$s" data-target="%2$s">%3$s</button>',
+			esc_attr( $args['reset'] ),
+			esc_attr( $args['id'] ),
+			esc_html__( 'Restore Default Template', 'wp-downloadmanager' )
+		);
+	}
+
+	/**
+	 * The sort columns, labelled, in the order the allow list defines them.
+	 *
+	 * @return array
+	 */
+	protected static function sort_column_labels() {
 		$labels = array(
 			'file_id'           => __( 'File ID', 'wp-downloadmanager' ),
 			'file'              => __( 'File', 'wp-downloadmanager' ),
@@ -450,14 +596,12 @@ class DownloadManager_Settings {
 			'file_hits'         => __( 'File Hits', 'wp-downloadmanager' ),
 		);
 
+		$choices = array();
 		foreach ( DownloadManager_File::sort_columns() as $column ) {
-			printf(
-				'<option value="%1$s"%2$s>%3$s</option>' . "\n",
-				esc_attr( $column ),
-				selected( $column, $selected, false ),
-				esc_html( isset( $labels[ $column ] ) ? $labels[ $column ] : $column )
-			);
+			$choices[ $column ] = isset( $labels[ $column ] ) ? $labels[ $column ] : $column;
 		}
+
+		return $choices;
 	}
 
 	/**
@@ -607,17 +751,45 @@ class DownloadManager_Settings {
 	}
 
 	/**
+	 * The Download Options screen.
+	 *
+	 * @return void
+	 */
+	public static function render_options_page() {
+		self::render_page(
+			__( 'Download Options', 'wp-downloadmanager' ),
+			self::GROUP_OPTIONS
+		);
+	}
+
+	/**
 	 * The Download Templates screen.
 	 *
 	 * @return void
 	 */
 	public static function render_templates_page() {
+		self::render_page(
+			__( 'Download Templates', 'wp-downloadmanager' ),
+			self::GROUP_TEMPLATES
+		);
+	}
+
+	/**
+	 * Both screens: core lays out the sections and fields registered above.
+	 *
+	 * @param string $title Screen heading.
+	 * @param string $group Settings group, which is also the page slug the
+	 *                      sections were registered against.
+	 * @return void
+	 */
+	protected static function render_page( $title, $group ) {
 		if ( ! current_user_can( 'manage_downloads' ) ) {
 			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'wp-downloadmanager' ) );
 		}
+
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Download Templates', 'wp-downloadmanager' ); ?></h1>
+			<h1><?php echo esc_html( $title ); ?></h1>
 			<?php
 			// A custom menu page has to render its own settings errors; WordPress
 			// only does it automatically on the built-in Settings screens. Without
@@ -625,51 +797,11 @@ class DownloadManager_Settings {
 			settings_errors( DownloadManager_Options::OPTION );
 			?>
 			<form method="post" action="options.php">
-				<?php settings_fields( self::GROUP_TEMPLATES ); ?>
-
-				<?php foreach ( self::template_fields() as $section => $fields ) : ?>
-					<h2><?php echo esc_html( $section ); ?></h2>
-					<table class="form-table" role="presentation">
-						<?php foreach ( $fields as $field ) : ?>
-							<?php
-							$key    = $field['key'];
-							$index  = isset( $field['index'] ) ? (int) $field['index'] : 0;
-							$paired = in_array( $key, DownloadManager_Templates::paired_keys(), true );
-							$name   = $paired
-								? self::name( 'templates.' . $key ) . '[' . $index . ']'
-								: self::name( 'templates.' . $key );
-							$id     = 'download_template_' . $key . ( $paired && $index ? '_2' : '' );
-							$reset  = $key . ( $paired && $index ? '_2' : '' );
-							?>
-							<tr>
-								<th scope="row" style="width: 30%;">
-									<label for="<?php echo esc_attr( $id ); ?>"><strong><?php echo esc_html( $field['label'] ); ?></strong></label>
-									<?php if ( ! empty( $field['desc'] ) ) : ?>
-										<p class="description"><?php echo esc_html( $field['desc'] ); ?></p>
-									<?php endif; ?>
-									<p class="description">
-										<?php esc_html_e( 'Allowed Variables:', 'wp-downloadmanager' ); ?><br />
-										<?php if ( empty( $field['vars'] ) ) : ?>
-											- <?php esc_html_e( 'N/A', 'wp-downloadmanager' ); ?><br />
-										<?php else : ?>
-											<?php foreach ( $field['vars'] as $var ) : ?>
-												- <?php echo esc_html( $var ); ?><br />
-											<?php endforeach; ?>
-										<?php endif; ?>
-									</p>
-									<button type="button" class="button download-template-reset" data-template="<?php echo esc_attr( $reset ); ?>" data-target="<?php echo esc_attr( $id ); ?>">
-										<?php esc_html_e( 'Restore Default Template', 'wp-downloadmanager' ); ?>
-									</button>
-								</th>
-								<td>
-									<textarea cols="80" rows="12" class="large-text code" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"><?php echo esc_textarea( DownloadManager_Options::template( $key, $index ) ); ?></textarea>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</table>
-				<?php endforeach; ?>
-
-				<?php submit_button(); ?>
+				<?php
+				settings_fields( $group );
+				do_settings_sections( $group );
+				submit_button();
+				?>
 			</form>
 		</div>
 		<?php

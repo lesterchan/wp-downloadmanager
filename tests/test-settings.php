@@ -11,6 +11,24 @@
 class Test_Settings extends DownloadManager_TestCase {
 
 	/**
+	 * Register the sections and fields before each test.
+	 *
+	 * Core renders these screens from a global registry, so they have
+	 * no fields until register() has run. In production that happens on
+	 * admin_init, which always fires before an admin page renders; here it has
+	 * to be explicit, or the render tests pass only when something earlier in
+	 * the class happens to have registered first.
+	 *
+	 * add_settings_section() and add_settings_field() key on their ids, so
+	 * calling this repeatedly is idempotent.
+	 */
+	public function set_up() {
+		parent::set_up();
+
+		DownloadManager_Settings::register();
+	}
+
+	/**
 	 * Both groups register the one consolidated option.
 	 */
 	public function test_option_is_registered_under_both_groups() {
@@ -104,6 +122,81 @@ class Test_Settings extends DownloadManager_TestCase {
 		preg_match_all( '/value="([^"]+)"/', $matches[0], $values );
 
 		$this->assertSame( DownloadManager_File::sort_columns(), $values[1] );
+	}
+
+	/**
+	 * Every field is registered with the Settings API, not printed by hand.
+	 *
+	 * The screens used to write their own form-table markup. Core lays them out
+	 * from this registration now, so the registry is what the tests assert on.
+	 */
+	public function test_sections_and_fields_are_registered() {
+		global $wp_settings_sections, $wp_settings_fields;
+
+		$this->assertArrayHasKey( DownloadManager_Settings::GROUP_OPTIONS, $wp_settings_sections );
+		$this->assertArrayHasKey( DownloadManager_Settings::GROUP_TEMPLATES, $wp_settings_sections );
+
+		$option_fields = array();
+		foreach ( $wp_settings_fields[ DownloadManager_Settings::GROUP_OPTIONS ] as $fields ) {
+			$option_fields = array_merge( $option_fields, array_keys( $fields ) );
+		}
+
+		foreach ( array( 'download_path', 'download_page_url', 'download_sort_by', 'download_rss_limit' ) as $id ) {
+			$this->assertContains( $id, $option_fields, $id . ' should be a registered field' );
+		}
+
+		// One registered field per template, both halves of each pair included.
+		$template_fields = array();
+		foreach ( $wp_settings_fields[ DownloadManager_Settings::GROUP_TEMPLATES ] as $fields ) {
+			$template_fields = array_merge( $template_fields, array_keys( $fields ) );
+		}
+
+		$this->assertContains( 'download_template_header', $template_fields );
+		$this->assertContains( 'download_template_listing', $template_fields );
+		$this->assertContains( 'download_template_listing_2', $template_fields );
+	}
+
+	/**
+	 * The screens render nothing without their registration.
+	 *
+	 * Core reads a global registry, so a screen whose fields
+	 * were never registered renders an empty form rather than failing loudly.
+	 * That is only safe because register() runs on admin_init, which always
+	 * fires before an admin page renders - this pins the dependency so it is
+	 * visible rather than discovered by a test that happens to run second.
+	 */
+	public function test_screens_depend_on_registration() {
+		global $wp_settings_sections, $wp_settings_fields;
+
+		$sections = $wp_settings_sections;
+		$fields   = $wp_settings_fields;
+
+		// Emptied deliberately: these are core's registries and clearing them is
+		// exactly what this test needs to simulate. Both are restored below.
+		$wp_settings_sections = array(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+		$wp_settings_fields   = array(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+		ob_start();
+		DownloadManager_Settings::render_options_page();
+		$html = ob_get_clean();
+
+		$wp_settings_sections = $sections; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+		$wp_settings_fields   = $fields; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+
+		// The form and its nonce still render; only the fields are missing.
+		$this->assertStringContainsString( 'options.php', $html );
+		$this->assertStringNotContainsString( 'name="' . DownloadManager_Options::OPTION . '[page_url]"', $html );
+
+		// And with registration in place, they are there.
+		DownloadManager_Settings::register();
+
+		ob_start();
+		DownloadManager_Settings::render_options_page();
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="' . DownloadManager_Options::OPTION . '[page_url]"', $html );
 	}
 
 	/**

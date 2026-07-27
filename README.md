@@ -57,7 +57,7 @@ Adds a simple download manager to your WordPress blog.
 
 ## Changelog
 ### 2.0.0
-* IMPORTANT: The Download Options and Download Templates screens now use the WordPress Settings API, so their admin URLs have changed. See the FAQ.
+* IMPORTANT: The Download Options and Download Templates screens are now built with the WordPress Settings API - `register_setting()`, `add_settings_section()` and `add_settings_field()` - so their admin URLs have changed. See the FAQ.
 * IMPORTANT: The nineteen `download_*` option rows are consolidated into a single `download_options` row and the old rows are deleted. Settings are migrated automatically. Custom code reading them directly needs updating - see the FAQ.
 * NEW: Requires WordPress 6.0 and PHP 7.4.
 * NEW: Restructured into `includes/class-downloadmanager-*.php`.
