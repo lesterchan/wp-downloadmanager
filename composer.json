@@ -1,0 +1,34 @@
+{
+    "name": "lesterchan/wp-downloadmanager",
+    "description": "Adds a simple download manager to your WordPress blog.",
+    "type": "wordpress-plugin",
+    "keywords": [
+        "wordpress",
+        "plugin",
+        "download",
+        "downloads",
+        "file"
+    ],
+    "license": [
+        "GPL-2.0-only"
+    ],
+    "authors": [
+        {
+            "name": "Lester Chan",
+            "email": "lesterchan@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6",
+        "yoast/phpunit-polyfills": "^2.0"
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "allow-plugins": false
+    }
+}
