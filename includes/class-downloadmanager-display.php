@@ -398,7 +398,7 @@ class DownloadManager_Display {
 				);
 
 				$temp_cat_id = $cat_id;
-			}
+			}//end foreach
 
 			if ( $need_footer ) {
 				$output .= self::replace_category_vars(
@@ -416,7 +416,7 @@ class DownloadManager_Display {
 			);
 		} else {
 			$output .= stripslashes( DownloadManager_Options::template( 'none' ) );
-		}
+		}//end if
 
 		$output .= self::paging_markup( $paging );
 

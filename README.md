@@ -1,11 +1,13 @@
-# WP-DownloadManager  
+# WP-DownloadManager
 Contributors: GamerZ  
 Donate link: https://lesterchan.net/site/donation/  
-Tags: file, files, download, downloads, manager, downloadmanager, downloadsmanager, filemanager, filesmanager  
-Requires at least: 4.0  
+Tags: download, downloads, file, files, manager  
+Requires at least: 6.0  
 Tested up to: 7.0  
-Stable tag: 1.69.2  
-License: GPLv2  
+Stable tag: 2.0.0  
+Requires PHP: 7.4  
+License: GPLv2 or later  
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Adds a simple download manager to your WordPress blog.
 
@@ -46,103 +48,120 @@ Adds a simple download manager to your WordPress blog.
 ### Development
 * [https://github.com/lesterchan/wp-downloadmanager](https://github.com/lesterchan/wp-downloadmanager "https://github.com/lesterchan/wp-downloadmanager")
 
-### Translations
-* [http://dev.wp-plugins.org/browser/wp-downloadmanager/i18n/](http://dev.wp-plugins.org/browser/wp-downloadmanager/i18n/ "http://dev.wp-plugins.org/browser/wp-downloadmanager/i18n/")
-
 ### Credits
-* Plugin icon by [Freepik](http://www.freepik.com) from [Flaticon](http://www.flaticon.com)
-* Download Icon by [Ryan Zimmerman](http://www.imvain.com/" "Ryan Zimmerman")
+* Plugin icon by [Freepik](https://www.freepik.com) from [Flaticon](https://www.flaticon.com)
+* Download Icon by [Ryan Zimmerman](https://www.imvain.com/ "Ryan Zimmerman")
 
 ### Donations
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
-### Version 1.69.2
+### 2.0.0
+* IMPORTANT: The Download Options and Download Templates screens now use the WordPress Settings API, so their admin URLs have changed. See the FAQ.
+* IMPORTANT: The nineteen `download_*` option rows are consolidated into a single `download_options` row and the old rows are deleted. Settings are migrated automatically. Custom code reading them directly needs updating - see the FAQ.
+* NEW: Requires WordPress 6.0 and PHP 7.4.
+* NEW: Restructured into `includes/class-downloadmanager-*.php`.
+* NEW: Dropped jQuery entirely. The quicktag, TinyMCE button, timestamp toggle and template reset buttons are vanilla JavaScript, and inline `onclick=` handlers are gone.
+* NEW: The widget supports selective refresh in the customizer.
+* NEW: Paths derive from the plugin file, so the plugin works installed under any directory name.
+* FIXED: SQL injection in `get_downloads_category()`, reachable by anyone able to edit a widget, which could expose files marked Hidden.
+* FIXED: SQL injection in the Manage Downloads search box.
+* FIXED: The listing and feed sort columns reached `ORDER BY` unvalidated.
+* FIXED: The upload subfolder was not constrained to the downloads directory.
+* FIXED: A search term containing regex metacharacters blanked the file name it was highlighting.
+* FIXED: `wp_get_sites()` was removed in WordPress 5.1, so activating or uninstalling on a network fatalled; uninstall also stopped at 100 sites and unwound `switch_to_blog()` one short.
+* FIXED: The widget's "Display Link To Download Page?" setting never showed as selected and silently reverted, and widget edits made in the block widget editor or the customizer were discarded.
+* FIXED: Files in a deleted category no longer emit "Undefined array key" warnings on PHP 8.
+* FIXED: The downloads directory is actually created on activation now.
+* FIXED: Deprecated `upgrade-functions.php` include and `add_option()` third argument removed.
+* NOTE: Some translated strings gained numbered placeholders (`%1$s`), which changes their msgid. Those strings need retranslating.
+
+### 1.69.2
 * NEW: WordPress 7.0
 * FIXED: Security hardening to escape output and prevent cross-site scripting (XSS).
 
-### Version 1.69.1
+### 1.69.1
 * FIXED: Use file_id to fetch file again before deleting files.
 * FIXED: Don't allow directory traversal for download_path
 
-### Version 1.69
+### 1.69
 * FIXED: Only allow certain files to be uploaded based on `wp_check_filetype_and_ext()`
 
-### Version 1.68.12
+### 1.68.12
 * FIXED: Add a warning to let user know that if any users manage to guess the direct file URI, he will be able to download the file as well.
 
-### Version 1.68.11
+### 1.68.11
 * FIXED: Ensure that Download Path starts only with your wp-content folder for additional security.
 
-### Version 1.68.10
+### 1.68.10
 * FIXED: Allow form in Download Page Footer template.
 
-### Version 1.68.9
+### 1.68.9
 * FIXED: XSS file_sortby and file_sortorder in download-manager.php 
 
-### Version 1.68.8
+### 1.68.8
 * FIXED: Download Categories not parsing properly.
 
-### Version 1.68.7
+### 1.68.7
 * FIXED: esc_attr()
 
-### Version 1.68.6
+### 1.68.6
 * NEW: Add filter wp_downloadmanager_file_extension_image and wp_downloadmanager_file_extension_images_path
 * FIXED: XSS in download-manager.php. Props to Ngo Van Thien and Patchstack.
 
-### Version 1.68.5
+### 1.68.5
 * FIXED: Validation of remote file to prevent Server Side Request Forgery (SSRF) as reported by WordPress Plugin Review Team
 
-### Version 1.68.4
+### 1.68.4
 * NEW: Bump WordPress 5.4
 * FIXED: Unix timestamp sorting order
 
-### Version 1.68.3
+### 1.68.3
 * NEW: Bump WordPress 5.3
 
-### Version 1.68.2
+### 1.68.2
 * NEW: WordPress 4.7
 * FIXED: Pagination not working
 * FIXED: Remove eregi
 * FIXED: Remote file URL will get be broken, if the remote file URL gets really ugly
 
-### Version 1.68.1
+### 1.68.1
 * NEW: Uses wp_kses_post() for better field sanitization
 
-### Version 1.68
+### 1.68
 * NEW: Use translate.wordpress.org to translate the plugin
 * FIXED: Some WP doesn't have wp_user_level because it has been deprecated
 
-### Version 1.67
+### 1.67
 * FIXED: Notices
 
-### Version 1.66
+### 1.66
 * FIXED: Notices in Widget Constructor for WordPress 4.3
 
-### Version 1.65
+### 1.65
 * FIXED: Integration with WP-Stats
 
-### Version 1.64
+### 1.64
 * NEW: Supports WordPress MultiSite Network Activate
 * NEW: Uses native WordPress uninstall.php
 * FIXED: Notices
 
-### Version 1.63
+### 1.63
 * NEW: Added %FILE_EXT% template variable that  output the file extension
 * FIXED: Editor button was outputting the wrong shortcode.
 * FIXED: ReferenceError: downloadssEdL10n is not defined if TinyMCE 4.0 is loaded outside the Add/Edit Posts/Pages.
 * FIXED: Added backward compatibility with [download=1] in order not to break older downloads.
 
-### Version 1.62
+### 1.62
 * NEW: Uses Dash Icons
 * NEW: Supports TinyMCE 4.0 For WordPress 3.9
 * NEW: Added sorting to embedded downloads. Props ksze.
 * NEW: You can now choose to display file sizes in either binary base or decimal base (i.e. KiB vs KB), using either `%FILE_SIZE` or `%FILE_SIZE_DEC`; `%CATEGORY_SIZE` and `%TOTAL_SIZE` also have their `_DEC` counterparts.. Props ksze.
 
-### Version 1.61
+### 1.61
 * FIXED: Added nonce to Options. Credits to Charlie Eriksen via Secunia SVCRP.
 
-### Version 1.60 (08-11-2010)
+### 1.60 (08-11-2010)
 * NEW: Display File ID In Message After Adding A File
 * FIXED: Bug In Remote File With Using Nice Permalink and File Name
 
@@ -159,6 +178,37 @@ Adds a simple download manager to your WordPress blog.
 9. Downloads Page
 
 ## Frequently Asked Questions
+
+### Download Options or Download Templates is missing, or my bookmark 404s
+Both screens moved to the WordPress Settings API in 2.0.0, so their URLs changed from
+`admin.php?page=wp-downloadmanager/download-options.php` to
+`admin.php?page=wp-downloadmanager-options`, and from
+`.../download-templates.php` to `admin.php?page=wp-downloadmanager-templates`.
+Reach them from `WP-Admin -> Downloads` and update any bookmark. Your settings are
+carried over automatically; nothing needs re-entering.
+
+### My custom code that read a download_* option stopped working
+2.0.0 consolidated the nineteen `wp_options` rows into a single `download_options`
+row holding a nested array, and deleted the old ones. Read them through the plugin
+instead:
+
+~~~php
+DownloadManager_Options::get( 'page_url' );
+DownloadManager_Options::get( 'sort.perpage' );
+DownloadManager_Options::template( 'header' );
+DownloadManager_Options::template( 'listing', 1 ); // the no-permission variant
+~~~
+
+The template tags (`downloads_page()`, `download_embedded()`,
+`get_most_downloaded()`, `get_recent_downloads()`, `get_downloads_category()`,
+`get_download_files()`, `get_download_size()`, `get_download_hits()`,
+`download_file_url()`) and the `downloads_page` / `download_embedded` filters are
+unchanged, so themes calling those need no edits.
+
+### The plugin's stylesheets or extension icons 404
+Earlier versions built every path from a literal `wp-downloadmanager` directory name,
+so installing under any other name broke them. 2.0.0 derives the paths from the plugin
+file itself. If you renamed the directory to work around this, you can rename it back.
 
 ### To Display Most Downloaded
 

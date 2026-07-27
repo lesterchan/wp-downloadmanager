@@ -70,7 +70,7 @@ class DownloadManager_Options {
 	/**
 	 * Legacy rows that carry no value forward but must still be cleaned up.
 	 *
-	 * download_options is NOT listed: it is the row the settings now live in, so
+	 * Note that download_options is NOT listed: it is the row the settings now live in, so
 	 * deleting it would throw away everything the migration just wrote.
 	 *
 	 * @return array

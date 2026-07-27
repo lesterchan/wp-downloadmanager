@@ -64,4 +64,4 @@ if ( is_multisite() ) {
 	}
 } else {
 	downloadmanager_uninstall_site();
-}
+}//end if

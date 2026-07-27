@@ -17,7 +17,7 @@ class Test_Security extends DownloadManager_TestCase {
 	/**
 	 * Category ids are cast before they reach the IN() list.
 	 *
-	 * get_downloads_category() implode()d its array argument straight into the
+	 * The get_downloads_category() tag implode()d its array argument straight into the
 	 * SQL. The widget hands it explode( ',', $instance['cat_ids'] ), so anyone
 	 * who can edit a widget could rewrite the WHERE clause - and the payload
 	 * below lifts the file_permission != -2 guard that hides files.
@@ -67,7 +67,7 @@ class Test_Security extends DownloadManager_TestCase {
 	 * A search term containing regex metacharacters does not blow up the
 	 * highlighter.
 	 *
-	 * download_search_highlight() interpolated the raw term into a preg_replace
+	 * The download_search_highlight() tag interpolated the raw term into a preg_replace
 	 * pattern, so "(" was enough to make PHP emit a compilation warning and
 	 * return null - blanking the file name.
 	 */
@@ -138,7 +138,7 @@ class Test_Security extends DownloadManager_TestCase {
 	/**
 	 * The listing sort column is restricted to real columns.
 	 *
-	 * download_sort['by'] went into ORDER BY with only sanitize_text_field()
+	 * The download_sort['by'] value went into ORDER BY with only sanitize_text_field()
 	 * behind it, so a value saved on the options screen reached the query
 	 * verbatim.
 	 */
@@ -265,7 +265,7 @@ class Test_Security extends DownloadManager_TestCase {
 	/**
 	 * The widget saves without the hidden submit marker.
 	 *
-	 * update() bailed out with false unless $new_instance['submit'] was set,
+	 * The update() method bailed out with false unless $new_instance['submit'] was set,
 	 * which the block widget editor and the customizer never send - so widget
 	 * edits made there were silently discarded.
 	 */
@@ -314,7 +314,7 @@ class Test_Security extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * download_embedded() returns a string when nothing matches.
+	 * The download_embedded() tag returns a string when nothing matches.
 	 *
 	 * It used to fall off the end of the function and return null, which is a
 	 * TypeError waiting to happen for any caller that concatenates the result.
@@ -324,9 +324,9 @@ class Test_Security extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * uninstall.php does not call the function core removed in WP 5.1.
+	 * The uninstaller does not call the function core removed in WP 5.1.
 	 *
-	 * wp_get_sites() is gone, so the multisite branch fatals rather than merely
+	 * That function is gone, so the multisite branch fatals rather than merely
 	 * skipping sites. Asserted at source level because a single-site suite
 	 * cannot build a network to run the branch against.
 	 */
@@ -342,7 +342,7 @@ class Test_Security extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * uninstall.php lifts WP_Site_Query's default cap of 100 sites.
+	 * The uninstaller lifts WP_Site_Query's default cap of 100 sites.
 	 *
 	 * A bare get_sites() silently stops at the hundredth site and leaves the
 	 * options and the table behind on every site after that, reporting success.
@@ -356,9 +356,9 @@ class Test_Security extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * restore_current_blog() runs once per switch, inside the loop.
+	 * Each switch is restored inside the loop rather than once at the end.
 	 *
-	 * switch_to_blog() pushes onto a stack, so switching N times and restoring
+	 * The switch_to_blog() call pushes onto a stack, so switching N times and restoring
 	 * once leaves the stack unwound by exactly one.
 	 */
 	public function test_uninstall_restores_each_blog() {
@@ -379,7 +379,7 @@ class Test_Security extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * add_option() is not called with the deprecated description argument.
+	 * The add_option() calls do not pass the deprecated description argument.
 	 */
 	public function test_activation_does_not_pass_deprecated_add_option_arg() {
 		$source = $this->code( 'includes/class-downloadmanager-install.php' );

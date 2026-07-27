@@ -174,7 +174,7 @@ class Test_Settings extends DownloadManager_TestCase {
 	/**
 	 * The page footer template may keep its search form.
 	 *
-	 * wp_kses_post() strips <form> and <input>, which would silently delete the
+	 * Plain wp_kses_post() strips <form> and <input>, which would silently delete the
 	 * search box from the one template that ships with one.
 	 */
 	public function test_footer_template_keeps_its_form() {

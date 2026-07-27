@@ -75,11 +75,13 @@ class DownloadManager_Templates {
 		$img    = '<img src="' . $icons . '/%FILE_ICON%" alt="" title="" style="vertical-align: middle;" />';
 
 		return array(
+			/* translators: the %WORD% tokens are the plugin's own template variables, not printf placeholders, and must be left as they are. */
 			'header'             => '<p>' . __( 'There are <strong>%TOTAL_FILES_COUNT% files</strong>, weighing <strong>%TOTAL_SIZE%</strong> with <strong>%TOTAL_HITS% hits</strong> in <strong>%FILE_CATEGORY_NAME%</strong>.</p><p>Displaying <strong>%RECORD_START%</strong> to <strong>%RECORD_END%</strong> of <strong>%TOTAL_FILES_COUNT%</strong> files.', 'wp-downloadmanager' ) . '</p>',
 			'footer'             => '<form action="%DOWNLOAD_PAGE_URL%" method="get"><p><input type="hidden" name="dl_cat" value="%CATEGORY_ID%" /><input type="text" name="dl_search" value="%FILE_SEARCH_WORD%" />&nbsp;&nbsp;&nbsp;<input type="submit" value="' . __( 'Search', 'wp-downloadmanager' ) . '" /></p></form>',
 			'pagingheader'       => '',
 			'pagingfooter'       => '',
 			'none'               => '<p style="text-align: center;">' . __( 'No Files Found.', 'wp-downloadmanager' ) . '</p>',
+			/* translators: %FILE_CATEGORY_NAME% is one of the plugin's own template variables, not a printf placeholder. */
 			'category_header'    => '<h2 id="downloadcat-%CATEGORY_ID%"><a href="%CATEGORY_URL%" title="' . __( 'View all downloads in %FILE_CATEGORY_NAME%', 'wp-downloadmanager' ) . '">%FILE_CATEGORY_NAME%</a></h2>',
 			'category_footer'    => '',
 			'listing'            => array(

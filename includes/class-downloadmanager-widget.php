@@ -175,7 +175,9 @@ class DownloadManager_Widget extends WP_Widget {
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'link' ) ); ?>"><?php esc_html_e( 'Display Link To Download Page?', 'wp-downloadmanager' ); ?>
 				<select name="<?php echo esc_attr( $this->get_field_name( 'link' ) ); ?>" id="<?php echo esc_attr( $this->get_field_id( 'link' ) ); ?>" class="widefat">
-					<?php // These compared against $type rather than $link, so the saved value never rendered as selected. ?>
+					<?php
+					// These compared against $type rather than $link, so the saved value never rendered as selected.
+					?>
 					<option value="0"<?php selected( 0, $link ); ?>><?php esc_html_e( 'No', 'wp-downloadmanager' ); ?></option>
 					<option value="1"<?php selected( 1, $link ); ?>><?php esc_html_e( 'Yes', 'wp-downloadmanager' ); ?></option>
 				</select>

@@ -23,7 +23,7 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 	const T0 = 1592209800;
 
 	/**
-	 * file_id keyed by the shorthand the tests use.
+	 * The file_id of each fixture, keyed by the shorthand the tests use.
 	 *
 	 * @var array
 	 */

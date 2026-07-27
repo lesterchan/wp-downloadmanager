@@ -386,7 +386,7 @@ class Test_Golden extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * display="name" blanks the description placeholder.
+	 * Passing display="name" blanks the description placeholder.
 	 */
 	public function test_download_shortcode_display_name_only() {
 		$this->login_as( '' );
@@ -421,7 +421,7 @@ class Test_Golden extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * sort_by and sort_order are honoured, and an unknown value falls back.
+	 * The sort_by and sort_order attributes are honoured, and an unknown value falls back.
 	 */
 	public function test_download_shortcode_sorting() {
 		$this->login_as( '' );
@@ -442,7 +442,7 @@ class Test_Golden extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * stream_limit truncates the list outside a single post and adds the More link.
+	 * The stream_limit attribute truncates the list outside a single post and adds the More link.
 	 */
 	public function test_download_shortcode_stream_limit() {
 		$this->login_as( '' );

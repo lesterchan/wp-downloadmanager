@@ -112,7 +112,7 @@ class Test_Migration extends DownloadManager_TestCase {
 	/**
 	 * The reused row's own pre-2.0.0 keys reach their new nested homes.
 	 *
-	 * download_options is the row being written, so its old contents arrive
+	 * The download_options row is the one being written, so its old contents arrive
 	 * through the defaults merge as stray top-level keys rather than through the
 	 * legacy loop. Missing this leaves rss_sortby sitting at the top level while
 	 * rss.sortby quietly stays on the default.
@@ -250,7 +250,7 @@ class Test_Migration extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * uninstall.php cleans up both the new row and any legacy leftovers.
+	 * The uninstaller cleans up both the new row and any legacy leftovers.
 	 */
 	public function test_uninstall_covers_every_row() {
 		$source = $this->code( 'uninstall.php' );

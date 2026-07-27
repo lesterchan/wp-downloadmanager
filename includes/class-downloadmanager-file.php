@@ -24,7 +24,7 @@ class DownloadManager_File {
 	/**
 	 * The columns a download listing may be sorted by.
 	 *
-	 * sort.by and rss.sortby are written by the settings screen and read
+	 * The sort.by and rss.sortby settings are written by the settings screen and read
 	 * straight into an ORDER BY clause, so they need an allow list rather than
 	 * sanitize_text_field().
 	 *
