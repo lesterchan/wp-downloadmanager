@@ -1,5 +1,14 @@
 <?php
-// Check Whether User Can Manage Downloads
+/**
+ * The Add A File screen.
+ *
+ * Kept at the plugin root rather than moved into includes/: the admin menu uses
+ * the legacy "plugin file as menu slug" form, so this file's path is its slug.
+ *
+ * @package WP-DownloadManager
+ */
+
+// Check whether the user can manage downloads.
 if ( ! current_user_can( 'manage_downloads' ) ) {
 	// wp_die() rather than a bare die(): it renders a styled page, sends a 403
 	// instead of a 200, and is catchable, so the capability guard can be tested.
@@ -11,7 +20,7 @@ if ( ! current_user_can( 'manage_downloads' ) ) {
 }
 
 
-// Variables Variables Variables
+// Variables.
 $base_name       = WP_DOWNLOADMANAGER_SLUG . '/download-manager.php';
 $base_page       = 'admin.php?page=' . $base_name;
 $file_path       = DownloadManager_Options::get( 'path.dir' );
@@ -34,38 +43,41 @@ wp_enqueue_script(
 );
 
 
-// Form Processing
+// Form processing.
 if ( ! empty( $_POST['do'] ) ) {
 	check_admin_referer( 'wp-downloadmanager_add-file' );
-	// Decide What To Do
+	// Decide what to do.
 	switch ( $_POST['do'] ) {
-		// Add File
+		// Add a file.
 		case __( 'Add File', 'wp-downloadmanager' ):
 			$file_type = ! empty( $_POST['file_type'] ) ? intval( $_POST['file_type'] ) : 0;
 			switch ( $file_type ) {
 				case 0:
-					$file      = ! empty( $_POST['file'] ) ? sanitize_text_field( trim( wp_unslash( $_POST['file'] ) ) ) : '';
+					$file      = ! empty( $_POST['file'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['file'] ) ) ) : '';
 					$file      = DownloadManager_File::rename_file( $file_path, $file );
 					$file_size = filesize( $file_path . $file );
 					break;
 				case 1:
-					if ( $_FILES['file_upload']['size'] > get_max_upload_size() ) {
+					$upload_size = isset( $_FILES['file_upload']['size'] ) ? (int) $_FILES['file_upload']['size'] : 0;
+					if ( $upload_size > get_max_upload_size() ) {
+						/* translators: %s: the maximum upload size. */
 						$text = '<p style="color: red;">' . sprintf( __( 'File Size Too Large. Maximum Size Is %s', 'wp-downloadmanager' ), format_filesize( get_max_upload_size() ) ) . '</p>';
 						break;
 					}
-					$file_name = ! empty( $_FILES['file_upload']['name'] ) ? basename( $_FILES['file_upload']['name'] ) : '';
-					$validate  = wp_check_filetype_and_ext( $_FILES['file_upload']['tmp_name'], $file_name );
-					if ( $validate['type'] === false ) {
+					$file_name = ! empty( $_FILES['file_upload']['name'] ) ? sanitize_file_name( basename( sanitize_text_field( wp_unslash( $_FILES['file_upload']['name'] ) ) ) ) : '';
+					$tmp_name  = isset( $_FILES['file_upload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['file_upload']['tmp_name'] ) ) : '';
+					$validate  = wp_check_filetype_and_ext( $tmp_name, $file_name );
+					if ( false === $validate['type'] ) {
 							$text = '<p style="color: red;">' . __( 'File type is invalid', 'wp-downloadmanager' ) . '</p>';
 							break;
 					}
-					if ( is_uploaded_file( $_FILES['file_upload']['tmp_name'] ) ) {
+					if ( is_uploaded_file( $tmp_name ) ) {
 						$file_upload_to = ! empty( $_POST['file_upload_to'] ) ? sanitize_text_field( wp_unslash( $_POST['file_upload_to'] ) ) : '';
 						$file_upload_to = DownloadManager_File::safe_subfolder( $file_path, $file_upload_to );
-						if ( $file_upload_to !== '/' ) {
+						if ( '/' !== $file_upload_to ) {
 							$file_upload_to = $file_upload_to . '/';
 						}
-						if ( move_uploaded_file( $_FILES['file_upload']['tmp_name'], $file_path . $file_upload_to . $file_name ) ) {
+						if ( move_uploaded_file( $tmp_name, $file_path . $file_upload_to . $file_name ) ) {
 							$file      = $file_upload_to . $file_name;
 							$file      = DownloadManager_File::rename_file( $file_path, $file );
 							$file_size = filesize( $file_path . $file );
@@ -88,11 +100,11 @@ if ( ! empty( $_POST['do'] ) ) {
 					break;
 			}
 			if ( empty( $text ) ) {
-				$file_name = ! empty( $_POST['file_name'] ) ? wp_kses_post( trim( wp_unslash( $_POST['file_name'] ) ) ) : '';
+				$file_name = ! empty( $_POST['file_name'] ) ? trim( wp_kses_post( wp_unslash( $_POST['file_name'] ) ) ) : '';
 				if ( empty( $file_name ) ) {
 					$file_name = basename( $file );
 				}
-				$file_des      = ! empty( $_POST['file_des'] ) ? wp_kses_post( trim( wp_unslash( $_POST['file_des'] ) ) ) : '';
+				$file_des      = ! empty( $_POST['file_des'] ) ? trim( wp_kses_post( wp_unslash( $_POST['file_des'] ) ) ) : '';
 				$file_category = ! empty( $_POST['file_cat'] ) ? intval( $_POST['file_cat'] ) : 0;
 				if ( ! empty( $_POST['file_size'] ) ) {
 					$file_size = ! empty( $_POST['file_size'] ) ? intval( $_POST['file_size'] ) : 0;
@@ -124,10 +136,12 @@ if ( ! empty( $_POST['do'] ) ) {
 					)
 				);
 				if ( ! $addfile ) {
+					/* translators: 1: file name, 2: file path. */
 					$text = '<p style="color: red;">' . sprintf( __( 'Error In Adding File \'%1$s (%2$s)\'', 'wp-downloadmanager' ), $file_name, $file ) . '</p>';
 				} else {
 					$file_id = intval( $wpdb->insert_id );
-					$text    = '<p style="color: green;">' . sprintf( __( 'File \'%1$s (%2$s) (ID: %3$s)\' Added Successfully', 'wp-downloadmanager' ), $file_name, $file, $file_id ) . '</p>';
+					/* translators: 1: file name, 2: file path, 3: file ID. */
+					$text = '<p style="color: green;">' . sprintf( __( 'File \'%1$s (%2$s) (ID: %3$s)\' Added Successfully', 'wp-downloadmanager' ), $file_name, $file, $file_id ) . '</p>';
 				}
 			}
 			break;
@@ -136,56 +150,67 @@ if ( ! empty( $_POST['do'] ) ) {
 ?>
 <?php
 if ( ! empty( $text ) ) {
-	echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . stripslashes( $text ) . '</p></div>';
+	echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . wp_kses_post( stripslashes( $text ) ) . '</p></div>';
 }
 ?>
 <!-- Add A File -->
-<form method="post" action="<?php echo admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/' . basename( __FILE__ ) ); ?>" enctype="multipart/form-data">
-	<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo get_max_upload_size(); ?>" />
+<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/' . basename( __FILE__ ) ) ); ?>" enctype="multipart/form-data">
+	<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo esc_attr( get_max_upload_size() ); ?>" />
 	<?php wp_nonce_field( 'wp-downloadmanager_add-file' ); ?>
 	<div class="wrap">
-		<h2><?php _e( 'Add A File', 'wp-downloadmanager' ); ?></h2>
+		<h2><?php esc_html_e( 'Add A File', 'wp-downloadmanager' ); ?></h2>
 		<table class="form-table">
 			<tr>
-				<td valign="top"><strong><?php _e( 'File:', 'wp-downloadmanager' ); ?></strong></td>
+				<td valign="top"><strong><?php esc_html_e( 'File:', 'wp-downloadmanager' ); ?></strong></td>
 				<td>
 					<!-- Browse File -->
-					<input type="radio" id="file_type_0" name="file_type" value="0" checked="checked" />&nbsp;&nbsp;<label for="file_type_0"><?php _e( 'Browse File:', 'wp-downloadmanager' ); ?></label>&nbsp;
+					<input type="radio" id="file_type_0" name="file_type" value="0" checked="checked" />&nbsp;&nbsp;<label for="file_type_0"><?php esc_html_e( 'Browse File:', 'wp-downloadmanager' ); ?></label>&nbsp;
 					<select name="file" size="1" data-checks="file_type_0" dir="ltr">
 						<?php DownloadManager_Admin::print_files( $file_path, $file_path ); ?>
 					</select>
-					<br /><small><?php printf( __( 'Please upload the file to \'%s\' directory first.', 'wp-downloadmanager' ), $file_path ); ?></small>
+					<br /><small>
+					<?php
+					/* translators: %s: the downloads directory. */
+					printf( esc_html__( 'Please upload the file to \'%s\' directory first.', 'wp-downloadmanager' ), esc_html( $file_path ) );
+					?>
+					</small>
 					<br /><br />
 					<!-- Upload File -->
-					<input type="radio" id="file_type_1" name="file_type" value="1" />&nbsp;&nbsp;<label for="file_type_1"><?php _e( 'Upload File:', 'wp-downloadmanager' ); ?></label>&nbsp;
-					<input type="file" name="file_upload" size="25" data-checks="file_type_1" dir="ltr" />&nbsp;&nbsp;<?php _e( 'to', 'wp-downloadmanager' ); ?>&nbsp;&nbsp;
+					<input type="radio" id="file_type_1" name="file_type" value="1" />&nbsp;&nbsp;<label for="file_type_1"><?php esc_html_e( 'Upload File:', 'wp-downloadmanager' ); ?></label>&nbsp;
+					<input type="file" name="file_upload" size="25" data-checks="file_type_1" dir="ltr" />&nbsp;&nbsp;<?php esc_html_e( 'to', 'wp-downloadmanager' ); ?>&nbsp;&nbsp;
 					<select name="file_upload_to" size="1" data-checks="file_type_1" dir="ltr">
 						<?php DownloadManager_Admin::print_folders( $file_path, $file_path ); ?>
 					</select>
-					<br /><small><?php printf( __( 'Maximum file size is %s.', 'wp-downloadmanager' ), format_filesize( get_max_upload_size() ) ); ?></small>
+					<br /><small>
+					<?php
+					/* translators: %s: the maximum upload size. */
+					printf( esc_html__( 'Maximum file size is %s.', 'wp-downloadmanager' ), esc_html( format_filesize( get_max_upload_size() ) ) );
+					?>
+					</small>
 					<!-- Remote File -->
 					<br /><br />
-					<input type="radio" id="file_type_2" name="file_type" value="2" />&nbsp;&nbsp;<label for="file_type_2"><?php _e( 'Remote File:', 'wp-downloadmanager' ); ?></label>&nbsp;
+					<input type="radio" id="file_type_2" name="file_type" value="2" />&nbsp;&nbsp;<label for="file_type_2"><?php esc_html_e( 'Remote File:', 'wp-downloadmanager' ); ?></label>&nbsp;
 					<input type="text" name="file_remote" size="50" maxlength="255" data-checks="file_type_2" value="http://" dir="ltr" />
-					<br /><small><?php _e( 'Please include http:// or ftp:// in front.', 'wp-downloadmanager' ); ?></small>
+					<br /><small><?php esc_html_e( 'Please include http:// or ftp:// in front.', 'wp-downloadmanager' ); ?></small>
 				</td>
 			</tr>
 			<tr>
-				<td><strong><?php _e( 'File Name:', 'wp-downloadmanager' ); ?></strong></td>
+				<td><strong><?php esc_html_e( 'File Name:', 'wp-downloadmanager' ); ?></strong></td>
 				<td><input type="text" size="50" maxlength="200" name="file_name" /></td>
 			</tr>
 			<tr>
-				<td valign="top"><strong><?php _e( 'File Description:', 'wp-downloadmanager' ); ?></strong></td>
+				<td valign="top"><strong><?php esc_html_e( 'File Description:', 'wp-downloadmanager' ); ?></strong></td>
 				<td><textarea rows="5" cols="50" name="file_des"></textarea></td>
 			</tr>
 			<tr>
-				<td><strong><?php _e( 'File Category:', 'wp-downloadmanager' ); ?></strong></td>
+				<td><strong><?php esc_html_e( 'File Category:', 'wp-downloadmanager' ); ?></strong></td>
 				<td>
 					<select name="file_cat" size="1">
 						<?php
-						for ( $i = 0; $i < sizeof( $file_categories ); $i++ ) {
+						$category_count = count( $file_categories );
+						for ( $i = 0; $i < $category_count; $i++ ) {
 							if ( ! empty( $file_categories[ $i ] ) ) {
-								echo '<option value="' . $i . '">' . $file_categories[ $i ] . '</option>' . "\n";
+								printf( '<option value="%1$s">%2$s</option>' . "\n", esc_attr( $i ), esc_html( $file_categories[ $i ] ) );
 							}
 						}
 						?>
@@ -193,36 +218,36 @@ if ( ! empty( $text ) ) {
 				</td>
 			</tr>
 			<tr>
-				<td valign="top"><strong><?php _e( 'File Size:', 'wp-downloadmanager' ); ?></strong></td>
-				<td><input type="text" size="10" name="file_size" />&nbsp;<?php _e( 'bytes', 'wp-downloadmanager' ); ?><br /><small><?php _e( 'Leave blank for auto detection. Auto detection sometimes will not work for Remote File.', 'wp-downloadmanager' ); ?></small></td>
+				<td valign="top"><strong><?php esc_html_e( 'File Size:', 'wp-downloadmanager' ); ?></strong></td>
+				<td><input type="text" size="10" name="file_size" />&nbsp;<?php esc_html_e( 'bytes', 'wp-downloadmanager' ); ?><br /><small><?php esc_html_e( 'Leave blank for auto detection. Auto detection sometimes will not work for Remote File.', 'wp-downloadmanager' ); ?></small></td>
 			</tr>
 			<tr>
-				<td valign="top"><strong><?php _e( 'File Date:', 'wp-downloadmanager' ); ?></strong></td>
+				<td valign="top"><strong><?php esc_html_e( 'File Date:', 'wp-downloadmanager' ); ?></strong></td>
 				<td><?php DownloadManager_Admin::file_timestamp( current_time( 'timestamp' ) ); ?></td>
 			</tr>
 			<tr>
-				<td><strong><?php _e( 'Starting File Hits:', 'wp-downloadmanager' ); ?></strong></td>
+				<td><strong><?php esc_html_e( 'Starting File Hits:', 'wp-downloadmanager' ); ?></strong></td>
 				<td><input type="text" size="6" maxlength="10" name="file_hits" value="0" /></td>
 			</tr>
 			<tr>
-				<td><strong><?php _e( 'Allowed To Download:', 'wp-downloadmanager' ); ?></strong></td>
+				<td><strong><?php esc_html_e( 'Allowed To Download:', 'wp-downloadmanager' ); ?></strong></td>
 				<td>
 					<select name="file_permission" size="1">
-						<option value="-2"><?php _e( 'Hidden', 'wp-downloadmanager' ); ?></option>
-						<option value="-1" selected="selected"><?php _e( 'Everyone', 'wp-downloadmanager' ); ?></option>
-						<option value="0"><?php _e( 'Registered Users Only', 'wp-downloadmanager' ); ?></option>
-						<option value="1"><?php _e( 'At Least Contributor Role', 'wp-downloadmanager' ); ?></option>
-						<option value="2"><?php _e( 'At Least Author Role', 'wp-downloadmanager' ); ?></option>
-						<option value="7"><?php _e( 'At Least Editor Role', 'wp-downloadmanager' ); ?></option>
-						<option value="10"><?php _e( 'At Least Administrator Role', 'wp-downloadmanager' ); ?></option>
+						<option value="-2"><?php esc_html_e( 'Hidden', 'wp-downloadmanager' ); ?></option>
+						<option value="-1" selected="selected"><?php esc_html_e( 'Everyone', 'wp-downloadmanager' ); ?></option>
+						<option value="0"><?php esc_html_e( 'Registered Users Only', 'wp-downloadmanager' ); ?></option>
+						<option value="1"><?php esc_html_e( 'At Least Contributor Role', 'wp-downloadmanager' ); ?></option>
+						<option value="2"><?php esc_html_e( 'At Least Author Role', 'wp-downloadmanager' ); ?></option>
+						<option value="7"><?php esc_html_e( 'At Least Editor Role', 'wp-downloadmanager' ); ?></option>
+						<option value="10"><?php esc_html_e( 'At Least Administrator Role', 'wp-downloadmanager' ); ?></option>
 					</select>
 					<p>
-						<?php _e( 'Note: While role-based authentication is enforced, users who directly guess the file URL may still be able to access the file without authorization.', 'wp-downloadmanager' ); ?>
+						<?php esc_html_e( 'Note: While role-based authentication is enforced, users who directly guess the file URL may still be able to access the file without authorization.', 'wp-downloadmanager' ); ?>
 					</p>
 				</td>
 			</tr>
 			<tr>
-				<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e( 'Add File', 'wp-downloadmanager' ); ?>" class="button" />&nbsp;&nbsp;<button type="button" name="cancel" class="button download-cancel"><?php esc_html_e( 'Cancel', 'wp-downloadmanager' ); ?></button></td>
+				<td colspan="2" align="center"><input type="submit" name="do" value="<?php esc_html_e( 'Add File', 'wp-downloadmanager' ); ?>" class="button" />&nbsp;&nbsp;<button type="button" name="cancel" class="button download-cancel"><?php esc_html_e( 'Cancel', 'wp-downloadmanager' ); ?></button></td>
 			</tr>
 		</table>
 	</div>

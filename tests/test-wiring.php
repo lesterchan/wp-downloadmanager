@@ -90,8 +90,11 @@ class Test_Wiring extends DownloadManager_TestCase {
 	public function test_menu_registers() {
 		global $menu, $submenu;
 
-		$menu    = array();
-		$submenu = array();
+		// Cleared so the assertions below see only what menu() registered. These
+		// are core's globals, which is the whole point: the test is checking what
+		// the plugin puts into them.
+		$menu    = array(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+		$submenu = array(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		set_current_screen( 'dashboard' );
 
@@ -136,7 +139,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 	/**
 	 * Hook suffixes to test the asset loader against.
 	 *
-	 * add_submenu_page() returns "downloads_page_<slug>" for the pages with
+	 * WordPress returns "downloads_page_<slug>" for the pages with
 	 * callbacks and the bare file path for the legacy ones, so both shapes have
 	 * to match.
 	 *

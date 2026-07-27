@@ -79,72 +79,17 @@
 		<exclude-pattern>/tests/*</exclude-pattern>
 	</rule>
 
-	<!-- OUTSTANDING WORK, not a judgement that these are fine.
-
-	     download-manager.php and download-add.php are the two screens 2.0.0 did
-	     not rewrite: they keep the legacy "plugin file as menu slug" form, so
-	     they stay at the plugin root rather than moving into includes/. Between
-	     them they still report ~300 violations, roughly two thirds of which are
-	     output escaping - _e() that should be esc_html_e(), and echo of values
-	     that should be escaped at the sink.
-
-	     They are excluded here so CI has a clean signal to enforce over the rest
-	     of the plugin, NOT because the findings are wrong. They are admin-only
-	     and behind the manage_downloads capability, which is why they are not
-	     urgent, but they are real and should be cleared file by file.
-
-	     The reason this was not done in 2.0.0 is that these two files are the
-	     only ones the test suite does not reach - it covers rendering, options,
-	     migration and settings, none of which touch these screens. Bulk editing
-	     escaping into unfested admin code is exactly how a refactor introduces a
-	     silent bug, so it wants its own pass with its own tests. -->
-	<rule ref="WordPress.Security.EscapeOutput">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-		<exclude-pattern>/download-add.php</exclude-pattern>
-	</rule>
+	<!-- wp_kses_post() is a sanitizer for the fields that are allowed to carry
+	     markup - the file name and description shown in the listing templates.
+	     WPCS only knows the core list, so it is declared here rather than
+	     silenced with an ignore at each call site. -->
 	<rule ref="WordPress.Security.ValidatedSanitizedInput">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-		<exclude-pattern>/download-add.php</exclude-pattern>
+		<properties>
+			<property name="customSanitizingFunctions" type="array">
+				<element value="wp_kses_post"/>
+				<element value="wp_kses"/>
+			</property>
+		</properties>
 	</rule>
-	<rule ref="WordPress.WP.I18n.MissingTranslatorsComment">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-		<exclude-pattern>/download-add.php</exclude-pattern>
-	</rule>
-	<rule ref="WordPress.PHP.YodaConditions">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-		<exclude-pattern>/download-add.php</exclude-pattern>
-	</rule>
-	<rule ref="Squiz.Commenting">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-		<exclude-pattern>/download-add.php</exclude-pattern>
-	</rule>
-	<rule ref="Universal.Operators.StrictComparisons">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-		<exclude-pattern>/download-add.php</exclude-pattern>
-	</rule>
-	<rule ref="Generic.CodeAnalysis.ForLoopWithTestFunctionCall">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-		<exclude-pattern>/download-add.php</exclude-pattern>
-	</rule>
-	<rule ref="Squiz.PHP.DisallowSizeFunctionsInLoops">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-		<exclude-pattern>/download-add.php</exclude-pattern>
-	</rule>
-	<rule ref="WordPress.WP.GlobalVariablesOverride">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-	</rule>
-	<rule ref="WordPress.DB.PreparedSQL.NotPrepared">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-	</rule>
-	<rule ref="Generic.PHP.ForbiddenFunctions">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-		<exclude-pattern>/download-add.php</exclude-pattern>
-	</rule>
-	<rule ref="Generic.Strings.UnnecessaryStringConcat">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-	</rule>
-	<!-- unlink() on a file the admin explicitly asked to delete from the server. -->
-	<rule ref="WordPress.WP.AlternativeFunctions.unlink_unlink">
-		<exclude-pattern>/download-manager.php</exclude-pattern>
-	</rule>
+
 </ruleset>

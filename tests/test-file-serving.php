@@ -41,7 +41,7 @@ class Test_File_Serving extends DownloadManager_TestCase {
 	/**
 	 * Run serve() for a query var, capturing output and any wp_die().
 	 *
-	 * serve() exits on success, and wp_redirect() plus exit is unreachable from
+	 * The endpoint exits on success, and wp_redirect() plus exit is unreachable from
 	 * a test, so the redirect branch is asserted through the wp_redirect filter
 	 * instead. Everything returns through a WPDieException or the filter.
 	 *

@@ -1,8 +1,8 @@
 <?php
 /**
- * uninstall.php.
+ * The uninstaller.
  *
- * The destructive path runs once, in a single test: WordPress's test framework
+ * The destructive path runs once, in a single test. WordPress's test framework
  * rewrites CREATE/DROP TABLE into their TEMPORARY equivalents, so the physical
  * drop cannot be observed from inside the suite and the queries the uninstaller
  * issues are asserted instead.
@@ -147,7 +147,7 @@ class Test_Uninstall extends DownloadManager_TestCase {
 	/**
 	 * Every site on a network is visited.
 	 *
-	 * get_sites() defaults 'number' to 100, so without this a network larger
+	 * Core defaults get_sites()' 'number' to 100, so without this a network larger
 	 * than that silently keeps its options and tables on every site past the
 	 * hundredth while uninstall still reports success. Asserted at source level
 	 * because a single-site suite cannot build the network to prove it.

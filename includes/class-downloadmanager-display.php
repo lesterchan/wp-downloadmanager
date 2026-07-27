@@ -335,7 +335,9 @@ class DownloadManager_Display {
 
 		$group_sql = 1 === $group ? 'file_category ASC,' : '';
 
-		// phpcs:ignore WordPress.DB
+		// The placeholder count is dynamic - three per search term, plus the two
+		// LIMIT bounds - so the sniff cannot count them statically.
+		// phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 		$files = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->downloads} WHERE 1=1 {$category_sql} {$search_sql} AND file_permission != -2 ORDER BY {$group_sql} {$order_by_column} {$sort_order} LIMIT %d, %d",

@@ -2,7 +2,7 @@
 /**
  * Render tests for the two legacy admin screens.
  *
- * download-manager.php and download-add.php are the only part of the plugin
+ * The two files download-manager.php and download-add.php are the only part of the plugin
  * 2.0.0 did not rewrite - they keep the legacy "plugin file as menu slug" form,
  * so they stay at the plugin root - and they were the only files with no
  * coverage at all, which is why the escaping sniffs had to be excluded for

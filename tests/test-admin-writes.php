@@ -212,9 +212,9 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * kses normalises a bare ampersand, and it is not then double encoded.
+	 * A bare ampersand is normalised by kses, and not then double encoded.
 	 *
-	 * wp_kses_post() entity-encodes a bare & on the way in, which is correct.
+	 * Encoding on the way in is correct - wp_kses_post() does it.
 	 * What must not happen is the stored &amp; being encoded again on the way
 	 * out, which renders &amp;amp; on screen.
 	 */

@@ -210,7 +210,7 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 	/**
 	 * Render one of the legacy admin pages and return its HTML.
 	 *
-	 * download-manager.php and download-add.php are procedural and run at global
+	 * Both admin pages are procedural and run at global
 	 * scope under wp-admin, so they reach for $wpdb without owning it. Requiring
 	 * them from inside a method only works because this helper pulls the same
 	 * globals in first; without that they would silently render half a page.
