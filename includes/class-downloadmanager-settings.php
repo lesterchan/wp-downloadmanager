@@ -135,12 +135,23 @@ class DownloadManager_Settings {
 	 * @return string
 	 */
 	protected static function sanitize_download_path( $path ) {
-		$real_path    = realpath( $path );
-		$real_content = realpath( WP_CONTENT_DIR );
+		$path    = untrailingslashit( wp_normalize_path( trim( $path ) ) );
+		$content = untrailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
 
-		if ( false === $real_path || false === $real_content
-			|| 0 !== strpos( $real_path . DIRECTORY_SEPARATOR, rtrim( $real_content, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR )
-			|| false !== strpos( $path, '../' ) ) {
+		// realpath() resolves symlinks and .., but returns false for a directory
+		// that does not exist yet. Falling back to the raw path there is what
+		// stops a perfectly good setting being silently rewritten to wp-content
+		// just because the directory has not been created - which is what the
+		// old check did, on every save of this screen, to anyone whose downloads
+		// directory was missing.
+		$resolved = realpath( $path );
+		$compare  = false !== $resolved ? untrailingslashit( wp_normalize_path( $resolved ) ) : $path;
+
+		$escapes = false !== strpos( $path, '..' )
+			|| '' === $path
+			|| 0 !== strpos( $compare . '/', $content . '/' );
+
+		if ( $escapes ) {
 			add_settings_error(
 				DownloadManager_Options::OPTION,
 				'download_path',
@@ -260,6 +271,12 @@ class DownloadManager_Settings {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Download Options', 'wp-downloadmanager' ); ?></h1>
+			<?php
+			// A custom menu page has to render its own settings errors; WordPress
+			// only does it automatically on the built-in Settings screens. Without
+			// this a rejected value is corrected silently.
+			settings_errors( DownloadManager_Options::OPTION );
+			?>
 			<form method="post" action="options.php">
 				<?php settings_fields( self::GROUP_OPTIONS ); ?>
 
@@ -601,6 +618,12 @@ class DownloadManager_Settings {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Download Templates', 'wp-downloadmanager' ); ?></h1>
+			<?php
+			// A custom menu page has to render its own settings errors; WordPress
+			// only does it automatically on the built-in Settings screens. Without
+			// this a rejected value is corrected silently.
+			settings_errors( DownloadManager_Options::OPTION );
+			?>
 			<form method="post" action="options.php">
 				<?php settings_fields( self::GROUP_TEMPLATES ); ?>
 

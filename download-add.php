@@ -12,6 +12,11 @@ $file_path       = DownloadManager_Options::get( 'path.dir' );
 $file_categories = DownloadManager_Options::get( 'categories' );
 
 
+// WordPress includes this file at global scope from admin.php, so $wpdb is
+// already in scope. Declared explicitly so the dependency is visible.
+global $wpdb;
+
+
 // The form screens' behaviour lives in one script rather than in inline
 // handlers. Enqueued for every mode: add, edit and delete all use it.
 wp_enqueue_script(

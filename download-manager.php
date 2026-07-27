@@ -23,6 +23,11 @@ $file_search         = ! empty( $_GET['search'] ) ? sanitize_text_field( wp_unsl
 $file_search_query   = '';
 $text_direction      = ! empty( $text_direction ) ? $text_direction : '';
 
+// WordPress includes this file at global scope from admin.php, so $wpdb is
+// already in scope. Declared explicitly so the dependency is visible.
+global $wpdb;
+
+
 // The form screens' behaviour lives in one script rather than in inline
 // handlers. Enqueued for every mode: add, edit and delete all use it.
 wp_enqueue_script(

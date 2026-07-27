@@ -127,6 +127,80 @@ class Test_Settings extends DownloadManager_TestCase {
 	}
 
 	/**
+	 * Traversal is refused even when it lands back inside wp-content.
+	 */
+	public function test_download_path_rejects_traversal() {
+		$saved = DownloadManager_Settings::sanitize(
+			array( 'path' => array( 'dir' => WP_CONTENT_DIR . '/../../etc' ) )
+		);
+
+		$this->assertSame( WP_CONTENT_DIR, $saved['path']['dir'] );
+	}
+
+	/**
+	 * A directory inside wp-content that does not exist yet is kept.
+	 *
+	 * The old check ran realpath() and reset the setting to wp-content whenever
+	 * it came back false, so anyone whose downloads directory had not been
+	 * created lost their path every single time they saved this screen - even if
+	 * they had only come to change the per-page count. Found by saving the
+	 * screen in a browser, which is the only place it showed.
+	 */
+	public function test_download_path_survives_a_missing_directory() {
+		$missing = WP_CONTENT_DIR . '/files-not-created-yet';
+		$this->assertDirectoryDoesNotExist( $missing );
+
+		$saved = DownloadManager_Settings::sanitize(
+			array( 'path' => array( 'dir' => $missing ) )
+		);
+
+		$this->assertSame( $missing, $saved['path']['dir'] );
+	}
+
+	/**
+	 * Saving an unrelated field does not disturb the stored path.
+	 */
+	public function test_saving_another_field_keeps_the_download_path() {
+		$path = WP_CONTENT_DIR . '/files-not-created-yet';
+		DownloadManager_Options::set( 'path.dir', $path );
+
+		$saved = DownloadManager_Settings::sanitize(
+			array( 'sort' => array( 'perpage' => '7' ) )
+		);
+
+		$this->assertSame( $path, $saved['path']['dir'] );
+		$this->assertSame( 7, $saved['sort']['perpage'] );
+	}
+
+	/**
+	 * A trailing slash is normalised away rather than stored.
+	 */
+	public function test_download_path_drops_a_trailing_slash() {
+		$saved = DownloadManager_Settings::sanitize(
+			array( 'path' => array( 'dir' => WP_CONTENT_DIR . '/uploads/' ) )
+		);
+
+		$this->assertSame( WP_CONTENT_DIR . '/uploads', $saved['path']['dir'] );
+	}
+
+	/**
+	 * Both screens render their own settings errors.
+	 *
+	 * A custom menu page has to call settings_errors() itself - WordPress only
+	 * does it automatically on the built-in Settings screens - so without it a
+	 * rejected value is corrected with no message at all.
+	 */
+	public function test_screens_render_settings_errors() {
+		foreach ( array( 'render_options_page', 'render_templates_page' ) as $method ) {
+			$this->assertStringContainsString(
+				'settings_errors(',
+				$this->code( 'includes/class-downloadmanager-settings.php' ),
+				"{$method} should display settings errors"
+			);
+		}
+	}
+
+	/**
 	 * Saving the templates screen does not blank the options screen.
 	 *
 	 * Both screens write the same row, so a sanitize callback that replaced
