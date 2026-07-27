@@ -116,22 +116,26 @@ class Test_Wiring extends DownloadManager_TestCase {
 	}
 
 	/**
-	 * The admin stylesheet loads on the plugin's pages and nowhere else.
+	 * The templates script loads on its own screen and nowhere else.
+	 *
+	 * There used to be an admin stylesheet enqueued on all four screens as well.
+	 * It had been a zero-byte file since the plugin's first commit, so it was
+	 * dropped in 2.0.0 rather than shipped as a request that delivers nothing.
 	 *
 	 * @dataProvider admin_asset_provider
 	 *
 	 * @param string $hook_suffix The hook suffix WordPress hands back.
-	 * @param bool   $expected    Whether the stylesheet should load.
+	 * @param bool   $expected    Whether the script should load.
 	 */
-	public function test_admin_stylesheet_scoping( $hook_suffix, $expected ) {
-		wp_dequeue_style( 'wp-downloadmanager-admin' );
-		wp_deregister_style( 'wp-downloadmanager-admin' );
+	public function test_admin_script_scoping( $hook_suffix, $expected ) {
+		wp_dequeue_script( 'wp-downloadmanager-admin' );
+		wp_deregister_script( 'wp-downloadmanager-admin' );
 
 		DownloadManager_Admin::enqueue_assets( $hook_suffix );
 
 		$this->assertSame(
 			$expected,
-			wp_style_is( 'wp-downloadmanager-admin', 'enqueued' ),
+			wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ),
 			$hook_suffix
 		);
 	}
@@ -139,9 +143,10 @@ class Test_Wiring extends DownloadManager_TestCase {
 	/**
 	 * Hook suffixes to test the asset loader against.
 	 *
-	 * WordPress returns "downloads_page_<slug>" for the pages with
-	 * callbacks and the bare file path for the legacy ones, so both shapes have
-	 * to match.
+	 * WordPress returns "downloads_page_<slug>" for the pages registered with a
+	 * callback and the bare file path for the legacy ones, so both shapes are
+	 * covered - the options screen in particular must not pick up the templates
+	 * screen's script just because their slugs share a prefix.
 	 *
 	 * @return array
 	 */
@@ -149,14 +154,57 @@ class Test_Wiring extends DownloadManager_TestCase {
 		$pages = DownloadManager_Admin::pages();
 
 		return array(
-			'manage downloads'   => array( $pages['manager'], true ),
-			'add file'           => array( $pages['add'], true ),
-			'options callback'   => array( 'downloads_page_' . $pages['options'], true ),
 			'templates callback' => array( 'downloads_page_' . $pages['templates'], true ),
+			'options callback'   => array( 'downloads_page_' . $pages['options'], false ),
+			'manage downloads'   => array( $pages['manager'], false ),
+			'add file'           => array( $pages['add'], false ),
 			'unrelated screen'   => array( 'edit.php', false ),
 			'dashboard'          => array( 'index.php', false ),
 			'another plugin'     => array( 'settings_page_something-else', false ),
 		);
+	}
+
+	/**
+	 * No stylesheet is enqueued on any admin screen.
+	 *
+	 * A guard against the empty one coming back.
+	 */
+	public function test_no_admin_stylesheet_is_enqueued() {
+		foreach ( DownloadManager_Admin::pages() as $slug ) {
+			DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $slug );
+			DownloadManager_Admin::enqueue_assets( $slug );
+		}
+
+		$ours = array_filter(
+			wp_styles()->queue,
+			static function ( $handle ) {
+				return 0 === strpos( $handle, 'wp-downloadmanager' );
+			}
+		);
+
+		$this->assertSame( array(), array_values( $ours ), 'the admin stylesheet was removed in 2.0.0' );
+	}
+
+	/**
+	 * The plugin ships no zero-byte assets.
+	 *
+	 * download-admin-css.css was one for fifteen years, enqueued the whole time.
+	 */
+	public function test_no_empty_assets_are_shipped() {
+		$assets = array_merge(
+			(array) glob( WP_DOWNLOADMANAGER_DIR . '*.css' ),
+			(array) glob( WP_DOWNLOADMANAGER_DIR . '*.js' )
+		);
+
+		$this->assertNotEmpty( $assets );
+
+		foreach ( $assets as $asset ) {
+			$this->assertGreaterThan(
+				0,
+				filesize( $asset ),
+				basename( $asset ) . ' is empty and should not ship'
+			);
+		}
 	}
 
 	/**

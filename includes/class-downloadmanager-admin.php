@@ -99,7 +99,11 @@ class DownloadManager_Admin {
 	}
 
 	/**
-	 * Admin stylesheet and the templates screen script.
+	 * The templates screen's script.
+	 *
+	 * There was an admin stylesheet here too, enqueued on all four screens. It
+	 * had been a zero-byte file since the plugin's first commit, so every one of
+	 * those screens paid for a request that delivered nothing.
 	 *
 	 * @param string $hook_suffix Current admin page.
 	 * @return void
@@ -107,27 +111,10 @@ class DownloadManager_Admin {
 	public static function enqueue_assets( $hook_suffix ) {
 		$pages = self::pages();
 
-		// add_submenu_page() returns hook suffixes of the form
-		// "downloads_page_<slug>" for the pages with callbacks, and the bare file
-		// path for the legacy ones.
-		$is_plugin_page = in_array( $hook_suffix, $pages, true );
-		foreach ( $pages as $slug ) {
-			if ( false !== strpos( $hook_suffix, $slug ) ) {
-				$is_plugin_page = true;
-			}
-		}
-
-		if ( ! $is_plugin_page ) {
-			return;
-		}
-
-		wp_enqueue_style(
-			'wp-downloadmanager-admin',
-			WP_DOWNLOADMANAGER_URL . 'download-admin-css.css',
-			array(),
-			WP_DOWNLOADMANAGER_VERSION
-		);
-
+		// The templates screen is the only one of the four with an asset of its
+		// own. It is registered with a callback, so add_submenu_page() hands back
+		// a hook suffix of the form "downloads_page_<slug>" rather than the bare
+		// file path the two legacy screens get.
 		if ( false === strpos( $hook_suffix, $pages['templates'] ) ) {
 			return;
 		}

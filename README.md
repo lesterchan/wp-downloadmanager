@@ -74,6 +74,7 @@ Adds a simple download manager to your WordPress blog.
 * FIXED: Files in a deleted category no longer emit "Undefined array key" warnings on PHP 8.
 * FIXED: The downloads directory is actually created on activation now.
 * FIXED: Deprecated `upgrade-functions.php` include and `add_option()` third argument removed.
+* FIXED: Removed `download-admin-css.css`, a zero-byte stylesheet that had been enqueued on every plugin admin screen since 2010.
 * NOTE: Some translated strings gained numbered placeholders (`%1$s`), which changes their msgid. Those strings need retranslating.
 
 ### 1.69.2
