@@ -188,7 +188,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 	/**
 	 * The plugin ships no zero-byte assets.
 	 *
-	 * download-admin-css.css was one for fifteen years, enqueued the whole time.
+	 * The admin stylesheet was one for fifteen years, enqueued the whole time.
 	 */
 	public function test_no_empty_assets_are_shipped() {
 		$assets = array_merge(
