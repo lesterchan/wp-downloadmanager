@@ -58,34 +58,15 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 	/**
 	 * Put every option back to the value a fresh install has.
 	 *
-	 * Deliberately writes through the same names the 1.x plugin used. The
-	 * modernized plugin migrates them, which is exactly what the migration
-	 * tests want to exercise.
+	 * Writes the consolidated row directly. The migration from the pre-2.0.0
+	 * rows has its own tests, which seed the legacy names themselves.
 	 */
 	protected function reset_options() {
-		update_option( 'download_path', WP_CONTENT_DIR . '/files' );
-		update_option( 'download_path_url', content_url( 'files' ) );
-		update_option( 'download_page_url', site_url( 'downloads' ) );
-		update_option( 'download_method', 1 );
-		update_option( 'download_nice_permalink', 1 );
-		update_option( 'download_categories', array( '', 'General', 'Software' ) );
-		update_option(
-			'download_sort',
-			array(
-				'by'      => 'file_name',
-				'order'   => 'asc',
-				'perpage' => 20,
-				'group'   => 1,
-			)
-		);
-		update_option(
-			'download_options',
-			array(
-				'use_filename' => 0,
-				'rss_sortby'   => 'file_date',
-				'rss_limit'    => 20,
-			)
-		);
+		$defaults = DownloadManager_Options::defaults();
+
+		$defaults['categories'] = array( '', 'General', 'Software' );
+
+		DownloadManager_Options::save( $defaults );
 	}
 
 	/**

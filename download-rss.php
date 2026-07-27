@@ -1,7 +1,7 @@
 <?php
 // Get Download Information
 $file_last_download  = $wpdb->get_var( "SELECT file_updated_date FROM $wpdb->downloads WHERE file_permission != -2 ORDER BY file_updated_date DESC LIMIT 1" );
-$download_categories = get_option( 'download_categories' );
+$download_categories = DownloadManager_Options::get( 'categories' );
 
 
 // Get Latest Downloads
@@ -28,7 +28,7 @@ header( 'Content-Type: ' . feed_content_type( 'rss2' ) . '; charset=' . get_opti
 	?>
 	</title>
 	<atom:link href="<?php self_link(); ?>" rel="self" type="application/rss+xml" />
-	<link><?php echo get_option( 'download_page_url' ); ?></link>
+	<link><?php echo DownloadManager_Options::get( 'page_url' ); ?></link>
 	<description>
 	<?php
 	bloginfo_rss( 'name' );

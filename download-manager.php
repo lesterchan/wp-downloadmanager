@@ -6,12 +6,12 @@ if ( ! current_user_can( 'manage_downloads' ) ) {
 
 
 // Variables Variables Variables
-$base_name           = plugin_basename( 'wp-downloadmanager/download-manager.php' );
+$base_name           = WP_DOWNLOADMANAGER_SLUG . '/download-manager.php';
 $base_page           = 'admin.php?page=' . $base_name;
 $mode                = ! empty( $_GET['mode'] ) ? sanitize_text_field( $_GET['mode'] ) : '';
 $file_id             = ! empty( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
-$file_path           = get_option( 'download_path' );
-$file_categories     = get_option( 'download_categories' );
+$file_path           = DownloadManager_Options::get( 'path.dir' );
+$file_categories     = DownloadManager_Options::get( 'categories' );
 $file_page           = ! empty( $_GET['filepage'] ) ? intval( $_GET['filepage'] ) : 0;
 $file_sortby         = ! empty( $_GET['by'] ) ? sanitize_text_field( $_GET['by'] ) : '';
 $file_sortby_text    = '';
@@ -22,6 +22,17 @@ $file_sort_url       = '';
 $file_search         = ! empty( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : '';
 $file_search_query   = '';
 $text_direction      = ! empty( $text_direction ) ? $text_direction : '';
+
+// The form screens' behaviour lives in one script rather than in inline
+// handlers. Enqueued for every mode: add, edit and delete all use it.
+wp_enqueue_script(
+	'wp-downloadmanager-forms',
+	WP_DOWNLOADMANAGER_URL . 'download-forms.js',
+	array(),
+	WP_DOWNLOADMANAGER_VERSION,
+	true
+);
+
 
 // Form Sorting URL
 if ( ! empty( $file_sortby ) ) {
@@ -129,7 +140,7 @@ if ( ! empty( $_POST['do'] ) ) {
 					break;
 				case 0:
 					$file      = ! empty( $_POST['file'] ) ? sanitize_text_field( trim( wp_unslash( $_POST['file'] ) ) ) : '';
-					$file      = download_rename_file( $file_path, $file );
+					$file      = DownloadManager_File::rename_file( $file_path, $file );
 					$file_size = filesize( $file_path . $file );
 					break;
 				case 1:
@@ -138,7 +149,7 @@ if ( ! empty( $_POST['do'] ) ) {
 						break;
 					} elseif ( is_uploaded_file( $_FILES['file_upload']['tmp_name'] ) ) {
 							$file_upload_to = ! empty( $_POST['file_upload_to'] ) ? sanitize_text_field( wp_unslash( $_POST['file_upload_to'] ) ) : '';
-							$file_upload_to = download_safe_subfolder( $file_path, $file_upload_to );
+							$file_upload_to = DownloadManager_File::safe_subfolder( $file_path, $file_upload_to );
 						if ( $file_upload_to !== '/' ) {
 							$file_upload_to = $file_upload_to . '/';
 						}
@@ -149,7 +160,7 @@ if ( ! empty( $_POST['do'] ) ) {
 						}
 						if ( move_uploaded_file( $_FILES['file_upload']['tmp_name'], $file_path . $file_upload_to . basename( $_FILES['file_upload']['name'] ) ) ) {
 							$file      = $file_upload_to . basename( $_FILES['file_upload']['name'] );
-							$file      = download_rename_file( $file_path, $file );
+							$file      = DownloadManager_File::rename_file( $file_path, $file );
 							$file_size = filesize( $file_path . $file );
 						} else {
 							$text = '<p style="color: red;">' . __( 'Error In Uploading File', 'wp-downloadmanager' ) . '</p>';
@@ -251,44 +262,15 @@ switch ( $mode ) {
 	case 'edit':
 		$file = $wpdb->get_row( "SELECT * FROM $wpdb->downloads WHERE file_id = $file_id" );
 		?>
-		<script type="text/javascript">
-			/* <![CDATA[*/
-			var actual_day = "<?php echo gmdate( 'j', $file->file_date ); ?>";
-			var actual_month = "<?php echo gmdate( 'n', $file->file_date ); ?>";
-			var actual_year = "<?php echo gmdate( 'Y', $file->file_date ); ?>";
-			var actual_hour = "<?php echo gmdate( 'G', $file->file_date ); ?>";
-			var actual_minute = "<?php echo intval( gmdate( 'i', $file->file_date ) ); ?>";
-			var actual_second = "<?php echo intval( gmdate( 's', $file->file_date ) ); ?>";
-			function file_usetodaydate() {
-				if(jQuery('#edit_usetodaydate').is(':checked')) {
-					jQuery('#edit_filetimestamp').attr('checked', true);
-					jQuery('#file_timestamp_day').val("<?php echo gmdate( 'j', current_time( 'timestamp' ) ); ?>");
-					jQuery('#file_timestamp_month').val("<?php echo gmdate( 'n', current_time( 'timestamp' ) ); ?>");
-					jQuery('#file_timestamp_year').val("<?php echo gmdate( 'Y', current_time( 'timestamp' ) ); ?>");
-					jQuery('#file_timestamp_hour').val("<?php echo gmdate( 'G', current_time( 'timestamp' ) ); ?>");
-					jQuery('#file_timestamp_minute').val("<?php echo intval( gmdate( 'i', current_time( 'timestamp' ) ) ); ?>");
-					jQuery('#file_timestamp_second').val("<?php echo intval( gmdate( 's', current_time( 'timestamp' ) ) ); ?>");
-				} else {
-					jQuery('#edit_filetimestamp').attr('checked', false);
-					jQuery('#file_timestamp_day').val(actual_day);
-					jQuery('#file_timestamp_month').val(actual_month);
-					jQuery('#file_timestamp_year').val(actual_year);
-					jQuery('#file_timestamp_hour').val(actual_hour);
-					jQuery('#file_timestamp_minute').val(actual_minute);
-					jQuery('#file_timestamp_second').val(actual_second);
-				}
-			}
-			/* ]]> */
-		</script>
 		<?php
 		if ( ! empty( $text ) ) {
 			echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . stripslashes( $text ) . '</p></div>'; }
 		?>
 		<!-- Edit A File -->
-		<form method="post" action="<?php echo admin_url( 'admin.php?page=' . plugin_basename( __FILE__ ) . '&amp;mode=edit&amp;id=' . intval( $file->file_id ) ); ?>" enctype="multipart/form-data">
+		<form method="post" action="<?php echo admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/' . basename( __FILE__ ) . '&amp;mode=edit&amp;id=' . intval( $file->file_id ) ); ?>" enctype="multipart/form-data">
 			<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo get_max_upload_size(); ?>" />
 			<input type="hidden" name="file_id" value="<?php echo intval( $file->file_id ); ?>" />
-			<input type="hidden" name="old_file" value="<?php echo esc_attr( removeslashes( $file->file ) ); ?>" />
+			<input type="hidden" name="old_file" value="<?php echo esc_attr( stripslashes( $file->file ) ); ?>" />
 			<?php wp_nonce_field( 'wp-downloadmanager_edit-file' ); ?>
 			<div class="wrap">
 				<h2><?php _e( 'Edit A File', 'wp-downloadmanager' ); ?></h2>
@@ -301,32 +283,32 @@ switch ( $mode ) {
 							<br /><br />
 							<!-- Browse File -->
 							<input type="radio" id="file_type_0" name="file_type" value="0" />&nbsp;&nbsp;<label for="file_type_0"><?php _e( 'Browse File:', 'wp-downloadmanager' ); ?></label>&nbsp;
-							<select name="file" size="1" onclick="document.getElementById('file_type_0').checked = true;" dir="ltr">
-								<?php print_list_files( $file_path, $file_path, stripslashes( $file->file ) ); ?>
+							<select name="file" size="1" data-checks="file_type_0" dir="ltr">
+								<?php DownloadManager_Admin::print_files( $file_path, $file_path, stripslashes( $file->file ) ); ?>
 							</select>
 							<br /><small><?php printf( __( 'Please upload the file to \'%s\' directory first.', 'wp-downloadmanager' ), $file_path ); ?></small>
 							<br /><br />
 							<!-- Upload File -->
 							<input type="radio" id="file_type_1" name="file_type" value="1" />&nbsp;&nbsp;<label for="file_type_1"><?php _e( 'Upload File:', 'wp-downloadmanager' ); ?></label>&nbsp;
-							<input type="file" name="file_upload" size="25" onclick="document.getElementById('file_type_1').checked = true;" dir="ltr" />&nbsp;&nbsp;<?php _e( 'to', 'wp-downloadmanager' ); ?>&nbsp;&nbsp;
-							<select name="file_upload_to" size="1" onclick="document.getElementById('file_type_1').checked = true;" dir="ltr">
-								<?php print_list_folders( $file_path, $file_path ); ?>
+							<input type="file" name="file_upload" size="25" data-checks="file_type_1" dir="ltr" />&nbsp;&nbsp;<?php _e( 'to', 'wp-downloadmanager' ); ?>&nbsp;&nbsp;
+							<select name="file_upload_to" size="1" data-checks="file_type_1" dir="ltr">
+								<?php DownloadManager_Admin::print_folders( $file_path, $file_path ); ?>
 							</select>
 							<br /><small><?php printf( __( 'Maximum file size is %s.', 'wp-downloadmanager' ), format_filesize( get_max_upload_size() ) ); ?></small>
 							<!-- Remote File -->
 							<br /><br />
 							<input type="radio" id="file_type_2" name="file_type" value="2" />&nbsp;&nbsp;<label for="file_type_2"><?php _e( 'Remote File:', 'wp-downloadmanager' ); ?></label>&nbsp;
-							<input type="text" name="file_remote" size="50" maxlength="255" onclick="document.getElementById('file_type_2').checked = true;" value="http://" dir="ltr" />
+							<input type="text" name="file_remote" size="50" maxlength="255" data-checks="file_type_2" value="http://" dir="ltr" />
 							<br /><small><?php _e( 'Please include http:// or ftp:// in front.', 'wp-downloadmanager' ); ?></small>
 						</td>
 					</tr>
 					<tr>
 						<td><strong><?php _e( 'File Name:', 'wp-downloadmanager' ); ?></strong></td>
-						<td><input type="text" size="50" maxlength="200" name="file_name" value="<?php echo esc_attr( removeslashes( $file->file_name ) ); ?>" /></td>
+						<td><input type="text" size="50" maxlength="200" name="file_name" value="<?php echo esc_attr( stripslashes( $file->file_name ) ); ?>" /></td>
 					</tr>
 					<tr>
 						<td valign="top"><strong><?php _e( 'File Description:', 'wp-downloadmanager' ); ?></strong></td>
-						<td><textarea rows="5" cols="50" name="file_des"><?php echo esc_attr( removeslashes( $file->file_des ) ); ?></textarea></td>
+						<td><textarea rows="5" cols="50" name="file_des"><?php echo esc_attr( stripslashes( $file->file_des ) ); ?></textarea></td>
 					</tr>
 					<tr>
 						<td><strong><?php _e( 'File Category:', 'wp-downloadmanager' ); ?></strong></td>
@@ -356,7 +338,39 @@ switch ( $mode ) {
 					</tr>
 					<tr>
 						<td valign="top"><strong><?php _e( 'File Date:', 'wp-downloadmanager' ); ?></strong></td>
-						<td><?php _e( 'Existing Timestamp:', 'wp-downloadmanager' ); ?> <?php echo mysql2date( sprintf( '%s @ %s', get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $file->file_date ) ); ?><br /><?php file_timestamp( $file->file_date ); ?><br /><input type="checkbox" id="edit_filetimestamp" name="edit_filetimestamp" value="1" />&nbsp;<label for="edit_filetimestamp"><?php _e( 'Edit Timestamp', 'wp-downloadmanager' ); ?></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" id="edit_usetodaydate" value="1" onclick="file_usetodaydate();" />&nbsp;<label for="edit_usetodaydate"><?php _e( 'Use Today\'s Date', 'wp-downloadmanager' ); ?></label></td>
+						<td><?php _e( 'Existing Timestamp:', 'wp-downloadmanager' ); ?> <?php echo mysql2date( sprintf( '%s @ %s', get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $file->file_date ) ); ?><br /><?php DownloadManager_Admin::file_timestamp( $file->file_date ); ?><br /><input type="checkbox" id="edit_filetimestamp" name="edit_filetimestamp" value="1" />&nbsp;<label for="edit_filetimestamp"><?php _e( 'Edit Timestamp', 'wp-downloadmanager' ); ?></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" id="edit_usetodaydate" value="1"
+							data-actual="
+							<?php
+							echo esc_attr(
+								wp_json_encode(
+									array(
+										'day'    => (int) gmdate( 'j', $file->file_date ),
+										'month'  => (int) gmdate( 'n', $file->file_date ),
+										'year'   => (int) gmdate( 'Y', $file->file_date ),
+										'hour'   => (int) gmdate( 'G', $file->file_date ),
+										'minute' => (int) gmdate( 'i', $file->file_date ),
+										'second' => (int) gmdate( 's', $file->file_date ),
+									)
+								)
+							);
+							?>
+											"
+							data-today="
+							<?php
+							echo esc_attr(
+								wp_json_encode(
+									array(
+										'day'    => (int) gmdate( 'j', current_time( 'timestamp' ) ),
+										'month'  => (int) gmdate( 'n', current_time( 'timestamp' ) ),
+										'year'   => (int) gmdate( 'Y', current_time( 'timestamp' ) ),
+										'hour'   => (int) gmdate( 'G', current_time( 'timestamp' ) ),
+										'minute' => (int) gmdate( 'i', current_time( 'timestamp' ) ),
+										'second' => (int) gmdate( 's', current_time( 'timestamp' ) ),
+									)
+								)
+							);
+							?>
+										" />&nbsp;<label for="edit_usetodaydate"><?php _e( 'Use Today\'s Date', 'wp-downloadmanager' ); ?></label></td>
 					</tr>
 					<tr>
 						<td valign="top"><strong><?php _e( 'File Updated Date:', 'wp-downloadmanager' ); ?></strong></td>
@@ -381,7 +395,7 @@ switch ( $mode ) {
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2" style="text-align: center;"><input type="submit" name="do" value="<?php _e( 'Edit File', 'wp-downloadmanager' ); ?>"  class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e( 'Cancel', 'wp-downloadmanager' ); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
+						<td colspan="2" style="text-align: center;"><input type="submit" name="do" value="<?php _e( 'Edit File', 'wp-downloadmanager' ); ?>"  class="button" />&nbsp;&nbsp;<button type="button" name="cancel" class="button download-cancel"><?php esc_html_e( 'Cancel', 'wp-downloadmanager' ); ?></button></td>
 					</tr>
 				</table>
 			</div>
@@ -397,7 +411,7 @@ switch ( $mode ) {
 			echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . stripslashes( $text ) . '</p></div>'; }
 		?>
 		<!-- Delete A File -->
-		<form method="post" action="<?php echo admin_url( 'admin.php?page=' . plugin_basename( __FILE__ ) ); ?>">
+		<form method="post" action="<?php echo admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/' . basename( __FILE__ ) ); ?>">
 			<input type="hidden" name="file_id" value="<?php echo esc_attr( intval( $file->file_id ) ); ?>" />
 			<?php wp_nonce_field( 'wp-downloadmanager_delete-file' ); ?>
 			<div class="wrap">
@@ -450,7 +464,13 @@ switch ( $mode ) {
 						</tr>
 					<?php endif; ?>
 					<tr class="alternate">
-						<td colspan="2" style="text-align: center;"><input type="submit" name="do" value="<?php _e( 'Delete File', 'wp-downloadmanager' ); ?>" class="button"  onclick="return confirm('You Are About To The Delete This File \'<?php echo esc_js( removeslashes( $file->file_name ) ); ?> (<?php echo esc_js( removeslashes( $file->file ) ); ?>)\'.\nThis Action Is Not Reversible.\n\n Choose \'Cancel\' to stop, \'OK\' to delete.')"/>&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e( 'Cancel', 'wp-downloadmanager' ); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
+						<td colspan="2" style="text-align: center;"><input type="submit" name="do" value="<?php esc_attr_e( 'Delete File', 'wp-downloadmanager' ); ?>" class="button"
+							data-confirm="
+							<?php
+								/* translators: 1: file name, 2: file path. */
+								echo esc_attr( sprintf( __( "You Are About To The Delete This File '%1\$s (%2\$s)'.\nThis Action Is Not Reversible.\n\n Choose 'Cancel' to stop, 'OK' to delete.", 'wp-downloadmanager' ), stripslashes( $file->file_name ), stripslashes( $file->file ) ) );
+							?>
+							" />&nbsp;&nbsp;<button type="button" name="cancel" class="button download-cancel"><?php esc_html_e( 'Cancel', 'wp-downloadmanager' ); ?></button></td>
 					</tr>
 				</table>
 			</div>
@@ -624,7 +644,7 @@ switch ( $mode ) {
 			}
 			?>
 			<br />
-			<form action="<?php echo admin_url( 'admin.php?page=' . plugin_basename( __FILE__ ) ); ?>" method="get">
+			<form action="<?php echo admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/' . basename( __FILE__ ) ); ?>" method="get">
 				<table class="widefat">
 					<tr>
 						<th><?php _e( 'Filter Options: ', 'wp-downloadmanager' ); ?></th>

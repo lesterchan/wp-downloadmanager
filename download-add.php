@@ -6,10 +6,21 @@ if ( ! current_user_can( 'manage_downloads' ) ) {
 
 
 // Variables Variables Variables
-$base_name       = plugin_basename( 'wp-downloadmanager/download-manager.php' );
+$base_name       = WP_DOWNLOADMANAGER_SLUG . '/download-manager.php';
 $base_page       = 'admin.php?page=' . $base_name;
-$file_path       = get_option( 'download_path' );
-$file_categories = get_option( 'download_categories' );
+$file_path       = DownloadManager_Options::get( 'path.dir' );
+$file_categories = DownloadManager_Options::get( 'categories' );
+
+
+// The form screens' behaviour lives in one script rather than in inline
+// handlers. Enqueued for every mode: add, edit and delete all use it.
+wp_enqueue_script(
+	'wp-downloadmanager-forms',
+	WP_DOWNLOADMANAGER_URL . 'download-forms.js',
+	array(),
+	WP_DOWNLOADMANAGER_VERSION,
+	true
+);
 
 
 // Form Processing
@@ -23,7 +34,7 @@ if ( ! empty( $_POST['do'] ) ) {
 			switch ( $file_type ) {
 				case 0:
 					$file      = ! empty( $_POST['file'] ) ? sanitize_text_field( trim( wp_unslash( $_POST['file'] ) ) ) : '';
-					$file      = download_rename_file( $file_path, $file );
+					$file      = DownloadManager_File::rename_file( $file_path, $file );
 					$file_size = filesize( $file_path . $file );
 					break;
 				case 1:
@@ -39,13 +50,13 @@ if ( ! empty( $_POST['do'] ) ) {
 					}
 					if ( is_uploaded_file( $_FILES['file_upload']['tmp_name'] ) ) {
 						$file_upload_to = ! empty( $_POST['file_upload_to'] ) ? sanitize_text_field( wp_unslash( $_POST['file_upload_to'] ) ) : '';
-						$file_upload_to = download_safe_subfolder( $file_path, $file_upload_to );
+						$file_upload_to = DownloadManager_File::safe_subfolder( $file_path, $file_upload_to );
 						if ( $file_upload_to !== '/' ) {
 							$file_upload_to = $file_upload_to . '/';
 						}
 						if ( move_uploaded_file( $_FILES['file_upload']['tmp_name'], $file_path . $file_upload_to . $file_name ) ) {
 							$file      = $file_upload_to . $file_name;
-							$file      = download_rename_file( $file_path, $file );
+							$file      = DownloadManager_File::rename_file( $file_path, $file );
 							$file_size = filesize( $file_path . $file );
 						} else {
 							$text = '<p style="color: red;">' . __( 'Error In Uploading File', 'wp-downloadmanager' ) . '</p>';
@@ -118,7 +129,7 @@ if ( ! empty( $text ) ) {
 }
 ?>
 <!-- Add A File -->
-<form method="post" action="<?php echo admin_url( 'admin.php?page=' . plugin_basename( __FILE__ ) ); ?>" enctype="multipart/form-data">
+<form method="post" action="<?php echo admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/' . basename( __FILE__ ) ); ?>" enctype="multipart/form-data">
 	<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo get_max_upload_size(); ?>" />
 	<?php wp_nonce_field( 'wp-downloadmanager_add-file' ); ?>
 	<div class="wrap">
@@ -129,22 +140,22 @@ if ( ! empty( $text ) ) {
 				<td>
 					<!-- Browse File -->
 					<input type="radio" id="file_type_0" name="file_type" value="0" checked="checked" />&nbsp;&nbsp;<label for="file_type_0"><?php _e( 'Browse File:', 'wp-downloadmanager' ); ?></label>&nbsp;
-					<select name="file" size="1" onclick="document.getElementById('file_type_0').checked = true;" dir="ltr">
-						<?php print_list_files( $file_path, $file_path ); ?>
+					<select name="file" size="1" data-checks="file_type_0" dir="ltr">
+						<?php DownloadManager_Admin::print_files( $file_path, $file_path ); ?>
 					</select>
 					<br /><small><?php printf( __( 'Please upload the file to \'%s\' directory first.', 'wp-downloadmanager' ), $file_path ); ?></small>
 					<br /><br />
 					<!-- Upload File -->
 					<input type="radio" id="file_type_1" name="file_type" value="1" />&nbsp;&nbsp;<label for="file_type_1"><?php _e( 'Upload File:', 'wp-downloadmanager' ); ?></label>&nbsp;
-					<input type="file" name="file_upload" size="25" onclick="document.getElementById('file_type_1').checked = true;" dir="ltr" />&nbsp;&nbsp;<?php _e( 'to', 'wp-downloadmanager' ); ?>&nbsp;&nbsp;
-					<select name="file_upload_to" size="1" onclick="document.getElementById('file_type_1').checked = true;" dir="ltr">
-						<?php print_list_folders( $file_path, $file_path ); ?>
+					<input type="file" name="file_upload" size="25" data-checks="file_type_1" dir="ltr" />&nbsp;&nbsp;<?php _e( 'to', 'wp-downloadmanager' ); ?>&nbsp;&nbsp;
+					<select name="file_upload_to" size="1" data-checks="file_type_1" dir="ltr">
+						<?php DownloadManager_Admin::print_folders( $file_path, $file_path ); ?>
 					</select>
 					<br /><small><?php printf( __( 'Maximum file size is %s.', 'wp-downloadmanager' ), format_filesize( get_max_upload_size() ) ); ?></small>
 					<!-- Remote File -->
 					<br /><br />
 					<input type="radio" id="file_type_2" name="file_type" value="2" />&nbsp;&nbsp;<label for="file_type_2"><?php _e( 'Remote File:', 'wp-downloadmanager' ); ?></label>&nbsp;
-					<input type="text" name="file_remote" size="50" maxlength="255" onclick="document.getElementById('file_type_2').checked = true;" value="http://" dir="ltr" />
+					<input type="text" name="file_remote" size="50" maxlength="255" data-checks="file_type_2" value="http://" dir="ltr" />
 					<br /><small><?php _e( 'Please include http:// or ftp:// in front.', 'wp-downloadmanager' ); ?></small>
 				</td>
 			</tr>
@@ -176,7 +187,7 @@ if ( ! empty( $text ) ) {
 			</tr>
 			<tr>
 				<td valign="top"><strong><?php _e( 'File Date:', 'wp-downloadmanager' ); ?></strong></td>
-				<td><?php file_timestamp( current_time( 'timestamp' ) ); ?></td>
+				<td><?php DownloadManager_Admin::file_timestamp( current_time( 'timestamp' ) ); ?></td>
 			</tr>
 			<tr>
 				<td><strong><?php _e( 'Starting File Hits:', 'wp-downloadmanager' ); ?></strong></td>
@@ -200,7 +211,7 @@ if ( ! empty( $text ) ) {
 				</td>
 			</tr>
 			<tr>
-				<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e( 'Add File', 'wp-downloadmanager' ); ?>" class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e( 'Cancel', 'wp-downloadmanager' ); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
+				<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e( 'Add File', 'wp-downloadmanager' ); ?>" class="button" />&nbsp;&nbsp;<button type="button" name="cancel" class="button download-cancel"><?php esc_html_e( 'Cancel', 'wp-downloadmanager' ); ?></button></td>
 			</tr>
 		</table>
 	</div>

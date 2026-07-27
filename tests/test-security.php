@@ -143,10 +143,8 @@ class Test_Security extends DownloadManager_TestCase {
 	 * verbatim.
 	 */
 	public function test_listing_sort_column_is_allow_listed() {
-		$sort          = get_option( 'download_sort' );
-		$sort['by']    = 'file_name, (SELECT 1)';
-		$sort['order'] = 'asc; SELECT 1';
-		update_option( 'download_sort', $sort );
+		DownloadManager_Options::set( 'sort.by', 'file_name, (SELECT 1)' );
+		DownloadManager_Options::set( 'sort.order', 'asc; SELECT 1' );
 
 		downloads_page();
 
@@ -160,10 +158,8 @@ class Test_Security extends DownloadManager_TestCase {
 	 * The feed sort column is restricted too.
 	 */
 	public function test_feed_sort_column_is_allow_listed() {
-		$options               = get_option( 'download_options' );
-		$options['rss_sortby'] = 'file_date, (SELECT 1)';
-		$options['rss_limit']  = '5 UNION SELECT 1';
-		update_option( 'download_options', $options );
+		DownloadManager_Options::set( 'rss.sortby', 'file_date, (SELECT 1)' );
+		DownloadManager_Options::set( 'rss.limit', '5 UNION SELECT 1' );
 
 		$files = downloadmanager_feed_files();
 
@@ -219,7 +215,7 @@ class Test_Security extends DownloadManager_TestCase {
 	 * setting always rendered as unselected and silently reverted to No.
 	 */
 	public function test_widget_form_link_select_reflects_saved_value() {
-		$widget = new WP_Widget_DownloadManager();
+		$widget = new DownloadManager_Widget();
 
 		ob_start();
 		$widget->form(
@@ -245,7 +241,7 @@ class Test_Security extends DownloadManager_TestCase {
 	 * A widget saved with link=0 keeps link=0.
 	 */
 	public function test_widget_form_link_select_respects_zero() {
-		$widget = new WP_Widget_DownloadManager();
+		$widget = new DownloadManager_Widget();
 
 		ob_start();
 		$widget->form(
@@ -274,7 +270,7 @@ class Test_Security extends DownloadManager_TestCase {
 	 * edits made there were silently discarded.
 	 */
 	public function test_widget_update_without_submit_marker() {
-		$widget = new WP_Widget_DownloadManager();
+		$widget = new DownloadManager_Widget();
 
 		$saved = $widget->update(
 			array(
@@ -300,7 +296,7 @@ class Test_Security extends DownloadManager_TestCase {
 	public function test_widget_renders_with_partial_instance() {
 		$this->login_as( '' );
 
-		$widget = new WP_Widget_DownloadManager();
+		$widget = new DownloadManager_Widget();
 
 		ob_start();
 		$widget->widget(
@@ -342,7 +338,7 @@ class Test_Security extends DownloadManager_TestCase {
 	 * The activation hook does not call it either.
 	 */
 	public function test_activation_does_not_call_wp_get_sites() {
-		$this->assertStringNotContainsString( 'wp_get_sites', $this->code( 'wp-downloadmanager.php' ) );
+		$this->assertStringNotContainsString( 'wp_get_sites', $this->code( 'includes/class-downloadmanager-install.php' ) );
 	}
 
 	/**
@@ -379,14 +375,14 @@ class Test_Security extends DownloadManager_TestCase {
 	 * Activation no longer reaches for the file core deprecated in 2.5.
 	 */
 	public function test_activation_uses_current_upgrade_include() {
-		$this->assertStringNotContainsString( 'upgrade-functions.php', $this->code( 'wp-downloadmanager.php' ) );
+		$this->assertStringNotContainsString( 'upgrade-functions.php', $this->code( 'includes/class-downloadmanager-install.php' ) );
 	}
 
 	/**
 	 * add_option() is not called with the deprecated description argument.
 	 */
 	public function test_activation_does_not_pass_deprecated_add_option_arg() {
-		$source = $this->code( 'wp-downloadmanager.php' );
+		$source = $this->code( 'includes/class-downloadmanager-install.php' );
 
 		$this->assertDoesNotMatchRegularExpression(
 			"/add_option\(\s*'[a-z_]+'\s*,[^;]*,\s*'[A-Z]/",

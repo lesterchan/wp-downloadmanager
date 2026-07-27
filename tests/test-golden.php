@@ -110,18 +110,18 @@ class Test_Golden extends DownloadManager_TestCase {
 	public function test_download_file_url() {
 		$home = get_option( 'home' );
 
-		update_option( 'download_nice_permalink', 1 );
-		update_option( 'download_options', array( 'use_filename' => 0 ) );
+		DownloadManager_Options::set( 'nice_permalink', 1 );
+		DownloadManager_Options::set( 'use_filename', 0 );
 		$this->assertSame( $home . '/download/7/', download_file_url( 7, '/manual.pdf' ) );
 
-		update_option( 'download_options', array( 'use_filename' => 1 ) );
+		DownloadManager_Options::set( 'use_filename', 1 );
 		$this->assertSame( $home . '/download/manual.pdf', download_file_url( 7, '/manual.pdf' ) );
 
-		update_option( 'download_nice_permalink', 0 );
-		update_option( 'download_options', array( 'use_filename' => 0 ) );
+		DownloadManager_Options::set( 'nice_permalink', 0 );
+		DownloadManager_Options::set( 'use_filename', 0 );
 		$this->assertSame( $home . '/?dl_id=7', download_file_url( 7, '/manual.pdf' ) );
 
-		update_option( 'download_options', array( 'use_filename' => 1 ) );
+		DownloadManager_Options::set( 'use_filename', 1 );
 		$this->assertSame( $home . '/?dl_name=manual.pdf', download_file_url( 7, '/manual.pdf' ) );
 	}
 
@@ -131,8 +131,8 @@ class Test_Golden extends DownloadManager_TestCase {
 	public function test_download_file_url_remote() {
 		$home = get_option( 'home' );
 
-		update_option( 'download_nice_permalink', 1 );
-		update_option( 'download_options', array( 'use_filename' => 1 ) );
+		DownloadManager_Options::set( 'nice_permalink', 1 );
+		DownloadManager_Options::set( 'use_filename', 1 );
 
 		$this->assertSame(
 			$home . '/download/https://example.com/remote.zip',
@@ -343,10 +343,8 @@ class Test_Golden extends DownloadManager_TestCase {
 	 * Pagination appears once there are more files than fit on a page.
 	 */
 	public function test_downloads_page_pagination() {
-		$sort            = get_option( 'download_sort' );
-		$sort['perpage'] = 2;
-		$sort['group']   = 0;
-		update_option( 'download_sort', $sort );
+		DownloadManager_Options::set( 'sort.perpage', 2 );
+		DownloadManager_Options::set( 'sort.group', 0 );
 
 		$out = downloads_page();
 
@@ -522,7 +520,7 @@ class Test_Golden extends DownloadManager_TestCase {
 	public function test_widget_renders() {
 		$this->login_as( '' );
 
-		$widget = new WP_Widget_DownloadManager();
+		$widget = new DownloadManager_Widget();
 
 		ob_start();
 		$widget->widget(
@@ -567,7 +565,7 @@ class Test_Golden extends DownloadManager_TestCase {
 		$rewrite        = new stdClass();
 		$rewrite->rules = array( 'existing/?$' => 'index.php?x=1' );
 
-		download_rewrite( $rewrite );
+		DownloadManager::rewrite_rules( $rewrite );
 
 		$this->assertSame(
 			'index.php?dl_id=$matches[1]',

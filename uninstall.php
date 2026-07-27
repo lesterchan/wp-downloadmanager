@@ -9,6 +9,9 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit();
 }
 
+require_once __DIR__ . '/includes/class-downloadmanager-templates.php';
+require_once __DIR__ . '/includes/class-downloadmanager-options.php';
+
 /**
  * Remove every option row and the downloads table for the current site.
  *
@@ -17,29 +20,18 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 function downloadmanager_uninstall_site() {
 	global $wpdb;
 
-	$option_names = array(
-		'download_path',
-		'download_path_url',
-		'download_page_url',
-		'download_method',
-		'download_categories',
-		'download_sort',
-		'download_template_header',
-		'download_template_footer',
-		'download_template_category_header',
-		'download_template_category_footer',
-		'download_template_listing',
-		'download_template_embedded',
-		'download_template_most',
-		'download_template_pagingheader',
-		'download_template_pagingfooter',
-		'download_nice_permalink',
-		'download_template_download_page_link',
-		'download_template_none',
-		'download_options',
-		'widget_download_most_downloaded',
-		'widget_download_recent_downloads',
-		'widget_downloads',
+	// The legacy rows are listed by the options class, so this and the migration
+	// can never disagree about which rows belong to the plugin. 2.0.0
+	// consolidated them into download_options, but an install that never reached
+	// the migration may still have them.
+	$option_names = array_merge(
+		array_keys( DownloadManager_Options::legacy_map() ),
+		DownloadManager_Options::legacy_extra_rows(),
+		array(
+			DownloadManager_Options::OPTION,
+			'download_db_version',
+			'widget_downloads',
+		)
 	);
 
 	foreach ( $option_names as $option_name ) {
