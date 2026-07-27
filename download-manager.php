@@ -1,7 +1,13 @@
 <?php
 // Check Whether User Can Manage Downloads
 if ( ! current_user_can( 'manage_downloads' ) ) {
-	die( 'Access Denied' );
+	// wp_die() rather than a bare die(): it renders a styled page, sends a 403
+	// instead of a 200, and is catchable, so the capability guard can be tested.
+	wp_die(
+		esc_html__( 'You do not have sufficient permissions to access this page.', 'wp-downloadmanager' ),
+		'',
+		array( 'response' => 403 )
+	);
 }
 
 

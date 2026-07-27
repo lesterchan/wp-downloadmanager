@@ -395,8 +395,12 @@ class DownloadManager_File {
 		$dl_name = (string) get_query_var( 'dl_name' );
 
 		if ( 'rss' === $dl_name ) {
-			load_template( WP_DOWNLOADMANAGER_DIR . 'download-rss.php' );
-			exit;
+			// $load_once = false: load_template() defaults to require_once, which
+			// would make the feed render only the first time it is asked for in
+			// a given process. get_template_part() passes false for the same
+			// reason - this is a template, not a library.
+			load_template( WP_DOWNLOADMANAGER_DIR . 'download-rss.php', false );
+			self::finish();
 		}
 
 		if ( $dl_id <= 0 && '' === $dl_name ) {
@@ -445,7 +449,7 @@ class DownloadManager_File {
 			} else {
 				wp_redirect( $file_url . $file_name ); // phpcs:ignore WordPress.Security.SafeRedirect
 			}
-			exit;
+			self::finish();
 		}
 
 		if ( ini_get( 'allow_url_fopen' ) && 0 === $method ) {
@@ -455,6 +459,27 @@ class DownloadManager_File {
 		} else {
 			wp_redirect( $file_name ); // phpcs:ignore WordPress.Security.SafeRedirect
 		}
+		self::finish();
+	}
+
+	/**
+	 * End the request after the endpoint has handed a file over.
+	 *
+	 * Every branch of serve() ends here rather than calling exit directly, so
+	 * there is one place that fires the action below - which is both a genuine
+	 * extension point for anyone wanting to log downloads, and what lets the
+	 * test suite observe the endpoint instead of being killed by it.
+	 *
+	 * @return void
+	 */
+	protected static function finish() {
+		/**
+		 * Fires immediately before the download endpoint ends the request.
+		 *
+		 * @since 2.0.0
+		 */
+		do_action( 'wp_downloadmanager_served' );
+
 		exit;
 	}
 
@@ -466,6 +491,12 @@ class DownloadManager_File {
 	 * @return void
 	 */
 	protected static function send_headers( $basename, $file_size ) {
+		// Same guard as the feed: with output already started these would be
+		// warnings printed into the file being served.
+		if ( headers_sent() ) {
+			return;
+		}
+
 		nocache_headers();
 		header( 'Content-Type: application/octet-stream' );
 		header( 'Content-Disposition: attachment; filename="' . $basename . '"' );

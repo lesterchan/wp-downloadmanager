@@ -250,6 +250,61 @@ class Test_Migration extends DownloadManager_TestCase {
 	}
 
 	/**
+	 * The schema version stays outside the row it gates.
+	 *
+	 * It is read to decide whether download_options needs migrating, and
+	 * DownloadManager_Options::all() merges the *new* schema's defaults over
+	 * whatever is stored - so reading the version from inside the row would mean
+	 * using the post-migration accessor to decide whether to migrate.
+	 *
+	 * There is no default that works for both cases. A pre-2.0.0 row has no
+	 * version key, so defaulting it to DB_VERSION makes every old install look
+	 * already migrated and silently abandons the other eighteen legacy rows;
+	 * defaulting it to 0 makes every fresh install re-run the migration on each
+	 * load. wp-polls (poll_version) and wp-useronline (useronline_db_version)
+	 * both keep it separate for the same reason.
+	 */
+	public function test_schema_version_is_not_stored_inside_the_consolidated_row() {
+		$this->seed_legacy_rows();
+		DownloadManager_Install::upgrade();
+
+		$stored = get_option( DownloadManager_Options::OPTION );
+
+		$this->assertArrayNotHasKey( 'db_version', $stored );
+		$this->assertArrayNotHasKey( DownloadManager_Install::DB_VERSION_OPTION, $stored );
+		$this->assertNotContains(
+			DownloadManager_Install::DB_VERSION_OPTION,
+			array_keys( DownloadManager_Options::defaults() )
+		);
+
+		// And it is genuinely its own row.
+		$this->assertSame(
+			DownloadManager_Install::DB_VERSION,
+			(int) get_option( DownloadManager_Install::DB_VERSION_OPTION )
+		);
+	}
+
+	/**
+	 * An old install with no version key still migrates.
+	 *
+	 * This is the case that folding the version into the row would break: the
+	 * pre-2.0.0 download_options row exists and carries settings, but has no
+	 * version of any kind.
+	 */
+	public function test_pre_200_row_without_a_version_key_still_migrates() {
+		$this->seed_legacy_rows();
+
+		$stored = get_option( DownloadManager_Options::OPTION );
+		$this->assertArrayNotHasKey( 'db_version', $stored, 'the 1.x row carries no version' );
+
+		DownloadManager_Install::upgrade();
+
+		// The other legacy rows were folded in rather than abandoned.
+		$this->assertSame( 'https://example.com/legacy-downloads', DownloadManager_Options::get( 'page_url' ) );
+		$this->assertSame( '<p>legacy header</p>', DownloadManager_Options::template( 'header' ) );
+	}
+
+	/**
 	 * The uninstaller cleans up both the new row and any legacy leftovers.
 	 */
 	public function test_uninstall_covers_every_row() {

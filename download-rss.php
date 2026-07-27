@@ -17,7 +17,12 @@ $download_categories = (array) DownloadManager_Options::get( 'categories' );
 $files               = downloadmanager_feed_files();
 $feed_title          = get_bloginfo_rss( 'name' ) . __( ' Downloads RSS Feed', 'wp-downloadmanager' );
 
-header( 'Content-Type: ' . feed_content_type( 'rss2' ) . '; charset=' . get_option( 'blog_charset' ), true );
+// Guarded: if anything has already sent output - an early echo from another
+// plugin, or a caller that is buffering - header() would emit a warning
+// straight into the feed body rather than setting the type.
+if ( ! headers_sent() ) {
+	header( 'Content-Type: ' . feed_content_type( 'rss2' ) . '; charset=' . get_option( 'blog_charset' ), true );
+}
 
 echo '<?xml version="1.0" encoding="' . esc_attr( get_option( 'blog_charset' ) ) . '"?>';
 ?>
