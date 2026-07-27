@@ -72,16 +72,18 @@
 			}
 		} );
 
-		const toggle = document.getElementById( 'edit_usetodaydate' );
+		// Delegated like the three above rather than bound straight to the
+		// checkbox: binding directly only works if the element already exists
+		// when this runs, which silently does nothing everywhere else.
+		document.addEventListener( 'change', function( event ) {
+			const toggle = event.target.closest( '#edit_usetodaydate' );
 
-		if ( ! toggle ) {
-			return;
-		}
+			if ( ! toggle ) {
+				return;
+			}
 
-		const edit = document.getElementById( 'edit_filetimestamp' );
-
-		toggle.addEventListener( 'change', function() {
 			const useToday = toggle.checked;
+			const edit = document.getElementById( 'edit_filetimestamp' );
 
 			if ( edit ) {
 				edit.checked = useToday;
