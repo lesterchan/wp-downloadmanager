@@ -19,7 +19,7 @@ $file_sortorder = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'
 $file_sortorder_text = '';
 $file_perpage = ! empty( $_GET['perpage'] ) ? intval( $_GET['perpage'] ) : 0;
 $file_sort_url = '';
-$file_search = ! empty( $_GET['search'] ) ? sanitize_text_field( $_GET['search'] ) : 0;
+$file_search = ! empty( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : '';
 $file_search_query = '';
 $text_direction = ! empty ( $text_direction ) ? $text_direction : '';
 
@@ -37,8 +37,11 @@ if ( ! empty( $file_perpage ) ) {
 
 ### Searching
 if ( ! empty( $file_search ) ) {
-	$file_search_query = "AND (file LIKE ('%$file_search%') OR file_name LIKE('%$file_search%') OR file_des LIKE ('%$file_search%'))";
-	$file_sort_url .= '&search=' . stripslashes( $file_search );
+	// sanitize_text_field() does not escape quotes, so the term used to be able
+	// to terminate the string and rewrite the rest of the query.
+	$file_search_like = '%' . $wpdb->esc_like( $file_search ) . '%';
+	$file_search_query = $wpdb->prepare( 'AND (file LIKE %s OR file_name LIKE %s OR file_des LIKE %s)', $file_search_like, $file_search_like, $file_search_like );
+	$file_sort_url .= '&search=' . rawurlencode( $file_search );
 }
 
 
@@ -111,10 +114,10 @@ if(!empty($_POST['do'])) {
 			$file_sql = '';
 			$file_id  = ! empty( $_POST['file_id'] ) ? intval( $_POST['file_id'] ) : 0;
 			$file_type = ! empty( $_POST['file_type'] ) ? intval( $_POST['file_type'] ) : 0;
-			$file_name = ! empty( $_POST['file_name'] ) ? addslashes( wp_kses_post( trim( $_POST['file_name'] ) ) ) : '';
+			$file_name = ! empty( $_POST['file_name'] ) ? wp_kses_post( trim( wp_unslash( $_POST['file_name'] ) ) ) : '';
 			switch($file_type) {
 				case -1:
-					$file = ! empty( $_POST['old_file'] ) ? $_POST['old_file'] : '';
+					$file = ! empty( $_POST['old_file'] ) ? sanitize_text_field( wp_unslash( $_POST['old_file'] ) ) : '';
 					if(is_remote_file($file)) {
 						$file_size = remote_filesize($file);
 						if ($file_size == 'unknown') {
@@ -125,7 +128,7 @@ if(!empty($_POST['do'])) {
 					}
 					break;
 				case 0:
-					$file = ! empty( $_POST['file'] ) ? addslashes( wp_kses_post( trim( $_POST['file'] ) ) ) : '';
+					$file = ! empty( $_POST['file'] ) ? sanitize_text_field( trim( wp_unslash( $_POST['file'] ) ) ) : '';
 					$file = download_rename_file($file_path, $file);
 					$file_size = filesize($file_path.$file);
 					break;
@@ -135,7 +138,8 @@ if(!empty($_POST['do'])) {
 						break;
 					} else {
 						if(is_uploaded_file($_FILES['file_upload']['tmp_name'])) {
-							$file_upload_to = ! empty( $_POST['file_upload_to'] ) ? $_POST['file_upload_to'] : '';
+							$file_upload_to = ! empty( $_POST['file_upload_to'] ) ? sanitize_text_field( wp_unslash( $_POST['file_upload_to'] ) ) : '';
+							$file_upload_to = download_safe_subfolder( $file_path, $file_upload_to );
 							if( $file_upload_to !== '/' ) {
 								$file_upload_to = $file_upload_to . '/';
 							}
@@ -159,7 +163,7 @@ if(!empty($_POST['do'])) {
 					}
 					break;
 				case 2:
-					$file = ! empty( $_POST['file_remote'] ) ? esc_url_raw( $_POST['file_remote'] ) : '';
+					$file = ! empty( $_POST['file_remote'] ) ? esc_url_raw( wp_unslash( $_POST['file_remote'] ) ) : '';
 					if ( is_file_remote_valid( $file ) ) {
 						$file_size = remote_filesize( $file );
 					} else {
@@ -169,40 +173,50 @@ if(!empty($_POST['do'])) {
 			}
 			if ( empty( $text ) ) {
 				if($file_type > -1) {
-					$file_sql = "file = '$file',";
 					if(empty($file_name)) {
 						$file_name = basename($file);
 					}
 				}
-				$file_des = ! empty( $_POST['file_des'] ) ? addslashes( wp_kses_post( trim( $_POST['file_des'] ) ) ) : '';
+				$file_des = ! empty( $_POST['file_des'] ) ? wp_kses_post( trim( wp_unslash( $_POST['file_des'] ) ) ) : '';
 				$file_category = ! empty( $_POST['file_cat'] ) ? intval( $_POST['file_cat'] ) : 0;
 				$file_hits = ! empty( $_POST['file_hits'] ) ? intval( $_POST['file_hits'] ) : 0;
 				$edit_filetimestamp = ! empty( $_POST['edit_filetimestamp'] ) ? intval( $_POST['edit_filetimestamp'] ) : 0;
-				if(intval($_POST['auto_filesize']) === 0) {
+				$auto_filesize = ! empty( $_POST['auto_filesize'] ) ? intval( $_POST['auto_filesize'] ) : 0;
+				if($auto_filesize === 0) {
 					$file_size = ! empty( $_POST['file_size'] ) ? intval( $_POST['file_size'] ) : 0;
 				}
-				$file_size_sql = "file_size = '$file_size',";
 				$reset_filehits = ! empty( $_POST['reset_filehits'] ) ? intval( $_POST['reset_filehits'] ) : 0;
-				$hits_sql = '';
-				if($reset_filehits == 1) {
-					$hits_sql = ', file_hits = 0';
-				} else {
-					$hits_sql = ", file_hits = $file_hits";
+				$file_permission = ! empty( $_POST['file_permission'] ) ? intval( $_POST['file_permission'] ) : 0;
+				$file_updated_date = current_time('timestamp');
+
+				// Built by hand and interpolated before, which both double slashed
+				// every text value on the way in and left the write unprepared.
+				$file_data = array(
+					'file_name'         => $file_name,
+					'file_des'          => $file_des,
+					'file_size'         => $file_size,
+					'file_category'     => $file_category,
+					'file_permission'   => $file_permission,
+					'file_updated_date' => $file_updated_date,
+					'file_hits'         => ( 1 === $reset_filehits ) ? 0 : $file_hits,
+				);
+				if($file_type > -1) {
+					$file_data['file'] = $file;
 				}
-				$timestamp_sql = '';
-				if($edit_filetimestamp == 1) {
+				if($edit_filetimestamp === 1) {
 					$file_timestamp_day =    ! empty( $_POST['file_timestamp_day'] ) ? intval( $_POST['file_timestamp_day'] ) : 0;
 					$file_timestamp_month =  ! empty( $_POST['file_timestamp_month'] ) ? intval( $_POST['file_timestamp_month'] ) : 0;
 					$file_timestamp_year =   ! empty( $_POST['file_timestamp_year'] ) ? intval( $_POST['file_timestamp_year'] ) : 0;
 					$file_timestamp_hour =   ! empty( $_POST['file_timestamp_hour'] ) ? intval( $_POST['file_timestamp_hour'] ) : 0;
 					$file_timestamp_minute = ! empty( $_POST['file_timestamp_minute'] ) ? intval( $_POST['file_timestamp_minute'] ) : 0;
 					$file_timestamp_second = ! empty( $_POST['file_timestamp_second'] ) ? intval( $_POST['file_timestamp_second'] ) : 0;
-					$timestamp_sql = ", file_date = '".gmmktime($file_timestamp_hour, $file_timestamp_minute, $file_timestamp_second, $file_timestamp_month, $file_timestamp_day, $file_timestamp_year)."'";
+					$file_data['file_date'] = gmmktime($file_timestamp_hour, $file_timestamp_minute, $file_timestamp_second, $file_timestamp_month, $file_timestamp_day, $file_timestamp_year);
 				}
-				$file_permission = ! empty( $_POST['file_permission'] ) ? intval( $_POST['file_permission'] ) : 0;
-				$file_updated_date = current_time('timestamp');
-				$editfile = $wpdb->query("UPDATE $wpdb->downloads SET $file_sql file_name = '$file_name', file_des = '$file_des', $file_size_sql file_category = $file_category, file_permission = $file_permission, file_updated_date = '$file_updated_date' $timestamp_sql $hits_sql WHERE file_id = $file_id;");
-				if(!$editfile) {
+				$editfile = $wpdb->update( $wpdb->downloads, $file_data, array( 'file_id' => $file_id ) );
+				// update() returns 0 when the row already held these values, which
+				// is a successful save rather than the failure the old !$editfile
+				// check reported.
+				if(false === $editfile) {
 					$text = '<p style="color: red;">'.sprintf(__('Error In Editing File \'%s (%s)\'', 'wp-downloadmanager'), $file_name, $file).'</p>';
 				} else {
 					$text = '<p style="color: green;">'.sprintf(__('File \'%s (%s)\' Edited Successfully', 'wp-downloadmanager'), $file_name, $file).'</p>';
@@ -210,7 +224,7 @@ if(!empty($_POST['do'])) {
 			}
 			break;
 		// Delete File
-		case __('Delete File', 'wp-downloadmanager');
+		case __('Delete File', 'wp-downloadmanager'):
 			check_admin_referer('wp-downloadmanager_delete-file');
 			$file_id  = ! empty( $_POST['file_id'] ) ? intval( $_POST['file_id'] ) : 0;
 			$file = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $wpdb->downloads WHERE file_id = %d", $file_id ) );
