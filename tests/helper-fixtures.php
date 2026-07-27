@@ -97,7 +97,7 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 	protected function seed_files() {
 		$this->ids = array();
 
-		$this->ids['public']   = $this->insert_file(
+		$this->ids['public']  = $this->insert_file(
 			array(
 				'file'            => '/manual.pdf',
 				'file_name'       => 'The Manual',
@@ -108,7 +108,7 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 				'file_permission' => -1,
 			)
 		);
-		$this->ids['members']  = $this->insert_file(
+		$this->ids['members'] = $this->insert_file(
 			array(
 				'file'            => '/members.zip',
 				'file_name'       => 'Members Bundle',
@@ -119,7 +119,7 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 				'file_permission' => 0,
 			)
 		);
-		$this->ids['editors']  = $this->insert_file(
+		$this->ids['editors'] = $this->insert_file(
 			array(
 				'file'            => '/editors.doc',
 				'file_name'       => 'Editor Notes',
@@ -130,7 +130,7 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 				'file_permission' => 7,
 			)
 		);
-		$this->ids['hidden']   = $this->insert_file(
+		$this->ids['hidden']  = $this->insert_file(
 			array(
 				'file'            => '/secret.exe',
 				'file_name'       => 'Hidden File',
@@ -141,7 +141,7 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 				'file_permission' => -2,
 			)
 		);
-		$this->ids['remote']   = $this->insert_file(
+		$this->ids['remote']  = $this->insert_file(
 			array(
 				'file'            => 'https://example.com/remote.zip',
 				'file_name'       => 'Remote Bundle',

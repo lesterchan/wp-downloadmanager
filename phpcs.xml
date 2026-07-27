@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<ruleset name="WP-DownloadManager">
+	<description>WordPress Coding Standards for WP-DownloadManager.</description>
+
+	<file>.</file>
+
+	<!-- Scanning these makes the CI runner run out of memory. -->
+	<exclude-pattern>/vendor/*</exclude-pattern>
+	<exclude-pattern>/node_modules/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="ps"/>
+
+	<rule ref="WordPress">
+		<!-- The plugin owns one table. There is no core API to use and nothing
+		     to cache, so these two are noise here. -->
+		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
+		<!-- Table identifiers cannot be bound, and %i needs WP 6.2. -->
+		<exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
+	</rule>
+
+	<!-- Creating and dropping the plugin's own table is the entire job of the
+	     installer and the uninstaller. -->
+	<rule ref="WordPress.DB.DirectDatabaseQuery.SchemaChange">
+		<exclude-pattern>/includes/class-downloadmanager-install.php</exclude-pattern>
+		<exclude-pattern>/uninstall.php</exclude-pattern>
+	</rule>
+
+	<!-- manage_downloads is this plugin's own capability, granted to
+	     administrator on activation. The sniff only knows core's list. -->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_downloads"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- The display side reads request data only to decide what to render -
+	     ?dl_cat, ?dl_page, ?dl_search - and writes nothing, so there is nothing
+	     for a nonce to protect. Every screen that writes checks one. -->
+	<rule ref="WordPress.Security.NonceVerification">
+		<exclude-pattern>/includes/class-downloadmanager-display.php</exclude-pattern>
+	</rule>
+
+	<!-- File dates have always been stored as site-local timestamps and are
+	     rendered back with gmdate(). Swapping current_time( 'timestamp' ) for
+	     time() would shift every newly added file by the GMT offset relative to
+	     the rows already in the table. Left alone deliberately. -->
+	<rule ref="WordPress.DateTime.CurrentTimeTimestamp">
+		<severity>0</severity>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="wp-downloadmanager"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Tests assemble their own markup and assert on it. -->
+	<rule ref="WordPress.Security.EscapeOutput">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!-- One test reads plugin sources to prove a removed API is no longer
+	     called, which is the only way to assert on a multisite-only branch from
+	     a single-site suite. -->
+	<rule ref="WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!-- The class-*.php file naming rule exempts test classes, which follow
+	     PHPUnit's own test-*.php convention. -->
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+</ruleset>
