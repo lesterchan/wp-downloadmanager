@@ -131,32 +131,38 @@ class WP_DownloadManager_List_Table extends WP_List_Table {
 		$orderby = isset( $columns[ $orderby ] ) ? $columns[ $orderby ] : $columns['file_name'];
 		$order   = 'desc' === strtolower( $this->request( 'order' ) ) ? 'DESC' : 'ASC';
 
-		// Carried as a placeholder fragment plus its arguments rather than an
-		// already-prepared string: the clause goes into two queries, and feeding
-		// a prepared fragment back through prepare() would have its % wildcards
-		// either re-read as placeholders or flagged as unescaped.
-		$search_sql  = '';
-		$search_args = array();
-		if ( '' !== $search ) {
-			// esc_like() so a literal % or _ is not read as a wildcard.
-			$like        = '%' . $wpdb->esc_like( $search ) . '%';
-			$search_sql  = ' AND (file LIKE %s OR file_name LIKE %s OR file_des LIKE %s)';
-			$search_args = array( $like, $like, $like );
-		}
+		// The search binds rather than being concatenated in: with no search term
+		// the first test reads 1 = 1, which makes the whole OR group true and the
+		// clause a no-op, exactly what leaving it out used to mean. esc_like() so
+		// a literal % or _ in the term is not read as a wildcard.
+		$search_all = '' === $search ? 1 : 0;
+		$like       = '%' . $wpdb->esc_like( $search ) . '%';
 
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(file_id) FROM {$wpdb->downloads} WHERE file_id > %d {$search_sql}",
-				array_merge( array( 0 ), $search_args )
+				"SELECT COUNT(file_id) FROM {$wpdb->downloads} WHERE file_id > %d AND ( %d = 1 OR file LIKE %s OR file_name LIKE %s OR file_des LIKE %s )",
+				0,
+				$search_all,
+				$like,
+				$like,
+				$like
 			)
 		);
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $orderby is a value from self::sortable_sql_columns() and $order is one of the two literals chosen above; an ORDER BY column and direction cannot be bound.
 		$this->items = (array) $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->downloads} WHERE file_id > %d {$search_sql} ORDER BY {$orderby} {$order} LIMIT %d, %d",
-				array_merge( array( 0 ), $search_args, array( ( $paged - 1 ) * $per_page, $per_page ) )
+				"SELECT * FROM {$wpdb->downloads} WHERE file_id > %d AND ( %d = 1 OR file LIKE %s OR file_name LIKE %s OR file_des LIKE %s ) ORDER BY {$orderby} {$order} LIMIT %d, %d",
+				0,
+				$search_all,
+				$like,
+				$like,
+				$like,
+				( $paged - 1 ) * $per_page,
+				$per_page
 			)
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$this->set_pagination_args(
 			array(

@@ -53,7 +53,7 @@ class WP_DownloadManager_Display {
 	 * @return array
 	 */
 	public static function query_args() {
-
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Carries the current listing's own query string into the links it prints; a nonce on a bookmarkable, shareable listing URL would break the back button and change nothing, and nothing here is written.
 		return array_map( 'sanitize_text_field', wp_unslash( $_GET ) );
 	}
 
@@ -395,11 +395,13 @@ class WP_DownloadManager_Display {
 
 		$category_id = (int) $category_id;
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- ?dl_cat, ?dl_page and ?dl_search decide which page of the public listing to draw and nothing else; the whole class only reads. A nonce on a listing URL that is meant to be linked, bookmarked and shared would break all three and prove nothing about a request that writes nothing.
 		$category    = ! empty( $_GET['dl_cat'] ) ? (int) $_GET['dl_cat'] : 0;
 		$page        = ! empty( $_GET['dl_page'] ) ? (int) $_GET['dl_page'] : 0;
 		$search_word = ! empty( $_GET['dl_search'] )
 			? wp_strip_all_tags( trim( sanitize_text_field( wp_unslash( $_GET['dl_search'] ) ) ) )
 			: '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$search     = $search_word;
 		$categories = (array) WP_DownloadManager_Options::get( 'categories', array() );
@@ -423,7 +425,12 @@ class WP_DownloadManager_Display {
 		if ( 0 === $category && $category_id > 0 ) {
 			$category = $category_id;
 		}
-		$category_sql = $category > 0 ? 'AND file_category = ' . (int) $category : '';
+
+		// The category filter binds rather than concatenating a clause: with no
+		// category chosen the first test reads 0 = 0, passes every row and so
+		// means exactly what the absent clause used to mean. Both queries below
+		// take the pair in this order.
+		$category_args = array( $category, $category );
 
 		// Carried as a placeholder fragment plus its arguments rather than a
 		// prepared string: the clause goes into two queries, and feeding an
@@ -447,12 +454,16 @@ class WP_DownloadManager_Display {
 		// literal so the query always has at least one placeholder, which is what
 		// lets both branches - with a search term and without - go through
 		// prepare() rather than only the one that happens to have arguments.
+		$stats_args = array_merge( $category_args, $search_args, array( -2 ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $search_sql is the only interpolated piece: a generated run of the literal ' AND ((file_name LIKE %s OR file_des LIKE %s OR file LIKE %s))', three placeholders per search term, so the count is only known at run time and prepare() cannot bind a variable-length set of LIKE clauses.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT file_category, COUNT(file_id) as category_files, SUM(file_size) category_size, SUM(file_hits) as category_hits FROM {$wpdb->downloads} WHERE 1=1 {$category_sql} {$search_sql} AND file_permission != %d GROUP BY file_category",
-				array_merge( $search_args, array( -2 ) )
+				"SELECT file_category, COUNT(file_id) as category_files, SUM(file_size) category_size, SUM(file_hits) as category_hits FROM {$wpdb->downloads} WHERE ( %d = 0 OR file_category = %d ) {$search_sql} AND file_permission != %d GROUP BY file_category",
+				$stats_args
 			)
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 
 		foreach ( (array) $rows as $row ) {
 			$cat_id                    = (int) $row->file_category;
@@ -471,16 +482,16 @@ class WP_DownloadManager_Display {
 
 		$group_sql = 1 === $group ? 'file_category ASC,' : '';
 
-		// The placeholder count is dynamic - three per search term, plus the two
-		// LIMIT bounds - which is why phpcs.xml exempts this file from the
-		// replacement-count sniff.
+		$page_args = array_merge( $category_args, $search_args, array( -2, $paging['offset'], $per_page ) );
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Three interpolated pieces, none of them bindable: $search_sql is a generated run of literal LIKE placeholders, three per search term, so the count is only known at run time; $group_sql is one of the two literals set above; $order_by_column and $sort_order come from WP_DownloadManager_File::sort_columns() and sort_order(), and an ORDER BY column and direction cannot be placeholders.
 		$files = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->downloads} WHERE 1=1 {$category_sql} {$search_sql} AND file_permission != %d ORDER BY {$group_sql} {$order_by_column} {$sort_order} LIMIT %d, %d",
-				array_merge( $search_args, array( -2, $paging['offset'], $per_page ) )
+				"SELECT * FROM {$wpdb->downloads} WHERE ( %d = 0 OR file_category = %d ) {$search_sql} AND file_permission != %d ORDER BY {$group_sql} {$order_by_column} {$sort_order} LIMIT %d, %d",
+				$page_args
 			)
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 
 		$output = '';
 
@@ -699,17 +710,22 @@ class WP_DownloadManager_Display {
 			$condition .= ' AND ';
 		}
 
-		// Only enough rows to know whether there are more than the limit.
+		// Only enough rows to know whether there are more than the limit. Bound
+		// through prepare() rather than concatenated, so the fragment that ends up
+		// in the statement below is a prepared string and not an integer this
+		// method spelled out itself.
 		$limit_sql = ( ! is_single() && 0 !== $stream_limit )
-			? ' LIMIT ' . ( $stream_limit + 1 )
+			? $wpdb->prepare( ' LIMIT %d', $stream_limit + 1 )
 			: '';
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $limit_sql is a $wpdb->prepare() result; $order_by_column and $sort_order come from WP_DownloadManager_File::sort_columns() and sort_order(), and an ORDER BY column and direction cannot be bound. $condition is the documented raw-SQL argument of the download_embedded() template tag, a contract older than this rewrite: every caller inside the plugin builds it from intval()ed ids in file_shortcode().
 		$files = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->downloads} WHERE {$condition} file_permission != %d ORDER BY {$order_by_column} {$sort_order}{$limit_sql}",
 				-2
 			)
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( ! $files ) {
 			// Used to fall off the end and return null, which is a TypeError
@@ -849,14 +865,22 @@ class WP_DownloadManager_Display {
 			if ( empty( $cat_ids ) ) {
 				$cat_ids = array( 0 );
 			}
-			$category_sql = 'file_category IN (' . implode( ',', $cat_ids ) . ')';
 		} else {
-			$category_sql = 'file_category = ' . (int) $cat_id;
+			$cat_ids = array( (int) $cat_id );
 		}
 
+		// IN () with one id means the same as = on that id, so both cases go
+		// through the same bound list rather than one concatenated clause each.
+		$placeholders = implode( ',', array_fill( 0, count( $cat_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is a generated run of %d, one per category id; prepare() cannot bind a variable-length IN () list.
 		$files = $wpdb->get_results(
-			$wpdb->prepare( "SELECT * FROM {$wpdb->downloads} WHERE {$category_sql} AND file_permission != -2 ORDER BY FROM_UNIXTIME(file_date) DESC LIMIT %d", (int) $limit )
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->downloads} WHERE file_category IN ({$placeholders}) AND file_permission != -2 ORDER BY FROM_UNIXTIME(file_date) DESC LIMIT %d",
+				array_merge( $cat_ids, array( (int) $limit ) )
+			)
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		return self::output( self::stats_list( $files, $chars ), $display );
 	}
@@ -960,6 +984,7 @@ class WP_DownloadManager_Display {
 		$limit  = max( 1, (int) WP_DownloadManager_Options::get( 'rss.limit', 20 ) );
 
 		return (array) $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $sortby is a column from WP_DownloadManager_File::sort_columns(), the allow list the rss.sortby setting is filtered through; an ORDER BY column cannot be bound.
 			$wpdb->prepare( "SELECT * FROM {$wpdb->downloads} WHERE file_permission != -2 ORDER BY {$sortby} DESC LIMIT %d", $limit )
 		);
 	}
