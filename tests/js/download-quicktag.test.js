@@ -12,9 +12,11 @@ import { loadScript } from './helpers.js';
 let callback;
 
 beforeAll( () => {
-	window.downloadManagerQuicktag = {
-		label: 'Download',
-		prompt: 'Enter File ID (Separate Multiple IDs By A Comma)',
+	window.wpDownloadManagerL10n = {
+		quicktag: {
+			label: 'Download',
+			prompt: 'Enter File ID (Separate Multiple IDs By A Comma)',
+		},
 	};
 
 	window.QTags = {

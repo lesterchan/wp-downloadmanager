@@ -18,7 +18,7 @@ const DEFAULTS = {
 };
 
 beforeAll( () => {
-	window.downloadManagerDefaults = DEFAULTS;
+	window.wpDownloadManagerL10n = { templates: DEFAULTS };
 	loadScript( 'js/wp-downloadmanager-admin.js' );
 } );
 

@@ -18,7 +18,7 @@
 	}
 
 	onReady( function() {
-		const defaults = window.downloadManagerDefaults || {};
+		const defaults = ( window.wpDownloadManagerL10n || {} ).templates || {};
 
 		document.addEventListener( 'click', function( event ) {
 			const button = event.target.closest( '.download-template-reset' );

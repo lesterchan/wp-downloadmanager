@@ -19,20 +19,16 @@ export default [
 			globals: {
 				...globals.browser,
 				// Localised into the page by wp_localize_script().
-				downloadManagerDefaults: 'readonly',
-				downloadManagerQuicktag: 'readonly',
+				wpDownloadManagerL10n: 'readonly',
+				// Registered by core's quicktags script, which the Text tab
+				// button declares as a dependency.
 				QTags: 'readonly',
 			},
 		},
 		rules: {
-			// Properties stay exempt: the wp_localize_script() objects are named
-			// on the PHP side, and the template keys they carry are snake_case by
-			// necessity.
-			camelcase: [ 'error', { properties: 'never' } ],
-
-			// The plugin asks for a file ID and confirms deletions with the native
-			// dialogs. Replacing them means building a modal, which is a UX
-			// change, not a lint fix.
+			// The plugin asks for a file ID and confirms deletions with the
+			// native dialogs. Replacing them means building a modal, which is a
+			// UX change, not a lint fix.
 			'no-alert': 'off',
 		},
 		settings: {
@@ -40,13 +36,21 @@ export default [
 		},
 	},
 	{
-		// The TinyMCE button runs inside the editor iframe against TinyMCE's own API.
+		// The Classic Editor button runs inside the editor iframe against
+		// TinyMCE's own API, which is a global there rather than an import.
 		files: [ 'tinymce/**/*.js' ],
 		languageOptions: {
 			globals: {
 				...globals.browser,
-				tinyMCE: 'readonly',
 				tinymce: 'readonly',
+			},
+		},
+	},
+	{
+		files: [ 'tests/js/**/*.test.js' ],
+		languageOptions: {
+			globals: {
+				...globals.node,
 			},
 		},
 	},

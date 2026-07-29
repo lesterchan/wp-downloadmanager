@@ -129,7 +129,7 @@ class DownloadManager_Admin {
 
 		// The reset buttons read the stock markup from here rather than from a
 		// duplicated copy inside the script, which is how the two used to drift.
-		wp_localize_script( 'wp-downloadmanager-admin', 'downloadManagerDefaults', DownloadManager_Templates::for_script() );
+		wp_localize_script( 'wp-downloadmanager-admin', 'wpDownloadManagerL10n', self::script_data() );
 	}
 
 	/**
@@ -146,13 +146,25 @@ class DownloadManager_Admin {
 			true
 		);
 
-		wp_localize_script(
-			'wp-downloadmanager-quicktag',
-			'downloadManagerQuicktag',
-			array(
+		wp_localize_script( 'wp-downloadmanager-quicktag', 'wpDownloadManagerL10n', self::script_data() );
+	}
+
+	/**
+	 * Everything the admin scripts read, in one localised object.
+	 *
+	 * Section 6 of the standard gives every plugin exactly one localised global,
+	 * named after the class prefix, so the two scripts share this payload rather
+	 * than each inventing a name of its own.
+	 *
+	 * @return array
+	 */
+	public static function script_data() {
+		return array(
+			'templates' => DownloadManager_Templates::for_script(),
+			'quicktag'  => array(
 				'label'  => __( 'Download', 'wp-downloadmanager' ),
 				'prompt' => __( 'Enter File ID (Separate Multiple IDs By A Comma)', 'wp-downloadmanager' ),
-			)
+			),
 		);
 	}
 

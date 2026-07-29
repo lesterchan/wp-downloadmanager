@@ -4,32 +4,26 @@
 
 	<file>.</file>
 
+	<!-- WPCS has no JavaScript sniffs; never let PHPCS touch .js. -->
+	<arg name="extensions" value="php"/>
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+
 	<!-- Scanning these makes the CI runner run out of memory. -->
 	<exclude-pattern>/vendor/*</exclude-pattern>
 	<exclude-pattern>/node_modules/*</exclude-pattern>
 
-	<arg name="extensions" value="php"/>
-	<arg name="colors"/>
-	<arg value="ps"/>
+	<rule ref="WordPress"/>
 
-	<rule ref="WordPress">
-		<!-- The plugin owns one table. There is no core API to use and nothing
-		     to cache, so these two are noise here. -->
-		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
-		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
-		<!-- Table identifiers cannot be bound, and %i needs WP 6.2. -->
-		<exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
-	</rule>
+	<config name="text_domain" value="wp-downloadmanager"/>
+	<config name="minimum_wp_version" value="6.8"/>
 
-	<!-- Creating and dropping the plugin's own table is the entire job of the
-	     installer and the uninstaller. -->
-	<rule ref="WordPress.DB.DirectDatabaseQuery.SchemaChange">
-		<exclude-pattern>/includes/class-downloadmanager-install.php</exclude-pattern>
-		<exclude-pattern>/uninstall.php</exclude-pattern>
-	</rule>
-
-	<!-- manage_downloads is this plugin's own capability, granted to
-	     administrator on activation. The sniff only knows core's list. -->
+	<!--
+		manage_downloads is this plugin's own capability, added to the
+		administrator role on activation. The sniff only knows core's list, so
+		it has to be told. This is configuration, not a relaxation.
+	-->
 	<rule ref="WordPress.WP.Capabilities">
 		<properties>
 			<property name="custom_capabilities" type="array">
@@ -38,51 +32,12 @@
 		</properties>
 	</rule>
 
-	<!-- The display side reads request data only to decide what to render -
-	     ?dl_cat, ?dl_page, ?dl_search - and writes nothing, so there is nothing
-	     for a nonce to protect. Every screen that writes checks one. -->
-	<rule ref="WordPress.Security.NonceVerification">
-		<exclude-pattern>/includes/class-downloadmanager-display.php</exclude-pattern>
-	</rule>
-
-	<!-- File dates have always been stored as site-local timestamps and are
-	     rendered back with gmdate(). Swapping current_time( 'timestamp' ) for
-	     time() would shift every newly added file by the GMT offset relative to
-	     the rows already in the table. Left alone deliberately. -->
-	<rule ref="WordPress.DateTime.CurrentTimeTimestamp">
-		<severity>0</severity>
-	</rule>
-
-	<rule ref="WordPress.WP.I18n">
-		<properties>
-			<property name="text_domain" type="array">
-				<element value="wp-downloadmanager"/>
-			</property>
-		</properties>
-	</rule>
-
-	<!-- Tests assemble their own markup and assert on it. -->
-	<rule ref="WordPress.Security.EscapeOutput">
-		<exclude-pattern>/tests/*</exclude-pattern>
-	</rule>
-
-	<!-- One test reads plugin sources to prove a removed API is no longer
-	     called, which is the only way to assert on a multisite-only branch from
-	     a single-site suite. -->
-	<rule ref="WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents">
-		<exclude-pattern>/tests/*</exclude-pattern>
-	</rule>
-
-	<!-- The class-*.php file naming rule exempts test classes, which follow
-	     PHPUnit's own test-*.php convention. -->
-	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
-		<exclude-pattern>/tests/*</exclude-pattern>
-	</rule>
-
-	<!-- wp_kses_post() is a sanitizer for the fields that are allowed to carry
-	     markup - the file name and description shown in the listing templates.
-	     WPCS only knows the core list, so it is declared here rather than
-	     silenced with an ignore at each call site. -->
+	<!--
+		wp_kses_post() and wp_kses() are the sanitizers for the two fields that
+		are allowed to carry markup - a file's display name and its description.
+		WPCS only knows core's list, so they are declared here rather than
+		silenced at each call site.
+	-->
 	<rule ref="WordPress.Security.ValidatedSanitizedInput">
 		<properties>
 			<property name="customSanitizingFunctions" type="array">
@@ -92,12 +47,147 @@
 		</properties>
 	</rule>
 
-	<!-- Polls_Display::downloads_page() builds its search clause as a
-	     placeholder fragment plus an argument list, so the number of
-	     placeholders is dynamic - three per search term, plus the two LIMIT
-	     bounds. The sniff can only count them statically. -->
-	<rule ref="WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber">
-		<exclude-pattern>/includes/class-downloadmanager-display.php</exclude-pattern>
+	<!--
+		=== Sniffs that are wrong for this plugin, not code that needs fixing ===
+
+		Everything below is a sniff whose premise does not hold for a plugin
+		that owns a database table and streams files out of it. They are turned
+		off here, in one reviewable list with a reason each, rather than with
+		inline phpcs:ignore comments scattered through includes/.
+	-->
+
+	<!--
+		The plugin owns one table, {$wpdb->prefix}downloads. There is no core
+		API that reads it and no object cache to prime, so "use a core function"
+		and "add caching" have no answer here.
+	-->
+	<rule ref="WordPress.DB.DirectDatabaseQuery.DirectQuery">
+		<severity>0</severity>
+	</rule>
+	<rule ref="WordPress.DB.DirectDatabaseQuery.NoCaching">
+		<severity>0</severity>
 	</rule>
 
+	<!--
+		Creating and dropping that table is the entire job of the installer and
+		the uninstaller.
+	-->
+	<rule ref="WordPress.DB.DirectDatabaseQuery.SchemaChange">
+		<severity>0</severity>
+	</rule>
+
+	<!--
+		A table identifier cannot be bound as a placeholder, and every query in
+		the plugin interpolates exactly one thing: $wpdb->downloads, which the
+		plugin registers itself. Values are always bound.
+	-->
+	<rule ref="WordPress.DB.PreparedSQL.InterpolatedNotPrepared">
+		<severity>0</severity>
+	</rule>
+
+	<!--
+		The search clause in the downloads listing is carried as a placeholder
+		fragment plus its argument list, so the number of placeholders is
+		decided at run time - three per search term, plus the two LIMIT bounds.
+		The sniff can only count them statically.
+	-->
+	<rule ref="WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber">
+		<severity>0</severity>
+	</rule>
+
+	<!--
+		The download endpoint streams the file with readfile() so a multi-gigabyte
+		download does not have to fit in PHP's memory limit, and moves an
+		uploaded file with rename() inside the downloads directory. WP_Filesystem
+		reads whole files into a string and needs credentials, so neither has a
+		usable replacement here.
+	-->
+	<rule ref="WordPress.WP.AlternativeFunctions.file_system_operations_readfile">
+		<severity>0</severity>
+	</rule>
+	<rule ref="WordPress.WP.AlternativeFunctions.rename_rename">
+		<severity>0</severity>
+	</rule>
+
+	<!--
+		The endpoint redirects to whatever URL the file is stored at, which for
+		a remote file is deliberately off-site. wp_safe_redirect() would send
+		every one of those visitors to the dashboard instead.
+	-->
+	<rule ref="WordPress.Security.SafeRedirect.wp_redirect_wp_redirect">
+		<severity>0</severity>
+	</rule>
+
+	<!--
+		Everything below relaxes a sniff for the test suite only, and this list
+		is closed: it is identical in all nineteen plugins. A sniff firing in
+		includes/ is a bug in the code, not a missing exclusion - fix the code.
+	-->
+
+	<!-- The tests assert on the plugin's own markup, so they must not escape it. -->
+	<rule ref="WordPress.Security.EscapeOutput">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		A test method's name is its documentation - test_a_malformed_range_does_
+		not_ban_everyone() gains nothing from a docblock repeating it. Required
+		everywhere else.
+	-->
+	<rule ref="Squiz.Commenting.FunctionComment.Missing">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Generic.Commenting.DocComment.MissingShort">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		Test files are named test-*.php by WordPress convention rather than
+		class-*.php; the coding standard excepts test classes from that rule.
+	-->
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		The tests read wp_options directly to assert which rows the migration
+		left behind. There is no API for "which rows exist".
+	-->
+	<rule ref="WordPress.DB.DirectDatabaseQuery">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		The tests drive superglobals to simulate proxy headers and form posts;
+		that is the behaviour under test, not unvalidated input.
+	-->
+	<rule ref="WordPress.Security.ValidatedSanitizedInput">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.Security.NonceVerification">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!-- The tests read the plugin's own source; WP_Filesystem is not appropriate. -->
+	<rule ref="WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		The admin-screen tests install an error handler on purpose: collecting
+		the diagnostics is what makes them more than smoke tests.
+	-->
+	<rule ref="WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		The settings tests set $hook_suffix, which wp-admin would have set before
+		any page callback ran. WP_List_Table's constructor reaches
+		WP_Screen::get(), which reads that global, so the test bootstrap has to
+		stand in for admin.php.
+	-->
+	<rule ref="WordPress.WP.GlobalVariablesOverride">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
 </ruleset>

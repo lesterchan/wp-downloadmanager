@@ -11,7 +11,7 @@
 		return;
 	}
 
-	const l10n = window.downloadManagerQuicktag || {};
+	const l10n = ( window.wpDownloadManagerL10n || {} ).quicktag || {};
 
 	window.QTags.addButton( 'ed_wp_downloadmanager', l10n.label || 'Download', function() {
 		let id = window.prompt( l10n.prompt || '' );

@@ -220,7 +220,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 		$this->assertTrue( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ) );
 
 		$data = wp_scripts()->get_data( 'wp-downloadmanager-admin', 'data' );
-		$this->assertStringContainsString( 'downloadManagerDefaults', (string) $data );
+		$this->assertStringContainsString( 'wpDownloadManagerL10n', (string) $data );
 		// The reset buttons read every template from here.
 		foreach ( DownloadManager_Templates::for_script() as $key => $unused ) {
 			$this->assertStringContainsString( '"' . $key . '"', (string) $data, $key . ' should be localised' );
@@ -256,7 +256,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 		$this->assertNotContains( 'jquery', $registered->deps );
 
 		$data = wp_scripts()->get_data( 'wp-downloadmanager-quicktag', 'data' );
-		$this->assertStringContainsString( 'downloadManagerQuicktag', (string) $data );
+		$this->assertStringContainsString( 'wpDownloadManagerL10n', (string) $data );
 	}
 
 	/**
