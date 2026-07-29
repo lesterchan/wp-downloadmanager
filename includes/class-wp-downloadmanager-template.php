@@ -5,8 +5,8 @@
  * The markup lives here rather than being duplicated between the option
  * defaults and the "Restore Default Template" buttons on the templates screen,
  * which is how the two used to drift apart: the buttons were a switch statement
- * in a jQuery snippet, and it had already fallen out of step with the defaults
- * written on activation.
+ * inside the admin script, and it had already fallen out of step with the
+ * defaults written on activation.
  *
  * @package WP-DownloadManager
  */

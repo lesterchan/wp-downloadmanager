@@ -1103,14 +1103,6 @@ class WP_DownloadManager_Admin {
 		// The reset buttons read the stock markup from here rather than from a
 		// duplicated copy inside the script, which is how the two used to drift.
 		wp_localize_script( 'wp-downloadmanager-admin', 'wpDownloadManagerL10n', self::script_data() );
-
-		wp_enqueue_script(
-			'wp-downloadmanager-forms',
-			WP_DOWNLOADMANAGER_URL . 'js/wp-downloadmanager-forms.js',
-			array(),
-			WP_DOWNLOADMANAGER_VERSION,
-			true
-		);
 	}
 
 	/**

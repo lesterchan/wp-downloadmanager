@@ -1,8 +1,9 @@
 /**
  * The Download quicktag on the Text tab of the classic editor.
  *
- * Was an inline <script> printed into admin_footer that called jQuery.trim();
- * neither the inline block nor jQuery is needed for this.
+ * Was an inline <script> printed into admin_footer that trimmed the entered id
+ * through the bundled DOM library. Neither the inline block nor the library is
+ * needed for this.
  */
 ( function() {
 	'use strict';

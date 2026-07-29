@@ -1,5 +1,5 @@
 /**
- * Tests for js/wp-downloadmanager-forms.js.
+ * Tests for js/wp-downloadmanager-admin.js.
  *
  * This script replaced four kinds of inline handler on the Add / Edit / Delete
  * screens: onclick= radio selection, a jQuery "use today's date" function with
@@ -22,7 +22,7 @@ const TODAY = { day: 27, month: 7, year: 2026, hour: 14, minute: 5, second: 45 }
 beforeAll( () => {
 	// The script attaches its listeners on DOMContentLoaded, and jsdom reports
 	// the document as already complete, so it wires up immediately.
-	loadScript( 'js/wp-downloadmanager-forms.js' );
+	loadScript( 'js/wp-downloadmanager-admin.js' );
 } );
 
 beforeEach( () => {
@@ -118,16 +118,22 @@ describe( 'destructive confirmations', () => {
 } );
 
 describe( 'cancel button', () => {
-	it( 'goes back rather than submitting', () => {
-		document.body.innerHTML = '<button class="button download-cancel">Cancel</button>';
+	it( 'is a plain link now, so nothing hijacks the click', () => {
+		// href="#" rather than a real URL: jsdom logs "navigation to another
+		// Document" for anything it would actually follow, and the assertion is
+		// about the script keeping its hands off, not about where it points.
+		document.body.innerHTML = '<a class="button" href="#">Cancel</a>';
 		const go = vi.spyOn( window.history, 'go' ).mockImplementation( () => {} );
 
-		const button = document.querySelector( '.download-cancel' );
+		const link = document.querySelector( 'a.button' );
 		const event = new window.MouseEvent( 'click', { bubbles: true, cancelable: true } );
-		button.dispatchEvent( event );
+		link.dispatchEvent( event );
 
-		expect( go ).toHaveBeenCalledWith( -1 );
-		expect( event.defaultPrevented ).toBe( true );
+		// history.go( -1 ) took the visitor back to whatever they were looking
+		// at before, which after a failed save was the form they had just left.
+		// Cancel goes to the downloads list now, and the script leaves it alone.
+		expect( go ).not.toHaveBeenCalled();
+		expect( event.defaultPrevented ).toBe( false );
 	} );
 } );
 
