@@ -227,6 +227,41 @@ class WP_DownloadManager_Migration_Test extends WP_DownloadManager_TestCase {
 		$this->assertSame( 0, WP_DownloadManager_Options::get( 'stats_display' ), 'only this plugin\'s three keys are consulted' );
 	}
 
+	public function test_a_shared_row_a_sibling_already_deleted_reads_as_on_not_off() {
+		// Section 13.2. Seven plugins read stats_display and every one of their
+		// migrations deletes it, so whichever plugin a site upgrades first takes
+		// it away from the other six. Reading its absence as an opt-out is what
+		// makes a downloads block vanish with no error on a site that updated
+		// WP-Stats first.
+		$this->seed_legacy_rows();
+		delete_option( 'stats_display' );
+
+		$this->migrate();
+
+		$this->assertSame(
+			1,
+			WP_DownloadManager_Options::get( 'stats_display' ),
+			'a block someone has to switch off again beats a block that disappears without explanation'
+		);
+	}
+
+	public function test_a_shared_row_a_sibling_already_deleted_does_not_lower_the_row_limit() {
+		$this->seed_legacy_rows();
+		delete_option( 'stats_mostlimit' );
+
+		$this->migrate();
+
+		$this->assertSame( 10, WP_DownloadManager_Options::get( 'stats_most_limit' ), 'the shipped default stands when there is nothing to migrate' );
+	}
+
+	public function test_an_explicit_opt_out_in_the_shared_row_is_still_honoured() {
+		$this->seed_legacy_rows( array( 'stats_display' => array( 'downloads' => 0 ) ) );
+
+		$this->migrate();
+
+		$this->assertSame( 0, WP_DownloadManager_Options::get( 'stats_display' ), 'a row that is present and says no means no' );
+	}
+
 	public function test_the_shared_wp_stats_rows_are_deleted() {
 		$this->seed_legacy_rows(
 			array(
