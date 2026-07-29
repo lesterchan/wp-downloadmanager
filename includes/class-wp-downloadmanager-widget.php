@@ -76,7 +76,7 @@ class WP_DownloadManager_Widget extends WP_Widget {
 		// The three wrappers are markup the theme registered with the sidebar, so
 		// kses is the only escaping that can run over them without breaking it.
 		echo wp_kses_post( $args['before_widget'] ) . wp_kses_post( $args['before_title'] ) . esc_html( $title ) . wp_kses_post( $args['after_title'] );
-		echo '<ul>' . "\n";
+		echo '<ul class="wp-downloadmanager">' . "\n";
 
 		switch ( $type ) {
 			case 'downloads_category':
@@ -94,7 +94,7 @@ class WP_DownloadManager_Widget extends WP_Widget {
 
 		if ( $link ) {
 			$template = stripslashes( WP_DownloadManager_Options::template( 'download_page_link' ) );
-			echo wp_kses_post( str_replace( '%DOWNLOAD_PAGE_URL%', WP_DownloadManager_Options::get( 'page_url' ), $template ) );
+			echo wp_kses( str_replace( '%DOWNLOAD_PAGE_URL%', WP_DownloadManager_Options::get( 'page_url' ), $template ), WP_DownloadManager_Display::allowed_html() );
 		}
 
 		echo wp_kses_post( $args['after_widget'] );

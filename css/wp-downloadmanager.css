@@ -1,54 +1,91 @@
-.wp-downloadmanager-paging a, .wp-downloadmanager-paging a:link {
-	padding: 2px 4px 2px 4px;
-	margin: 2px;
+/**
+ * WP-DownloadManager front end.
+ *
+ * Everything is scoped under the one root class the plugin puts on its
+ * outermost element, and nothing here sets font-family, font-size or color: a
+ * downloads listing is body copy and should look like the theme's body copy.
+ * The only colours are custom properties with sensible fallbacks, so a theme
+ * can restyle the plugin without overriding a single selector.
+ *
+ * Direction-neutral throughout - margin-inline, padding-inline, text-align:
+ * start - so there is no separate -rtl.css to keep in step with this one.
+ */
+
+.wp-downloadmanager {
+	--wp-downloadmanager-border: currentColor;
+	--wp-downloadmanager-accent: currentColor;
+	--wp-downloadmanager-highlight-bg: rgba(255, 229, 100, 0.4);
+}
+
+/* The sprite is a definitions block, never painted. */
+.wp-downloadmanager-sprite {
+	display: none;
+}
+
+.wp-downloadmanager-icon {
+	width: 1.25em;
+	height: 1.25em;
+	vertical-align: -0.25em;
+	margin-inline-end: 0.35em;
+	flex: none;
+}
+
+.wp-downloadmanager-none {
+	text-align: center;
+}
+
+.wp-downloadmanager-highlight {
+	background-color: var(--wp-downloadmanager-highlight-bg, rgba(255, 229, 100, 0.4));
+	color: inherit;
+}
+
+/* Paging. A row of links, laid out rather than floated. */
+.wp-downloadmanager-paging {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25em;
+	align-items: center;
+	text-align: start;
+}
+
+.wp-downloadmanager-paging a,
+.wp-downloadmanager-paging span {
+	padding: 0.15em 0.45em;
+	border: 1px solid var(--wp-downloadmanager-border, currentColor);
+	border-radius: 2px;
 	text-decoration: none;
-	border: 1px solid #0066cc;
-	color: #0066cc;
-	background-color: #FFFFFF;
+	color: inherit;
+	transition: opacity 0.15s ease-in-out;
 }
-.wp-downloadmanager-paging a:visited {
-	padding: 2px 4px 2px 4px;
-	margin: 2px;
-	text-decoration: none;
-	border: 1px solid #0066cc;
-	color: #0066cc;
-	background-color: #FFFFFF;
+
+.wp-downloadmanager-paging a {
+	opacity: 0.75;
 }
-.wp-downloadmanager-paging a:hover {
-	border: 1px solid #000000;
-	color: #000000;
-	background-color: #FFFFFF;
+
+.wp-downloadmanager-paging a:hover,
+.wp-downloadmanager-paging a:focus {
+	opacity: 1;
 }
-.wp-downloadmanager-paging a:active {
-	padding: 2px 4px 2px 4px;
-	margin: 2px;
-	text-decoration: none;
-	border: 1px solid #0066cc;
-	color: #0066cc;
-	background-color: #FFFFFF;
+
+.wp-downloadmanager-paging .current {
+	font-weight: 700;
+	border-color: var(--wp-downloadmanager-accent, currentColor);
 }
-.wp-downloadmanager-paging span.pages {
-	padding: 2px 4px 2px 4px;
-	margin: 2px 2px 2px 2px;
-	color: #000000;
-	border: 1px solid #000000;
-	background-color: #FFFFFF;
+
+.wp-downloadmanager-paging .extend {
+	border-color: transparent;
 }
-.wp-downloadmanager-paging span.current {
-	padding: 2px 4px 2px 4px;
-	margin: 2px;
-	font-weight: bold;
-	border: 1px solid #000000;
-	color: #000000;
-	background-color: #FFFFFF;
+
+/* The plugin paints its own surface only for the highlight, so that is the one
+   thing that needs a dark-scheme value of its own. */
+@media (prefers-color-scheme: dark) {
+	.wp-downloadmanager {
+		--wp-downloadmanager-highlight-bg: rgba(255, 229, 100, 0.22);
+	}
 }
-.wp-downloadmanager-paging span.extend {
-	padding: 2px 4px 2px 4px;
-	margin: 2px;
-	border: 1px solid #000000;
-	color: #000000;
-	background-color: #FFFFFF;
-}
-.download-search-highlight {
-	color: red;
+
+@media (prefers-reduced-motion: reduce) {
+	.wp-downloadmanager-paging a {
+		transition: none;
+	}
 }

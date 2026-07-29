@@ -103,7 +103,7 @@ class WP_DownloadManager_Display {
 			// blank out the file name it was supposed to be highlighting.
 			$replaced = preg_replace(
 				'/\w*?' . preg_quote( $term, '/' ) . '\w*/i',
-				'<span class="download-search-highlight">$0</span>',
+				'<span class="wp-downloadmanager-highlight">$0</span>',
 				$search_text
 			);
 			if ( null !== $replaced ) {
@@ -130,6 +130,57 @@ class WP_DownloadManager_Display {
 		}
 
 		return htmlentities( $text, ENT_COMPAT, $charset );
+	}
+
+	/**
+	 * The tags a rendered listing may contain.
+	 *
+	 * Core's post allow list knows nothing about SVG, so running it over output
+	 * that contains the icon sprite would quietly delete every icon. This is
+	 * that list plus exactly the elements and attributes sprite() emits, and
+	 * nothing else - no scripting hooks, no event attributes, no external
+	 * references.
+	 *
+	 * @return array
+	 */
+	public static function allowed_html() {
+		$shared = array(
+			'class'       => true,
+			'aria-hidden' => true,
+			'focusable'   => true,
+		);
+
+		return array_merge(
+			wp_kses_allowed_html( 'post' ),
+			array(
+				'svg'    => array_merge(
+					$shared,
+					array(
+						'xmlns'   => true,
+						'viewbox' => true,
+					)
+				),
+				'symbol' => array_merge(
+					$shared,
+					array(
+						'id'              => true,
+						'viewbox'         => true,
+						'fill'            => true,
+						'stroke'          => true,
+						'stroke-width'    => true,
+						'stroke-linecap'  => true,
+						'stroke-linejoin' => true,
+					)
+				),
+				'use'    => array( 'href' => true ),
+				'path'   => array( 'd' => true ),
+				'circle' => array(
+					'cx' => true,
+					'cy' => true,
+					'r'  => true,
+				),
+			)
+		);
 	}
 
 	/**
@@ -507,6 +558,10 @@ class WP_DownloadManager_Display {
 
 		$output .= self::paging_markup( $paging );
 
+		// One root element carrying the plugin's class, so the stylesheet needs
+		// exactly one scope and a theme has one thing to override.
+		$output = '<div class="wp-downloadmanager">' . $output . '</div>';
+
 		/**
 		 * Filters the whole rendered downloads page.
 		 *
@@ -687,6 +742,8 @@ class WP_DownloadManager_Display {
 		if ( ! is_single() && 0 !== $shown && $shown < count( $files ) ) {
 			$output .= '<p><a href="' . get_permalink() . '">' . __( 'More …', 'wp-downloadmanager' ) . '</a></p>';
 		}
+
+		$output = '<div class="wp-downloadmanager">' . $output . '</div>';
 
 		/**
 		 * Filters the markup for files embedded in a post or page.
@@ -956,8 +1013,9 @@ class WP_DownloadManager_Display {
 	protected static function output( $output, $display ) {
 		if ( $display ) {
 			// The stats templates are stored through wp_kses() on save, so this
-			// runs the same allow list back over what comes out of them.
-			echo wp_kses_post( $output );
+			// runs the same allow list back over what comes out of them, plus the
+			// handful of SVG elements the icons need.
+			echo wp_kses( $output, self::allowed_html() );
 			return;
 		}
 

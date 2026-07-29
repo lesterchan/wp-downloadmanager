@@ -96,7 +96,7 @@ class WP_DownloadManager_WPStats {
 		$total_size  = (int) $stats->total_size;
 		$total_hits  = (int) $stats->total_hits;
 
-		echo '<ul>' . "\n";
+		echo '<ul class="wp-downloadmanager">' . "\n";
 		printf(
 			'<li>%s</li>' . "\n",
 			wp_kses_post(
@@ -149,8 +149,8 @@ class WP_DownloadManager_WPStats {
 			)
 		);
 
-		echo '<ul>' . "\n";
-		echo wp_kses_post( WP_DownloadManager_Display::recent_downloads( $limit, 0, false ) );
+		echo '<ul class="wp-downloadmanager">' . "\n";
+		echo wp_kses( WP_DownloadManager_Display::recent_downloads( $limit, 0, false ), WP_DownloadManager_Display::allowed_html() );
 		echo '</ul>' . "\n";
 	}
 
@@ -173,8 +173,8 @@ class WP_DownloadManager_WPStats {
 			)
 		);
 
-		echo '<ul>' . "\n";
-		echo wp_kses_post( WP_DownloadManager_Display::most_downloaded( $limit, 0, false ) );
+		echo '<ul class="wp-downloadmanager">' . "\n";
+		echo wp_kses( WP_DownloadManager_Display::most_downloaded( $limit, 0, false ), WP_DownloadManager_Display::allowed_html() );
 		echo '</ul>' . "\n";
 	}
 }
