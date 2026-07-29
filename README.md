@@ -245,3 +245,21 @@ file itself. If you renamed the directory to work around this, you can rename it
 * The second value you pass in is the maximum number of files you want to get.
 
 Default: `get_downloads_category(1, 10);`
+
+## Upgrade Notice
+
+### 2.0.0
+
+**Two filters were renamed and the old names no longer exist.** If your theme or
+a snippet in `functions.php` hooks either of these, update it before you upgrade
+or the customisation will simply stop applying — nothing will error, the filter
+just never fires:
+
+* `downloads_page` is now `wp_downloadmanager_page`
+* `download_embedded` is now `wp_downloadmanager_embedded`
+
+The template tags themselves — `downloads_page()`, `download_embedded()`,
+`get_most_downloaded()`, `get_recent_downloads()`, `get_downloads_category()`,
+`get_download_files()`, `get_download_size()`, `get_download_hits()`,
+`download_file_url()` — keep their names, so a theme that only calls those needs
+no edits.

@@ -428,7 +428,17 @@ class WP_DownloadManager_Display {
 
 		$output .= self::paging_markup( $paging );
 
-		return apply_filters( 'downloads_page', $output );
+		/**
+		 * Filters the whole rendered downloads page.
+		 *
+		 * Renamed from the unprefixed downloads_page in 2.0.0; the old name is
+		 * gone rather than deprecated.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param string $output Rendered markup for the listing.
+		 */
+		return apply_filters( 'wp_downloadmanager_page', $output );
 	}
 
 	/**
@@ -570,7 +580,8 @@ class WP_DownloadManager_Display {
 		if ( ! $files ) {
 			// Used to fall off the end and return null, which is a TypeError
 			// waiting to happen for any caller that concatenates the result.
-			return apply_filters( 'download_embedded', '' );
+			/** This filter is documented at the end of this method. */
+			return apply_filters( 'wp_downloadmanager_embedded', '' );
 		}
 
 		$icons      = WP_DownloadManager_File::extension_images();
@@ -600,7 +611,18 @@ class WP_DownloadManager_Display {
 			$output .= '<p><a href="' . get_permalink() . '">' . __( 'More …', 'wp-downloadmanager' ) . '</a></p>';
 		}
 
-		return apply_filters( 'download_embedded', $output );
+		/**
+		 * Filters the markup for files embedded in a post or page.
+		 *
+		 * Renamed from the unprefixed download_embedded in 2.0.0; the old name is
+		 * gone rather than deprecated.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param string $output Rendered markup, or the empty string when the
+		 *                       shortcode matched nothing.
+		 */
+		return apply_filters( 'wp_downloadmanager_embedded', $output );
 	}
 
 	/**

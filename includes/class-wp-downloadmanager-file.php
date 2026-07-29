@@ -77,7 +77,14 @@ class WP_DownloadManager_File {
 	 */
 	public static function extension_images() {
 		$images = array();
-		$dir    = apply_filters( 'wp_downloadmanager_file_extension_images_path', WP_DOWNLOADMANAGER_DIR . 'images/ext' );
+		/**
+		 * Filters the directory the extension icons are read from.
+		 *
+		 * @since 1.68.6
+		 *
+		 * @param string $dir Absolute path, without a trailing slash.
+		 */
+		$dir = apply_filters( 'wp_downloadmanager_file_extension_images_path', WP_DOWNLOADMANAGER_DIR . 'images/ext' );
 
 		if ( is_dir( $dir ) ) {
 			foreach ( (array) scandir( $dir ) as $file ) {
@@ -105,6 +112,15 @@ class WP_DownloadManager_File {
 			$icon = $ext;
 		}
 
+		/**
+		 * Filters which icon a file is shown with.
+		 *
+		 * @since 1.68.6
+		 *
+		 * @param string $icon      Chosen icon.
+		 * @param string $ext       The file's extension.
+		 * @param string $file_name Stored file name.
+		 */
 		return apply_filters( 'wp_downloadmanager_file_extension_image', $icon, $ext, $file_name );
 	}
 
@@ -133,11 +149,25 @@ class WP_DownloadManager_File {
 			return false;
 		}
 
+		/**
+		 * Filters the URL schemes a remote file may use.
+		 *
+		 * @since 1.68.5
+		 *
+		 * @param array $schemes Allowed schemes.
+		 */
 		$schemes = apply_filters( 'wp_downloadmanager_schemes', array( 'http', 'https', 'ftp' ) );
 		if ( ! in_array( $parsed['scheme'], $schemes, true ) ) {
 			return false;
 		}
 
+		/**
+		 * Filters the ports a remote file may be served from.
+		 *
+		 * @since 1.68.5
+		 *
+		 * @param array $ports Allowed ports.
+		 */
 		$ports = apply_filters( 'wp_downloadmanager_ports', array( 80, 443, 21 ) );
 		if ( ! empty( $parsed['port'] ) && ! in_array( $parsed['port'], $ports, true ) ) {
 			return false;
