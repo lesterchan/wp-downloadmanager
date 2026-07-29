@@ -8,7 +8,7 @@
  * against a page that could never load. Both now come from
  * WP_DownloadManager_Admin::pages(), and these tests are what keeps them together.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

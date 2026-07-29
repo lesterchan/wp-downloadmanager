@@ -8,7 +8,7 @@
  * present, and through the legacy option row when it is not - and the suite
  * runs without WP-Stats installed, which exercises the fallback.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**
@@ -89,7 +89,7 @@ class Test_WPStats extends WP_DownloadManager_TestCase {
 	public function test_general_panel_reports_totals() {
 		$content = WP_DownloadManager_WPStats::page_general( '' );
 
-		$this->assertStringContainsString( 'WP-WP_DownloadManager', $content );
+		$this->assertStringContainsString( 'WP-DownloadManager', $content );
 		// Five fixtures, 126 hits between them, just over a megabyte.
 		$this->assertStringContainsString( '5', $content );
 		$this->assertStringContainsString( '126', $content );
@@ -257,7 +257,7 @@ class Test_WPStats extends WP_DownloadManager_TestCase {
 		// SUM() is NULL with no rows, and _n() and number_format() are both
 		// deprecated for null on PHP 8.1 and later. The panel must report zeroes.
 		$general = WP_DownloadManager_WPStats::page_general( '' );
-		$this->assertStringContainsString( 'WP-WP_DownloadManager', $general );
+		$this->assertStringContainsString( 'WP-DownloadManager', $general );
 		$this->assertStringContainsString( '<strong>0</strong> files were added.', $general );
 		$this->assertStringContainsString( '<strong>0</strong> hits were generated.', $general );
 	}

@@ -13,7 +13,7 @@
  * value escaped twice, a stray cast that made a branch permanently false. So
  * these tests assert on the HTML.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

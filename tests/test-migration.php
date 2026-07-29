@@ -5,7 +5,7 @@
  * The nineteen separate rows fold into one. This is the change most likely to
  * silently reset somebody's settings, so it gets the most tests.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

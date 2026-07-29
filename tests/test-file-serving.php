@@ -6,7 +6,7 @@
  * where the permission model is enforced for real - the templates only decide
  * whether to show a link. It had no coverage at all before 2.0.0.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

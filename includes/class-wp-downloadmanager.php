@@ -1,8 +1,8 @@
 <?php
 /**
- * Front-end wiring for WP-WP_DownloadManager.
+ * Front-end wiring for WP-DownloadManager.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;

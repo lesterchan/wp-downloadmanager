@@ -1,8 +1,8 @@
 <?php
 /**
- * Uninstall WP-WP_DownloadManager.
+ * Uninstall WP-DownloadManager.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
@@ -22,14 +22,15 @@ function wp_downloadmanager_uninstall_site() {
 
 	// The legacy rows are listed by the options class, so this and the migration
 	// can never disagree about which rows belong to the plugin. 2.0.0
-	// consolidated them into download_options, but an install that never reached
-	// the migration may still have them.
+	// consolidated them into wp_downloadmanager_options, but an install that
+	// never reached the migration may still have them.
 	$option_names = array_merge(
 		array_keys( WP_DownloadManager_Options::legacy_map() ),
+		array_values( WP_DownloadManager_Options::legacy_structured_rows() ),
 		WP_DownloadManager_Options::legacy_extra_rows(),
 		array(
 			WP_DownloadManager_Options::OPTION,
-			'download_db_version',
+			WP_DownloadManager_Options::VERSION,
 			'widget_downloads',
 		)
 	);
@@ -41,7 +42,7 @@ function wp_downloadmanager_uninstall_site() {
 	// Dropping the plugin's own table is the entire job here. The table was
 	// dropped once per option row before, which worked only by accident.
 	$table = $wpdb->prefix . 'downloads';
-	$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" ); // phpcs:ignore WordPress.DB
+	$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
 }
 
 if ( is_multisite() ) {
@@ -64,4 +65,4 @@ if ( is_multisite() ) {
 	}
 } else {
 	wp_downloadmanager_uninstall_site();
-}//end if
+}

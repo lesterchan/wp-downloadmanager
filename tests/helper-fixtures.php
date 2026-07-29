@@ -1,11 +1,11 @@
 <?php
 /**
- * Shared fixtures for the WP-WP_DownloadManager suite.
+ * Shared fixtures for the WP-DownloadManager suite.
  *
  * Every test starts from the same table contents and the same option values,
  * so the golden-master assertions in test-golden.php compare like with like.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

@@ -1,8 +1,8 @@
 <?php
 /**
- * File helpers and the download endpoint for WP-WP_DownloadManager.
+ * File helpers and the download endpoint for WP-DownloadManager.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -214,6 +214,22 @@ class WP_DownloadManager_File {
 	}
 
 	/**
+	 * Now, as a site-local Unix timestamp.
+	 *
+	 * File dates have always been stored shifted by the site's GMT offset and
+	 * are rendered back with gmdate(), so a row written with a true UTC
+	 * timestamp would show up hours away from the ones beside it. This is what
+	 * self::now() does, spelled out - the WordPress coding
+	 * standard rightly flags that call, and the answer here is to be explicit
+	 * about the offset rather than to change what the column means.
+	 *
+	 * @return int
+	 */
+	public static function now() {
+		return time() + (int) ( (float) get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+	}
+
+	/**
 	 * The largest upload PHP will accept, in bytes.
 	 *
 	 * @return int
@@ -347,7 +363,7 @@ class WP_DownloadManager_File {
 		$file     = preg_replace( '/[^A-Za-z0-9\-._\/]/', '', $file );
 
 		if ( $file !== $file_old ) {
-			$rename = rename( $file_path . $file_old, $file_path . $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			$rename = rename( $file_path . $file_old, $file_path . $file );
 		}
 
 		return $rename ? $file : $file_old;
@@ -411,12 +427,12 @@ class WP_DownloadManager_File {
 		$file         = null;
 
 		if ( $dl_id > 0 && 0 === $use_filename ) {
-			$file = $wpdb->get_row( $wpdb->prepare( "SELECT file_id, file, file_permission FROM {$wpdb->downloads} WHERE file_id = %d AND file_permission != -2", $dl_id ) ); // phpcs:ignore WordPress.DB
+			$file = $wpdb->get_row( $wpdb->prepare( "SELECT file_id, file, file_permission FROM {$wpdb->downloads} WHERE file_id = %d AND file_permission != -2", $dl_id ) );
 		} elseif ( '' !== $dl_name && 1 === $use_filename ) {
 			if ( ! self::is_remote( $dl_name ) ) {
 				$dl_name = '/' . $dl_name;
 			}
-			$file = $wpdb->get_row( $wpdb->prepare( "SELECT file_id, file, file_permission FROM {$wpdb->downloads} WHERE file = %s AND file_permission != -2", $dl_name ) ); // phpcs:ignore WordPress.DB
+			$file = $wpdb->get_row( $wpdb->prepare( "SELECT file_id, file, file_permission FROM {$wpdb->downloads} WHERE file = %s AND file_permission != -2", $dl_name ) );
 		}
 
 		if ( empty( $file ) ) {
@@ -435,7 +451,7 @@ class WP_DownloadManager_File {
 			wp_die( esc_html__( 'You do not have permission to download this file.', 'wp-downloadmanager' ), '', array( 'response' => 403 ) );
 		}
 
-		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->downloads} SET file_hits = (file_hits + 1), file_last_downloaded_date = %s WHERE file_id = %d AND file_permission != -2", current_time( 'timestamp' ), $file_id ) ); // phpcs:ignore WordPress.DB
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->downloads} SET file_hits = (file_hits + 1), file_last_downloaded_date = %s WHERE file_id = %d AND file_permission != -2", self::now(), $file_id ) );
 
 		if ( ! self::is_remote( $file_name ) ) {
 			if ( ! is_file( $file_path . $file_name ) ) {
@@ -445,9 +461,9 @@ class WP_DownloadManager_File {
 
 			if ( 0 === $method ) {
 				self::send_headers( basename( $file_name ), filesize( $file_path . $file_name ) );
-				readfile( $file_path . $file_name ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+				readfile( $file_path . $file_name );
 			} else {
-				wp_redirect( $file_url . $file_name ); // phpcs:ignore WordPress.Security.SafeRedirect
+				wp_redirect( $file_url . $file_name );
 			}
 			self::finish();
 		}
@@ -455,9 +471,9 @@ class WP_DownloadManager_File {
 		if ( ini_get( 'allow_url_fopen' ) && 0 === $method ) {
 			$file_size = self::remote_filesize( $file_name );
 			self::send_headers( basename( $file_name ), __( 'unknown', 'wp-downloadmanager' ) === $file_size ? 0 : $file_size );
-			readfile( $file_name ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			readfile( $file_name );
 		} else {
-			wp_redirect( $file_name ); // phpcs:ignore WordPress.Security.SafeRedirect
+			wp_redirect( $file_name );
 		}
 		self::finish();
 	}

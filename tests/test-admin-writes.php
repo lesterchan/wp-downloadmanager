@@ -6,7 +6,7 @@
  * outside a migration, and the only code that touches the filesystem. They had
  * no coverage at all before, which is why the 2.0.0 rewrite left them alone.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

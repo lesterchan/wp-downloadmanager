@@ -1,11 +1,11 @@
 <?php
 /**
- * PHPUnit bootstrap for WP-WP_DownloadManager.
+ * PHPUnit bootstrap for WP-DownloadManager.
  *
  * Runs inside the wp-env "tests" container, where WP_TESTS_DIR is already
  * exported and the WordPress test library is present.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );

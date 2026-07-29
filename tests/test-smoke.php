@@ -2,7 +2,7 @@
 /**
  * Smoke test: the plugin loaded, the table exists, the fixtures are in it.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

@@ -1,29 +1,26 @@
 <?php
 /**
- * Consolidated option storage for WP-WP_DownloadManager.
+ * Consolidated option storage for WP-DownloadManager.
  *
- * Everything the plugin configures lives in one wp_options row holding a nested
- * array, rather than the nineteen separate rows used up to 2.0.0. It reuses the
- * existing download_options name, which before 2.0.0 held only use_filename,
- * rss_sortby and rss_limit - reusing it adds no new row name and means the
- * existing value merges over the defaults for free.
+ * Everything a site owner can configure lives in one wp_options row holding a
+ * nested array, rather than the nineteen separate rows used up to 1.69.2. The
+ * two version markers live in a second row of their own - see
+ * WP_DownloadManager_Options::VERSION for why they are not in here with
+ * everything else.
  *
  * The value is a plain PHP array: update_option() serialises it and
  * get_option() unserialises it, so there is no encode/decode layer at the call
  * sites and register_setting()'s sanitize_callback receives the structure
  * intact.
  *
- * One thing deliberately stays in its own row: download_db_version, because it
- * is read to decide whether this option needs migrating and so cannot live
- * inside the thing being migrated.
- *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Reads and writes the single download_options row.
+ * Reads and writes the wp_downloadmanager_options and
+ * wp_downloadmanager_version rows.
  */
 class WP_DownloadManager_Options {
 
@@ -32,7 +29,7 @@ class WP_DownloadManager_Options {
 	 *
 	 * @var string
 	 */
-	const OPTION = 'download_options';
+	const OPTION = 'wp_downloadmanager_options';
 
 	/**
 	 * Name of the row holding the two version markers.
@@ -45,7 +42,7 @@ class WP_DownloadManager_Options {
 	 *
 	 * @var string
 	 */
-	const VERSION = 'download_db_version';
+	const VERSION = 'wp_downloadmanager_version';
 
 	/**
 	 * Runtime cache so a page render does not re-read the row per lookup.
@@ -71,6 +68,10 @@ class WP_DownloadManager_Options {
 			'download_nice_permalink' => 'nice_permalink',
 			'download_categories'     => 'categories',
 			'download_sort'           => 'sort',
+			// Section 13: WP-Stats used to own these two rows and all seven
+			// companion plugins read them. Each plugin keeps its own copy now,
+			// so wp-stats never has to read a sibling's settings.
+			'stats_mostlimit'         => 'stats_most_limit',
 		);
 
 		foreach ( WP_DownloadManager_Template::keys() as $key ) {
@@ -81,15 +82,29 @@ class WP_DownloadManager_Options {
 	}
 
 	/**
-	 * Legacy rows that carry no value forward but must still be cleaned up.
+	 * Legacy rows read by the migration outside the flat dot-path map.
 	 *
-	 * Note that download_options is NOT listed: it is the row the settings now live in, so
-	 * deleting it would throw away everything the migration just wrote.
+	 * The pre-2.0.0 settings row held the whole settings array and stats_display
+	 * an array of per-panel toggles shared with six other plugins, so neither
+	 * folds in with a single assignment.
+	 *
+	 * @return array
+	 */
+	public static function legacy_structured_rows() {
+		return array(
+			'settings' => 'download_options',
+			'stats'    => 'stats_display',
+		);
+	}
+
+	/**
+	 * Legacy rows that carry no value forward but must still be cleaned up.
 	 *
 	 * @return array
 	 */
 	public static function legacy_extra_rows() {
 		return array(
+			'download_db_version',
 			'widget_download_most_downloaded',
 			'widget_download_recent_downloads',
 		);
@@ -105,26 +120,31 @@ class WP_DownloadManager_Options {
 	 */
 	public static function defaults() {
 		return array(
-			'path'           => array(
+			'path'             => array(
 				'dir' => WP_CONTENT_DIR . '/files',
 				'url' => content_url( 'files' ),
 			),
-			'page_url'       => site_url( 'downloads' ),
-			'method'         => 1,
-			'nice_permalink' => 1,
-			'use_filename'   => 0,
-			'categories'     => array( 'General' ),
-			'sort'           => array(
+			'page_url'         => site_url( 'downloads' ),
+			'method'           => 1,
+			'nice_permalink'   => 1,
+			'use_filename'     => 0,
+			'categories'       => array( 'General' ),
+			'sort'             => array(
 				'by'      => 'file_name',
 				'order'   => 'asc',
 				'perpage' => 20,
 				'group'   => 1,
 			),
-			'rss'            => array(
+			'rss'              => array(
 				'sortby' => 'file_date',
 				'limit'  => 20,
 			),
-			'templates'      => WP_DownloadManager_Template::defaults(),
+			// Section 13. Whether to contribute a section to WP-Stats, and how
+			// many rows that section lists. Read by WP_DownloadManager_WPStats
+			// and by nothing outside this plugin.
+			'stats_display'    => 1,
+			'stats_most_limit' => 10,
+			'templates'        => WP_DownloadManager_Template::defaults(),
 		);
 	}
 
@@ -248,25 +268,80 @@ class WP_DownloadManager_Options {
 	}
 
 	/**
+	 * The two version markers, normalised.
+	 *
+	 * @return array Keys 'plugin' and 'db', in that order, and nothing else.
+	 */
+	public static function markers() {
+		$stored = get_option( self::VERSION, array() );
+
+		if ( ! is_array( $stored ) ) {
+			$stored = array();
+		}
+
+		return array(
+			'plugin' => isset( $stored['plugin'] ) ? (string) $stored['plugin'] : '',
+			'db'     => isset( $stored['db'] ) ? (string) $stored['db'] : '0',
+		);
+	}
+
+	/**
+	 * Write both markers in one go.
+	 *
+	 * One update_option() for both, so a half-finished upgrade can never record
+	 * itself as complete.
+	 *
+	 * @param string $plugin Plugin version just run.
+	 * @param string $db     Schema version just reached.
+	 * @return bool
+	 */
+	public static function save_markers( $plugin, $db ) {
+		return update_option(
+			self::VERSION,
+			array(
+				'plugin' => (string) $plugin,
+				'db'     => (string) $db,
+			)
+		);
+	}
+
+	/**
 	 * Fold the pre-2.0.0 option rows into the single row, then delete them.
 	 *
-	 * Gated by the caller on the stored version rather than on "do the old rows
-	 * still exist" - an install that has already migrated has no old rows, and a
-	 * presence check would write defaults straight over its settings.
+	 * Gated by the caller on the stored schema marker rather than on "do the old
+	 * rows still exist" - an install that has already migrated has no old rows,
+	 * and a presence check would write defaults straight over its settings.
 	 *
 	 * @return void
 	 */
 	public static function migrate_from_legacy_rows() {
 		// Start from whatever is already stored, not from the defaults. The
-		// version gate is the primary guard, but it is not sufficient on its own:
-		// an install whose download_db_version row is missing while
-		// download_options survives - a partial restore, a downgrade and
-		// re-upgrade, an over-eager cleanup plugin - would otherwise have every
-		// setting overwritten with defaults, because there are no legacy rows
-		// left to read them back from. Seeding from all() makes the migration a
-		// no-op in that case instead of destructive.
+		// marker gate is the primary guard, but it is not sufficient on its own:
+		// an install whose marker row is missing while the settings row survives
+		// - a partial restore, a downgrade and re-upgrade, an over-eager cleanup
+		// plugin - would otherwise have every setting overwritten with defaults,
+		// because there are no legacy rows left to read them back from. Seeding
+		// from all() makes the migration a no-op in that case instead of
+		// destructive.
 		self::flush();
 		$values = self::all();
+
+		// The 1.69.2 settings row, which held use_filename, rss_sortby and
+		// rss_limit under names that no longer exist. Read before the flat map so
+		// a dedicated row still wins over the copy inside it.
+		$structured      = self::legacy_structured_rows();
+		$legacy_settings = get_option( $structured['settings'], array() );
+		if ( is_array( $legacy_settings ) ) {
+			// Anything already using a current key comes across as it stands.
+			$values = self::merge( $values, array_intersect_key( $legacy_settings, self::defaults() ) );
+
+			if ( isset( $legacy_settings['rss_sortby'] ) ) {
+				$values['rss']['sortby'] = $legacy_settings['rss_sortby'];
+			}
+			if ( isset( $legacy_settings['rss_limit'] ) ) {
+				$values['rss']['limit'] = (int) $legacy_settings['rss_limit'];
+			}
+		}
 
 		foreach ( self::legacy_map() as $legacy => $path ) {
 			$stored = get_option( $legacy, null );
@@ -283,24 +358,30 @@ class WP_DownloadManager_Options {
 			}
 		}
 
-		// download_options is the row being written, so its pre-2.0.0 contents
-		// arrived through all() above as stray top-level keys rather than through
-		// the loop. Fold them into their new homes and drop the strays, or they
-		// would sit in the row forever shadowing nothing.
-		if ( isset( $values['rss_sortby'] ) ) {
-			$values['rss']['sortby'] = $values['rss_sortby'];
+		// WP-Stats' shared toggle row carried one flag per panel; this plugin
+		// contributes one section now, so it is on if any of its three panels
+		// was.
+		$stats_display = get_option( $structured['stats'], null );
+		if ( is_array( $stats_display ) ) {
+			$panels = array_intersect_key(
+				$stats_display,
+				array_flip( array( 'downloads', 'recent_downloads', 'downloaded_most' ) )
+			);
+
+			$values['stats_display'] = (int) (bool) array_filter( $panels );
 		}
-		if ( isset( $values['rss_limit'] ) ) {
-			$values['rss']['limit'] = $values['rss_limit'];
-		}
-		unset( $values['rss_sortby'], $values['rss_limit'] );
+
+		$values['stats_most_limit'] = max( 1, (int) $values['stats_most_limit'] );
 
 		self::save( $values );
 
-		foreach ( array_keys( self::legacy_map() ) as $legacy ) {
-			delete_option( $legacy );
-		}
-		foreach ( self::legacy_extra_rows() as $legacy ) {
+		$legacy_rows = array_merge(
+			array_keys( self::legacy_map() ),
+			array_values( self::legacy_structured_rows() ),
+			self::legacy_extra_rows()
+		);
+
+		foreach ( $legacy_rows as $legacy ) {
 			delete_option( $legacy );
 		}
 	}

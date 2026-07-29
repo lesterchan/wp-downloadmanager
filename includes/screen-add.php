@@ -5,7 +5,7 @@
  * Included by wp-admin: the menu uses the legacy "plugin file as menu slug"
  * form, so this file's path relative to the plugins directory is its slug.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 // Check whether the user can manage downloads.
@@ -223,7 +223,7 @@ if ( ! empty( $text ) ) {
 			</tr>
 			<tr>
 				<td valign="top"><strong><?php esc_html_e( 'File Date:', 'wp-downloadmanager' ); ?></strong></td>
-				<td><?php WP_DownloadManager_Admin::file_timestamp( current_time( 'timestamp' ) ); ?></td>
+				<td><?php WP_DownloadManager_Admin::file_timestamp( WP_DownloadManager_File::now() ); ?></td>
 			</tr>
 			<tr>
 				<td><strong><?php esc_html_e( 'Starting File Hits:', 'wp-downloadmanager' ); ?></strong></td>

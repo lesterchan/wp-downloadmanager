@@ -1,8 +1,8 @@
 <?php
 /**
- * Installation, schema and migration for WP-WP_DownloadManager.
+ * Installation, schema and migration for WP-DownloadManager.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -68,12 +68,12 @@ class WP_DownloadManager_Install {
 	}
 
 	/**
-	 * Run the upgrade path if the stored schema version is behind.
+	 * Run the upgrade path if either stored marker is behind.
 	 *
 	 * @return void
 	 */
 	public static function maybe_upgrade() {
-		if ( (int) get_option( WP_DownloadManager_Options::VERSION, 0 ) >= (int) WP_DOWNLOADMANAGER_DB_VERSION ) {
+		if ( ! self::is_behind() ) {
 			return;
 		}
 
@@ -82,24 +82,53 @@ class WP_DownloadManager_Install {
 	}
 
 	/**
-	 * Everything that has to happen once, gated on the stored version.
+	 * Whether the stored markers are behind the shipped ones.
+	 *
+	 * @return bool
+	 */
+	protected static function is_behind() {
+		$markers = WP_DownloadManager_Options::markers();
+
+		return (int) $markers['db'] < (int) WP_DOWNLOADMANAGER_DB_VERSION
+			|| WP_DOWNLOADMANAGER_VERSION !== $markers['plugin'];
+	}
+
+	/**
+	 * Everything that has to happen once, gated on the stored schema marker.
+	 *
+	 * The plugin marker drives the steps that are not schema changes - here,
+	 * re-sanitising the settings so a release that tightens a sanitiser cleans
+	 * up what an older one let through.
 	 *
 	 * @return void
 	 */
 	public static function upgrade() {
-		$installed = (int) get_option( WP_DownloadManager_Options::VERSION, 0 );
-
-		if ( $installed >= (int) WP_DOWNLOADMANAGER_DB_VERSION ) {
+		if ( ! self::is_behind() ) {
 			return;
 		}
 
-		if ( $installed < 2 ) {
+		$installed = (int) WP_DownloadManager_Options::markers()['db'];
+
+		// The pre-2.0.0 rows, including WP-Stats' two shared ones. Schema 3 is
+		// where they became wp_downloadmanager_options; anything below that has
+		// never been through the fold.
+		if ( $installed < 3 ) {
 			self::upgrade_pre_130();
 			self::upgrade_pre_150();
 			WP_DownloadManager_Options::migrate_from_legacy_rows();
+		} else {
+			WP_DownloadManager_Options::flush();
+			WP_DownloadManager_Options::save(
+				WP_DownloadManager_Settings::sanitize( WP_DownloadManager_Options::all() )
+			);
 		}
 
-		update_option( WP_DownloadManager_Options::VERSION, (int) WP_DOWNLOADMANAGER_DB_VERSION );
+		// Both markers in one write, so a half-finished upgrade never records
+		// itself as complete.
+		WP_DownloadManager_Options::save_markers(
+			WP_DOWNLOADMANAGER_VERSION,
+			WP_DOWNLOADMANAGER_DB_VERSION
+		);
 		WP_DownloadManager_Options::flush();
 	}
 
@@ -147,7 +176,10 @@ class WP_DownloadManager_Install {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		if ( get_option( 'download_nice_permalink', null ) ) {
+		// The 1.30 columns are already there wherever the pre-2.0.0 permalink
+		// row still exists, because that row and the columns arrived together.
+		$legacy = array_search( 'nice_permalink', WP_DownloadManager_Options::legacy_map(), true );
+		if ( $legacy && get_option( $legacy, null ) ) {
 			return;
 		}
 
@@ -156,14 +188,14 @@ class WP_DownloadManager_Install {
 			'file_updated_date',
 			"ALTER TABLE {$wpdb->downloads} ADD file_updated_date VARCHAR(20) NOT NULL AFTER file_date;"
 		);
-		$wpdb->query( "UPDATE {$wpdb->downloads} SET file_updated_date = file_date" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "UPDATE {$wpdb->downloads} SET file_updated_date = file_date" );
 
 		maybe_add_column(
 			$wpdb->downloads,
 			'file_last_downloaded_date',
 			"ALTER TABLE {$wpdb->downloads} ADD file_last_downloaded_date VARCHAR(20) NOT NULL AFTER file_updated_date;"
 		);
-		$wpdb->query( "UPDATE {$wpdb->downloads} SET file_last_downloaded_date = file_date" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "UPDATE {$wpdb->downloads} SET file_last_downloaded_date = file_date" );
 	}
 
 	/**
@@ -174,15 +206,18 @@ class WP_DownloadManager_Install {
 	protected static function upgrade_pre_150() {
 		global $wpdb;
 
-		if ( false !== get_option( 'download_options', false ) ) {
+		// Only installs that predate the 1.50 renumbering have no settings row
+		// at all, so its presence is the marker for "already renumbered".
+		$structured = WP_DownloadManager_Options::legacy_structured_rows();
+		if ( false !== get_option( $structured['settings'], false ) ) {
 			return;
 		}
 
-		$moved = $wpdb->query( "UPDATE {$wpdb->downloads} SET file_permission = -2 WHERE file_permission = -1" ); // phpcs:ignore WordPress.DB
+		$moved = $wpdb->query( "UPDATE {$wpdb->downloads} SET file_permission = -2 WHERE file_permission = -1" );
 		if ( $moved ) {
-			$moved = $wpdb->query( "UPDATE {$wpdb->downloads} SET file_permission = -1 WHERE file_permission = 0" ); // phpcs:ignore WordPress.DB
+			$moved = $wpdb->query( "UPDATE {$wpdb->downloads} SET file_permission = -1 WHERE file_permission = 0" );
 			if ( $moved ) {
-				$wpdb->query( "UPDATE {$wpdb->downloads} SET file_permission = 0 WHERE file_permission = 1" ); // phpcs:ignore WordPress.DB
+				$wpdb->query( "UPDATE {$wpdb->downloads} SET file_permission = 0 WHERE file_permission = 1" );
 			}
 		}
 	}

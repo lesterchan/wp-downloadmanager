@@ -5,7 +5,7 @@
  * Included by wp-admin: the menu uses the legacy "plugin file as menu slug"
  * form, so this file's path relative to the plugins directory is its slug.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 // Check whether the user can manage downloads.
@@ -219,7 +219,7 @@ if ( ! empty( $_POST['do'] ) ) {
 				}
 				$reset_filehits    = ! empty( $_POST['reset_filehits'] ) ? intval( $_POST['reset_filehits'] ) : 0;
 				$file_permission   = ! empty( $_POST['file_permission'] ) ? intval( $_POST['file_permission'] ) : 0;
-				$file_updated_date = current_time( 'timestamp' );
+				$file_updated_date = WP_DownloadManager_File::now();
 
 				// Built by hand and interpolated before, which both double slashed
 				// every text value on the way in and left the write unprepared.
@@ -405,12 +405,12 @@ switch ( $dl_mode ) {
 							echo esc_attr(
 								wp_json_encode(
 									array(
-										'day'    => (int) gmdate( 'j', current_time( 'timestamp' ) ),
-										'month'  => (int) gmdate( 'n', current_time( 'timestamp' ) ),
-										'year'   => (int) gmdate( 'Y', current_time( 'timestamp' ) ),
-										'hour'   => (int) gmdate( 'G', current_time( 'timestamp' ) ),
-										'minute' => (int) gmdate( 'i', current_time( 'timestamp' ) ),
-										'second' => (int) gmdate( 's', current_time( 'timestamp' ) ),
+										'day'    => (int) gmdate( 'j', WP_DownloadManager_File::now() ),
+										'month'  => (int) gmdate( 'n', WP_DownloadManager_File::now() ),
+										'year'   => (int) gmdate( 'Y', WP_DownloadManager_File::now() ),
+										'hour'   => (int) gmdate( 'G', WP_DownloadManager_File::now() ),
+										'minute' => (int) gmdate( 'i', WP_DownloadManager_File::now() ),
+										'second' => (int) gmdate( 's', WP_DownloadManager_File::now() ),
 									)
 								)
 							);

@@ -1,8 +1,8 @@
 <?php
 /**
- * Front-end rendering for WP-WP_DownloadManager.
+ * Front-end rendering for WP-DownloadManager.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -53,7 +53,7 @@ class WP_DownloadManager_Display {
 	 * @return array
 	 */
 	public static function query_args() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
 		return array_map( 'sanitize_text_field', wp_unslash( $_GET ) );
 	}
 
@@ -262,13 +262,11 @@ class WP_DownloadManager_Display {
 
 		$category_id = (int) $category_id;
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$category    = ! empty( $_GET['dl_cat'] ) ? (int) $_GET['dl_cat'] : 0;
 		$page        = ! empty( $_GET['dl_page'] ) ? (int) $_GET['dl_page'] : 0;
 		$search_word = ! empty( $_GET['dl_search'] )
 			? wp_strip_all_tags( trim( sanitize_text_field( wp_unslash( $_GET['dl_search'] ) ) ) )
 			: '';
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$search     = $search_word;
 		$categories = (array) WP_DownloadManager_Options::get( 'categories', array() );
@@ -314,9 +312,16 @@ class WP_DownloadManager_Display {
 			}
 		}
 
-		$counts_sql = "SELECT file_category, COUNT(file_id) as category_files, SUM(file_size) category_size, SUM(file_hits) as category_hits FROM {$wpdb->downloads} WHERE 1=1 {$category_sql} {$search_sql} AND file_permission != -2 GROUP BY file_category";
-		// phpcs:ignore WordPress.DB
-		$rows = $wpdb->get_results( $search_args ? $wpdb->prepare( $counts_sql, $search_args ) : $counts_sql );
+		// The permission guard is carried as a bound argument rather than a
+		// literal so the query always has at least one placeholder, which is what
+		// lets both branches - with a search term and without - go through
+		// prepare() rather than only the one that happens to have arguments.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT file_category, COUNT(file_id) as category_files, SUM(file_size) category_size, SUM(file_hits) as category_hits FROM {$wpdb->downloads} WHERE 1=1 {$category_sql} {$search_sql} AND file_permission != %d GROUP BY file_category",
+				array_merge( $search_args, array( -2 ) )
+			)
+		);
 
 		foreach ( (array) $rows as $row ) {
 			$cat_id                    = (int) $row->file_category;
@@ -338,11 +343,11 @@ class WP_DownloadManager_Display {
 		// The placeholder count is dynamic - three per search term, plus the two
 		// LIMIT bounds - which is why phpcs.xml exempts this file from the
 		// replacement-count sniff.
-		// phpcs:ignore WordPress.DB
+
 		$files = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->downloads} WHERE 1=1 {$category_sql} {$search_sql} AND file_permission != -2 ORDER BY {$group_sql} {$order_by_column} {$sort_order} LIMIT %d, %d",
-				array_merge( $search_args, array( $paging['offset'], $per_page ) )
+				"SELECT * FROM {$wpdb->downloads} WHERE 1=1 {$category_sql} {$search_sql} AND file_permission != %d ORDER BY {$group_sql} {$order_by_column} {$sort_order} LIMIT %d, %d",
+				array_merge( $search_args, array( -2, $paging['offset'], $per_page ) )
 			)
 		);
 
@@ -550,14 +555,17 @@ class WP_DownloadManager_Display {
 			$condition .= ' AND ';
 		}
 
-		$sql = "SELECT * FROM {$wpdb->downloads} WHERE {$condition} file_permission != -2 ORDER BY {$order_by_column} {$sort_order}";
+		// Only enough rows to know whether there are more than the limit.
+		$limit_sql = ( ! is_single() && 0 !== $stream_limit )
+			? ' LIMIT ' . ( $stream_limit + 1 )
+			: '';
 
-		if ( ! is_single() && 0 !== $stream_limit ) {
-			// Only enough rows to know whether there are more than the limit.
-			$sql .= ' LIMIT ' . ( $stream_limit + 1 );
-		}
-
-		$files = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB
+		$files = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->downloads} WHERE {$condition} file_permission != %d ORDER BY {$order_by_column} {$sort_order}{$limit_sql}",
+				-2
+			)
+		);
 
 		if ( ! $files ) {
 			// Used to fall off the end and return null, which is a TypeError
@@ -642,7 +650,6 @@ class WP_DownloadManager_Display {
 	public static function most_downloaded( $limit = 10, $chars = 0, $display = true ) {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB
 		$files = $wpdb->get_results(
 			$wpdb->prepare( "SELECT * FROM {$wpdb->downloads} WHERE file_permission != -2 ORDER BY file_hits DESC LIMIT %d", (int) $limit )
 		);
@@ -661,7 +668,6 @@ class WP_DownloadManager_Display {
 	public static function recent_downloads( $limit = 10, $chars = 0, $display = true ) {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB
 		$files = $wpdb->get_results(
 			$wpdb->prepare( "SELECT * FROM {$wpdb->downloads} WHERE file_permission != -2 ORDER BY FROM_UNIXTIME(file_date) DESC LIMIT %d", (int) $limit )
 		);
@@ -694,7 +700,6 @@ class WP_DownloadManager_Display {
 			$category_sql = 'file_category = ' . (int) $cat_id;
 		}
 
-		// phpcs:ignore WordPress.DB
 		$files = $wpdb->get_results(
 			$wpdb->prepare( "SELECT * FROM {$wpdb->downloads} WHERE {$category_sql} AND file_permission != -2 ORDER BY FROM_UNIXTIME(file_date) DESC LIMIT %d", (int) $limit )
 		);
@@ -713,7 +718,6 @@ class WP_DownloadManager_Display {
 		$sortby = WP_DownloadManager_File::sort_column( WP_DownloadManager_Options::get( 'rss.sortby', '' ), 'file_date' );
 		$limit  = max( 1, (int) WP_DownloadManager_Options::get( 'rss.limit', 20 ) );
 
-		// phpcs:ignore WordPress.DB
 		return (array) $wpdb->get_results(
 			$wpdb->prepare( "SELECT * FROM {$wpdb->downloads} WHERE file_permission != -2 ORDER BY {$sortby} DESC LIMIT %d", $limit )
 		);
@@ -728,7 +732,6 @@ class WP_DownloadManager_Display {
 	public static function total_files( $display = true ) {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB
 		return self::output( number_format_i18n( (int) $wpdb->get_var( "SELECT COUNT(file_id) FROM {$wpdb->downloads}" ) ), $display );
 	}
 
@@ -741,7 +744,6 @@ class WP_DownloadManager_Display {
 	public static function total_size( $display = true ) {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB
 		// Cast: SUM() is NULL on an empty table.
 		return self::output( WP_DownloadManager_File::format_size( (int) $wpdb->get_var( "SELECT SUM(file_size) FROM {$wpdb->downloads}" ) ), $display );
 	}
@@ -755,7 +757,6 @@ class WP_DownloadManager_Display {
 	public static function total_hits( $display = true ) {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB
 		// Cast: SUM() is NULL on an empty table, and number_format_i18n( null )
 		// is deprecated on PHP 8.1 and later.
 		return self::output( number_format_i18n( (int) $wpdb->get_var( "SELECT SUM(file_hits) FROM {$wpdb->downloads}" ) ), $display );
@@ -770,7 +771,9 @@ class WP_DownloadManager_Display {
 	 */
 	protected static function output( $output, $display ) {
 		if ( $display ) {
-			echo $output; // phpcs:ignore WordPress.Security.EscapeOutput
+			// The stats templates are stored through wp_kses() on save, so this
+			// runs the same allow list back over what comes out of them.
+			echo wp_kses_post( $output );
 			return;
 		}
 

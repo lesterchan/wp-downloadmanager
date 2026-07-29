@@ -2,7 +2,7 @@
 /**
  * The two Settings API screens.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

@@ -7,7 +7,7 @@
  * A modernization is allowed to move every one of these functions into a class,
  * but it is not allowed to change a single byte of what they emit.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

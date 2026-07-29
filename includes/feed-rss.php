@@ -4,14 +4,14 @@
  *
  * Loaded by WP_DownloadManager_File::serve() for /download/rss/ and ?dl_name=rss.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
 
 global $wpdb;
 
-// phpcs:ignore WordPress.DB
+
 $file_last_download  = $wpdb->get_var( "SELECT file_updated_date FROM {$wpdb->downloads} WHERE file_permission != -2 ORDER BY file_updated_date DESC LIMIT 1" );
 $download_categories = (array) WP_DownloadManager_Options::get( 'categories' );
 $files               = downloadmanager_feed_files();
@@ -41,7 +41,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( get_option( 'blog_charset' ) )
 	<description><?php echo esc_html( $feed_title ); ?></description>
 	<pubDate><?php echo esc_html( mysql2date( 'D, d M Y H:i:s +0000', gmdate( 'Y-m-d H:i:s', (int) $file_last_download ) ) ); ?></pubDate>
 	<?php the_generator( 'rss2' ); ?>
-	<language><?php echo esc_html( get_option( 'rss_language' ) ); ?></language>
+	<language><?php bloginfo_rss( 'language' ); ?></language>
 	<sy:updatePeriod><?php echo esc_html( apply_filters( 'rss_update_period', 'hourly' ) ); ?></sy:updatePeriod>
 	<sy:updateFrequency><?php echo esc_html( apply_filters( 'rss_update_frequency', '1' ) ); ?></sy:updateFrequency>
 	<?php do_action( 'rss2_head' ); ?>

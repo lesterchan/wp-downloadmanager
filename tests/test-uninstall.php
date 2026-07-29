@@ -12,7 +12,7 @@
  * it are pinned at source level, against the comment-stripped file so that a
  * docblock explaining a fix cannot satisfy the assertion.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

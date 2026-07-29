@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: WP-WP_DownloadManager
+ * Plugin Name: WP-DownloadManager
  * Plugin URI: https://lesterchan.net/portfolio/programming/php/
  * Description: Adds a simple download manager to your WordPress blog.
  * Version: 2.0.0
@@ -13,7 +13,7 @@
  * Text Domain: wp-downloadmanager
  * Domain Path: /languages
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /*

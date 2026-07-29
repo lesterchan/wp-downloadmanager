@@ -6,7 +6,7 @@
  * harness: the golden master proves the rewrite changed nothing, and these
  * prove it changed the things it was supposed to.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 /**

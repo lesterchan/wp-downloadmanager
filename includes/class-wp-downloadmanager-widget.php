@@ -2,7 +2,7 @@
 /**
  * The Downloads widget.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -20,7 +20,7 @@ class WP_DownloadManager_Widget extends WP_Widget {
 			'downloads',
 			__( 'Downloads', 'wp-downloadmanager' ),
 			array(
-				'description'                 => __( 'WP-WP_DownloadManager downloads statistics', 'wp-downloadmanager' ),
+				'description'                 => __( 'WP-DownloadManager downloads statistics', 'wp-downloadmanager' ),
 				'customize_selective_refresh' => true,
 			)
 		);
@@ -73,7 +73,9 @@ class WP_DownloadManager_Widget extends WP_Widget {
 		$cat_ids = explode( ',', (string) $instance['cat_ids'] );
 		$link    = (int) $instance['link'];
 
-		echo $args['before_widget'] . $args['before_title'] . esc_html( $title ) . $args['after_title']; // phpcs:ignore WordPress.Security.EscapeOutput
+		// The three wrappers are markup the theme registered with the sidebar, so
+		// kses is the only escaping that can run over them without breaking it.
+		echo wp_kses_post( $args['before_widget'] ) . wp_kses_post( $args['before_title'] ) . esc_html( $title ) . wp_kses_post( $args['after_title'] );
 		echo '<ul>' . "\n";
 
 		switch ( $type ) {
@@ -92,10 +94,10 @@ class WP_DownloadManager_Widget extends WP_Widget {
 
 		if ( $link ) {
 			$template = stripslashes( WP_DownloadManager_Options::template( 'download_page_link' ) );
-			echo str_replace( '%DOWNLOAD_PAGE_URL%', WP_DownloadManager_Options::get( 'page_url' ), $template ); // phpcs:ignore WordPress.Security.EscapeOutput
+			echo wp_kses_post( str_replace( '%DOWNLOAD_PAGE_URL%', WP_DownloadManager_Options::get( 'page_url' ), $template ) );
 		}
 
-		echo $args['after_widget']; // phpcs:ignore WordPress.Security.EscapeOutput
+		echo wp_kses_post( $args['after_widget'] );
 	}
 
 	/**

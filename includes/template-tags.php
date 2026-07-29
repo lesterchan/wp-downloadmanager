@@ -1,12 +1,12 @@
 <?php
 /**
- * Public template tags for WP-WP_DownloadManager.
+ * Public template tags for WP-DownloadManager.
  *
  * These are the plugin's API: themes call them directly, so their names and
  * signatures do not move even though everything behind them did in 2.0.0.
  * Each one is a thin wrapper over the class that now owns the behaviour.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;

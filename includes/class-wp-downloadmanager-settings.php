@@ -9,7 +9,7 @@
  * The callback merges whatever the submitted screen sent over the stored value
  * rather than replacing it, so saving one screen cannot blank the other.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;

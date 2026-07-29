@@ -1,6 +1,6 @@
 <?php
 /**
- * Default template markup for WP-WP_DownloadManager.
+ * Default template markup for WP-DownloadManager.
  *
  * The markup lives here rather than being duplicated between the option
  * defaults and the "Restore Default Template" buttons on the templates screen,
@@ -8,7 +8,7 @@
  * in a jQuery snippet, and it had already fallen out of step with the defaults
  * written on activation.
  *
- * @package WP-WP_DownloadManager
+ * @package WP-DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
