@@ -52,27 +52,15 @@ class WP_DownloadManager_Template {
 	}
 
 	/**
-	 * The URL of the extension icon directory.
-	 *
-	 * Derived from the main file rather than a hardcoded "wp-downloadmanager"
-	 * slug, so the icons still resolve when the plugin is installed under a
-	 * different directory name.
-	 *
-	 * @return string
-	 */
-	public static function icons_url() {
-		return WP_DOWNLOADMANAGER_URL . 'images/ext';
-	}
-
-	/**
 	 * Every default template, keyed as the option stores them.
 	 *
 	 * @return array
 	 */
 	public static function defaults() {
-		$icons  = self::icons_url();
 		$denied = '<i>' . __( 'You do not have permission to download this file.', 'wp-downloadmanager' ) . '</i>';
-		$img    = '<img src="' . $icons . '/%FILE_ICON%" alt="" title="" style="vertical-align: middle;" />';
+		// %FILE_ICON% is the whole icon element now, not a GIF file name to drop
+		// into an <img src>, so the wrapper that used to be here is gone.
+		$img = '%FILE_ICON%';
 
 		return array(
 			/* translators: the %WORD% tokens are the plugin's own template variables, not printf placeholders, and must be left as they are. */
@@ -80,7 +68,7 @@ class WP_DownloadManager_Template {
 			'footer'             => '<form action="%DOWNLOAD_PAGE_URL%" method="get"><p><input type="hidden" name="dl_cat" value="%CATEGORY_ID%" /><input type="text" name="dl_search" value="%FILE_SEARCH_WORD%" />&nbsp;&nbsp;&nbsp;<input type="submit" value="' . __( 'Search', 'wp-downloadmanager' ) . '" /></p></form>',
 			'pagingheader'       => '',
 			'pagingfooter'       => '',
-			'none'               => '<p style="text-align: center;">' . __( 'No Files Found.', 'wp-downloadmanager' ) . '</p>',
+			'none'               => '<p class="wp-downloadmanager-none">' . __( 'No Files Found.', 'wp-downloadmanager' ) . '</p>',
 			/* translators: %FILE_CATEGORY_NAME% is one of the plugin's own template variables, not a printf placeholder. */
 			'category_header'    => '<h2 id="downloadcat-%CATEGORY_ID%"><a href="%CATEGORY_URL%" title="' . __( 'View all downloads in %FILE_CATEGORY_NAME%', 'wp-downloadmanager' ) . '">%FILE_CATEGORY_NAME%</a></h2>',
 			'category_footer'    => '',

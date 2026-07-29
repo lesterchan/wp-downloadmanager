@@ -268,6 +268,16 @@ class WP_DownloadManager_Options {
 	}
 
 	/**
+	 * Drop the <img> that used to wrap %FILE_ICON%.
+	 *
+	 * @param string $template Stored template markup.
+	 * @return string
+	 */
+	protected static function unwrap_icon( $template ) {
+		return (string) preg_replace( '#<img[^>]*%FILE_ICON%[^>]*/?>#i', '%FILE_ICON%', (string) $template );
+	}
+
+	/**
 	 * The two version markers, normalised.
 	 *
 	 * @return array Keys 'plugin' and 'db', in that order, and nothing else.
@@ -372,6 +382,20 @@ class WP_DownloadManager_Options {
 		}
 
 		$values['stats_most_limit'] = max( 1, (int) $values['stats_most_limit'] );
+
+		// %FILE_ICON% used to be a GIF file name a template dropped into an
+		// <img src>. It is the whole icon element now, so the stock wrapper is
+		// unwrapped wherever a stored template still has it - otherwise every
+		// listing would render an <img> whose src is an inline <svg>.
+		foreach ( WP_DownloadManager_Template::keys() as $key ) {
+			if ( ! isset( $values['templates'][ $key ] ) ) {
+				continue;
+			}
+
+			$values['templates'][ $key ] = is_array( $values['templates'][ $key ] )
+				? array_map( array( __CLASS__, 'unwrap_icon' ), $values['templates'][ $key ] )
+				: self::unwrap_icon( $values['templates'][ $key ] );
+		}
 
 		self::save( $values );
 

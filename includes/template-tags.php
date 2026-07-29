@@ -182,25 +182,33 @@ if ( ! function_exists( 'file_extension' ) ) {
 
 if ( ! function_exists( 'file_extension_images' ) ) {
 	/**
-	 * The extension icons that ship with the plugin.
+	 * The icon families the plugin can draw.
+	 *
+	 * Returned a list of GIF file names up to 1.69.2; the plugin ships no images
+	 * at all now, so this is the list of family keys instead.
 	 *
 	 * @return array
 	 */
 	function file_extension_images() {
-		return WP_DownloadManager_File::extension_images();
+		return WP_DownloadManager_File::icon_families();
 	}
 }
 
 if ( ! function_exists( 'file_extension_image' ) ) {
 	/**
-	 * The icon file name for a given file.
+	 * The icon family a file belongs to.
+	 *
+	 * Returned a GIF file name up to 1.69.2. The second argument is ignored and
+	 * kept only so existing calls keep working.
 	 *
 	 * @param string $file_name Stored file name.
-	 * @param array  $images    Available icons.
+	 * @param array  $images    Unused.
 	 * @return string
 	 */
-	function file_extension_image( $file_name, $images ) {
-		return WP_DownloadManager_File::extension_image( $file_name, $images );
+	function file_extension_image( $file_name, $images = array() ) {
+		unset( $images );
+
+		return WP_DownloadManager_File::extension_family( $file_name );
 	}
 }
 

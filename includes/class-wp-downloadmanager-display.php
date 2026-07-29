@@ -133,6 +133,89 @@ class WP_DownloadManager_Display {
 	}
 
 	/**
+	 * Whether this request has already printed the icon sprite.
+	 *
+	 * @var bool
+	 */
+	protected static $sprite_printed = false;
+
+	/**
+	 * The icon sprite: one <symbol> per file family, defined once per request.
+	 *
+	 * Drawn rather than shipped. Up to 1.69.2 the plugin carried thirty-four
+	 * 16x16 GIFs plus drive.png and drive_go.gif - thirty-six raster files that
+	 * could not take the theme's colour, blurred on any high-density screen and
+	 * cost an HTTP request each. One inline sprite costs none, inherits
+	 * currentColor, and scales with the surrounding text.
+	 *
+	 * @return string
+	 */
+	public static function sprite() {
+		$symbols = array(
+			'file'         => '',
+			'archive'      => '<path d="M11 3h2v2h-2zM11 6h2v2h-2zM11 9h2v2h-2zM10.5 13h3v3.5h-3z" />',
+			'audio'        => '<path d="M10 18.5v-5l5-1.5v5" /><circle cx="9" cy="18.5" r="1.4" /><circle cx="14" cy="17" r="1.4" />',
+			'code'         => '<path d="M10.5 12.5 8 15.5l2.5 3M13.5 12.5 16 15.5l-2.5 3" />',
+			'document'     => '<path d="M9 12.5h6M9 15.5h6M9 18.5h4" />',
+			'image'        => '<circle cx="10" cy="13.5" r="1.1" /><path d="M8 19.5l3-3 2 2 3-3.5 2 4.5z" />',
+			'presentation' => '<path d="M9 19.5v-3M12 19.5v-5.5M15 19.5v-8" />',
+			'spreadsheet'  => '<path d="M8 12.5h8v7H8zM8 16h8M11.5 12.5v7" />',
+			'video'        => '<path d="M10.5 13.5l5 3-5 3z" />',
+			'application'  => '<circle cx="12" cy="16.5" r="2" /><path d="M12 12.5V14M12 19v1.5M8.5 16.5H10M14 16.5h1.5" />',
+		);
+
+		$out = '<svg xmlns="http://www.w3.org/2000/svg" class="wp-downloadmanager-sprite" aria-hidden="true" focusable="false">';
+
+		foreach ( $symbols as $family => $mark ) {
+			$out .= '<symbol id="wp-downloadmanager-icon-' . $family . '" viewBox="0 0 24 24"'
+				. ' fill="none" stroke="currentColor" stroke-width="1.4"'
+				. ' stroke-linecap="round" stroke-linejoin="round">'
+				. '<path d="M6 2.5h7l5 5v14H6z" /><path d="M13 2.5v5h5" />'
+				. $mark
+				. '</symbol>';
+		}
+
+		return $out . '</svg>';
+	}
+
+	/**
+	 * The icon markup for one file.
+	 *
+	 * The sprite rides along with the first icon of the request rather than
+	 * being hooked to wp_footer: the listing is just as often produced by a
+	 * template tag, a shortcode or the feed, none of which reach the footer.
+	 *
+	 * @param string $file_name Stored file name.
+	 * @return string
+	 */
+	public static function icon( $file_name ) {
+		$out = '';
+
+		if ( ! self::$sprite_printed ) {
+			self::$sprite_printed = true;
+			$out                  = self::sprite();
+		}
+
+		return $out . sprintf(
+			'<svg class="wp-downloadmanager-icon" aria-hidden="true" focusable="false"><use href="#wp-downloadmanager-icon-%s" /></svg>',
+			esc_attr( WP_DownloadManager_File::extension_family( $file_name ) )
+		);
+	}
+
+	/**
+	 * Forget that the sprite has been printed.
+	 *
+	 * One sprite per request is the rule, and a web request ends when the page
+	 * does. A long-running process - the test suite, a WP-CLI import - renders
+	 * many pages in one process, and this is how it starts a fresh one.
+	 *
+	 * @return void
+	 */
+	public static function reset_sprite() {
+		self::$sprite_printed = false;
+	}
+
+	/**
 	 * Substitute the per-file template variables.
 	 *
 	 * Shared by the listing, embedded and stats templates, which each used to
@@ -140,15 +223,14 @@ class WP_DownloadManager_Display {
 	 *
 	 * @param string $template   Template markup.
 	 * @param object $file       Row from the downloads table.
-	 * @param array  $context    Optional overrides: 'icons', 'categories',
-	 *                           'search', 'file_name', 'description'.
+	 * @param array  $context    Optional overrides: 'categories', 'search',
+	 *                           'file_name', 'description'.
 	 * @return string
 	 */
 	public static function replace_file_vars( $template, $file, $context = array() ) {
 		$context = wp_parse_args(
 			$context,
 			array(
-				'icons'       => array(),
 				'categories'  => array(),
 				'search'      => '',
 				'file_name'   => null,
@@ -166,7 +248,7 @@ class WP_DownloadManager_Display {
 			'%FILE%'               => stripslashes( $file->file ),
 			'%FILE_NAME%'          => self::search_highlight( $search, $file_name ),
 			'%FILE_EXT%'           => self::search_highlight( $search, WP_DownloadManager_File::extension( stripslashes( $file->file ) ) ),
-			'%FILE_ICON%'          => WP_DownloadManager_File::extension_image( stripslashes( $file->file ), $context['icons'] ),
+			'%FILE_ICON%'          => self::icon( stripslashes( $file->file ) ),
 			'%FILE_DESCRIPTION%'   => self::search_highlight( $search, $file_des ),
 			'%FILE_SIZE%'          => WP_DownloadManager_File::format_size( $file->file_size ),
 			'%FILE_SIZE_DEC%'      => WP_DownloadManager_File::format_size_dec( $file->file_size ),
@@ -287,8 +369,6 @@ class WP_DownloadManager_Display {
 		$group           = (int) ( isset( $sort['group'] ) ? $sort['group'] : 0 );
 		$order_by_column = 'file_date' === $sort_by ? 'FROM_UNIXTIME(file_date)' : $sort_by;
 
-		$icons = WP_DownloadManager_File::extension_images();
-
 		if ( 0 === $category && $category_id > 0 ) {
 			$category = $category_id;
 		}
@@ -399,7 +479,6 @@ class WP_DownloadManager_Display {
 					stripslashes( WP_DownloadManager_Options::template( 'listing', $index ) ),
 					$file,
 					array(
-						'icons'      => $icons,
 						'categories' => $categories,
 						'search'     => $search,
 					)
@@ -584,7 +663,6 @@ class WP_DownloadManager_Display {
 			return apply_filters( 'wp_downloadmanager_embedded', '' );
 		}
 
-		$icons      = WP_DownloadManager_File::extension_images();
 		$categories = (array) WP_DownloadManager_Options::get( 'categories', array() );
 
 		$shown = ( is_single() || 0 === $stream_limit )
@@ -600,7 +678,6 @@ class WP_DownloadManager_Display {
 				stripslashes( WP_DownloadManager_Options::template( 'embedded', $index ) ),
 				$file,
 				array(
-					'icons'       => $icons,
 					'categories'  => $categories,
 					'description' => 'both' === $display ? null : '',
 				)
@@ -637,7 +714,6 @@ class WP_DownloadManager_Display {
 			return '<li>' . __( 'N/A', 'wp-downloadmanager' ) . '</li>' . "\n";
 		}
 
-		$icons      = WP_DownloadManager_File::extension_images();
 		$categories = (array) WP_DownloadManager_Options::get( 'categories', array() );
 		$output     = '';
 
@@ -651,7 +727,6 @@ class WP_DownloadManager_Display {
 				stripslashes( WP_DownloadManager_Options::template( 'most', $index ) ),
 				$file,
 				array(
-					'icons'      => $icons,
 					'categories' => $categories,
 					'file_name'  => $file_name,
 				)

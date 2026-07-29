@@ -71,57 +71,141 @@ class WP_DownloadManager_File {
 	}
 
 	/**
-	 * The extension icons that ship with the plugin.
+	 * Extension to icon family.
 	 *
-	 * @return array
+	 * Up to 1.69.2 this plugin shipped thirty-four 16x16 GIFs, one per
+	 * extension, and picked one by building a file name. They are gone: a raster
+	 * icon cannot take the theme's colour, cannot scale on a high-density
+	 * display and is thirty-four extra HTTP requests. Files are grouped into
+	 * families now and drawn as one inline SVG sprite - see
+	 * WP_DownloadManager_Display::sprite() - so an unknown extension gets a
+	 * plain document rather than the old "unknown.gif".
+	 *
+	 * Extensions the GIF set never covered are included, because grouping costs
+	 * nothing where drawing thirty-four more icons did.
+	 *
+	 * @return array Extension => family key.
 	 */
-	public static function extension_images() {
-		$images = array();
-		/**
-		 * Filters the directory the extension icons are read from.
-		 *
-		 * @since 1.68.6
-		 *
-		 * @param string $dir Absolute path, without a trailing slash.
-		 */
-		$dir = apply_filters( 'wp_downloadmanager_file_extension_images_path', WP_DOWNLOADMANAGER_DIR . 'images/ext' );
+	public static function extension_families() {
+		return array(
+			// Archives.
+			'7z'    => 'archive',
+			'bz2'   => 'archive',
+			'gz'    => 'archive',
+			'rar'   => 'archive',
+			'tar'   => 'archive',
+			'zip'   => 'archive',
 
-		if ( is_dir( $dir ) ) {
-			foreach ( (array) scandir( $dir ) as $file ) {
-				if ( '.' !== $file && '..' !== $file ) {
-					$images[] = $file;
-				}
-			}
-		}
+			// Audio.
+			'aac'   => 'audio',
+			'flac'  => 'audio',
+			'm4a'   => 'audio',
+			'mp3'   => 'audio',
+			'ogg'   => 'audio',
+			'ra'    => 'audio',
+			'wav'   => 'audio',
+			'wma'   => 'audio',
 
-		return $images;
+			// Source and markup.
+			'css'   => 'code',
+			'htm'   => 'code',
+			'html'  => 'code',
+			'js'    => 'code',
+			'json'  => 'code',
+			'php'   => 'code',
+			'xml'   => 'code',
+
+			// Text and page layout.
+			'doc'   => 'document',
+			'docx'  => 'document',
+			'md'    => 'document',
+			'odt'   => 'document',
+			'pdf'   => 'document',
+			'rtf'   => 'document',
+			'txt'   => 'document',
+
+			// Pictures.
+			'ai'    => 'image',
+			'bmp'   => 'image',
+			'gif'   => 'image',
+			'ico'   => 'image',
+			'jpeg'  => 'image',
+			'jpg'   => 'image',
+			'png'   => 'image',
+			'psd'   => 'image',
+			'svg'   => 'image',
+			'tif'   => 'image',
+			'tiff'  => 'image',
+			'webp'  => 'image',
+
+			// Slides.
+			'odp'   => 'presentation',
+			'ppt'   => 'presentation',
+			'pptx'  => 'presentation',
+
+			// Rows and columns.
+			'csv'   => 'spreadsheet',
+			'mdb'   => 'spreadsheet',
+			'ods'   => 'spreadsheet',
+			'xls'   => 'spreadsheet',
+			'xlsx'  => 'spreadsheet',
+
+			// Moving pictures.
+			'avi'   => 'video',
+			'fla'   => 'video',
+			'mkv'   => 'video',
+			'mov'   => 'video',
+			'movie' => 'video',
+			'mp4'   => 'video',
+			'mpg'   => 'video',
+			'rm'    => 'video',
+			'swf'   => 'video',
+			'webm'  => 'video',
+			'wmv'   => 'video',
+
+			// Things you run.
+			'apk'   => 'application',
+			'dmg'   => 'application',
+			'exe'   => 'application',
+			'msi'   => 'application',
+		);
 	}
 
 	/**
-	 * The icon file name for a given file.
+	 * The icon families, in the order the sprite defines them.
+	 *
+	 * @return array
+	 */
+	public static function icon_families() {
+		return array( 'file', 'archive', 'audio', 'code', 'document', 'image', 'presentation', 'spreadsheet', 'video', 'application' );
+	}
+
+	/**
+	 * The family a file belongs to.
 	 *
 	 * @param string $file_name Stored file name.
-	 * @param array  $images    Available icons.
-	 * @return string
+	 * @return string Family key, 'file' when the extension is not one we know.
 	 */
-	public static function extension_image( $file_name, $images ) {
-		$ext  = self::extension( $file_name ) . '.gif';
-		$icon = 'unknown.gif';
-
-		if ( in_array( $ext, $images, true ) ) {
-			$icon = $ext;
-		}
+	public static function extension_family( $file_name ) {
+		$families = self::extension_families();
+		$ext      = self::extension( $file_name );
+		$family   = isset( $families[ $ext ] ) ? $families[ $ext ] : 'file';
 
 		/**
-		 * Filters which icon a file is shown with.
+		 * Filters which icon family a file is drawn with.
+		 *
+		 * Before 2.0.0 this passed a GIF file name; it passes a family key now,
+		 * one of the values WP_DownloadManager_File::icon_families() returns.
 		 *
 		 * @since 1.68.6
 		 *
-		 * @param string $icon      Chosen icon.
+		 * @param string $family    Family key.
 		 * @param string $ext       The file's extension.
 		 * @param string $file_name Stored file name.
 		 */
-		return apply_filters( 'wp_downloadmanager_file_extension_image', $icon, $ext, $file_name );
+		$family = apply_filters( 'wp_downloadmanager_file_extension_image', $family, $ext, $file_name );
+
+		return in_array( $family, self::icon_families(), true ) ? $family : 'file';
 	}
 
 	/**
