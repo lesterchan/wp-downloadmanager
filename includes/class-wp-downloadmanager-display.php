@@ -450,10 +450,10 @@ class WP_DownloadManager_Display {
 			}
 		}
 
-		// The permission guard is carried as a bound argument rather than a
-		// literal so the query always has at least one placeholder, which is what
-		// lets both branches - with a search term and without - go through
-		// prepare() rather than only the one that happens to have arguments.
+		// The permission guard is a bound argument rather than a literal -2, so
+		// that both branches - with a search term and without - always have
+		// arguments to pass and can go through prepare() the same way. The order
+		// here is the order the placeholders appear in: category, search, guard.
 		$stats_args = array_merge( $category_args, $search_args, array( -2 ) );
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $search_sql is the only interpolated piece: a generated run of the literal ' AND ((file_name LIKE %s OR file_des LIKE %s OR file LIKE %s))', three placeholders per search term, so the count is only known at run time and prepare() cannot bind a variable-length set of LIKE clauses.
