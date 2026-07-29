@@ -441,11 +441,7 @@ class WP_DownloadManager_File {
 		$dl_name = (string) get_query_var( 'dl_name' );
 
 		if ( 'rss' === $dl_name ) {
-			// $load_once = false: load_template() defaults to require_once, which
-			// would make the feed render only the first time it is asked for in
-			// a given process. get_template_part() passes false for the same
-			// reason - this is a template, not a library.
-			load_template( WP_DOWNLOADMANAGER_DIR . 'includes/feed-rss.php', false );
+			WP_DownloadManager_Display::render_feed();
 			self::finish();
 		}
 

@@ -110,14 +110,22 @@
 	</rule>
 
 	<!--
-		The public downloads listing reads ?dl_cat, ?dl_page and ?dl_search to
-		decide what to render and writes nothing at all. There is no state change
-		for a nonce to protect, and a nonce on a shareable, bookmarkable,
-		crawlable listing URL would break every one of those. Every screen that
-		writes checks one.
+		Only the .Recommended half, and only where a GET decides what to render:
+		?dl_cat, ?dl_page and ?dl_search on the public listing, ?orderby, ?order,
+		?paged and ?s on the list table, ?action, ?id and ?tab on the admin
+		screens. None of those change anything, and a nonce on a shareable,
+		bookmarkable listing URL would break bookmarking, sharing and the browser
+		back button for no gain.
+
+		.Missing - the POST half - is left fully switched on everywhere, so every
+		write in the plugin still has to prove it checked a nonce: add, edit,
+		delete, bulk delete and the settings form all do.
 	-->
-	<rule ref="WordPress.Security.NonceVerification">
+	<rule ref="WordPress.Security.NonceVerification.Recommended">
+		<exclude-pattern>/includes/class-wp-downloadmanager-admin.php</exclude-pattern>
 		<exclude-pattern>/includes/class-wp-downloadmanager-display.php</exclude-pattern>
+		<exclude-pattern>/includes/class-wp-downloadmanager-list-table.php</exclude-pattern>
+		<exclude-pattern>/includes/class-wp-downloadmanager-settings.php</exclude-pattern>
 	</rule>
 
 	<!--

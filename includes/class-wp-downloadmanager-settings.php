@@ -1,13 +1,17 @@
 <?php
 /**
- * The Download Options and Download Templates screens.
+ * The Settings screen.
  *
- * Both were hand-rolled <form> + $_POST handlers before 2.0.0. They are now
- * Settings API screens writing to the one consolidated option row, which is why
- * they share a sanitize callback: register_setting() keys its arguments by
- * option name, so the last registration would otherwise win for both groups.
- * The callback merges whatever the submitted screen sent over the stored value
- * rather than replacing it, so saving one screen cannot blank the other.
+ * Download Options and Download Templates were two hand-rolled <form> + $_POST
+ * screens with a menu entry each. Section 4.1 allows exactly one settings page
+ * per plugin, so they are two tabs on one page now, and section 4.2 requires
+ * both to be built entirely from the Settings API - there is no hand-written
+ * form-table markup left in this file, because do_settings_sections() emits it.
+ *
+ * Both tabs write the same option row, so they share one sanitize callback:
+ * register_setting() keys its arguments by option name, and the callback merges
+ * whatever the submitted tab sent over the stored value rather than replacing
+ * it, so saving one tab cannot blank the other.
  *
  * @package WP-DownloadManager
  */
@@ -15,23 +19,52 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Registers and renders the two settings screens.
+ * Registers and renders the settings page.
  */
 class WP_DownloadManager_Settings {
 
 	/**
-	 * Settings group for the options screen.
+	 * Settings group. Always the same string as the option row it writes.
 	 *
 	 * @var string
 	 */
-	const GROUP_OPTIONS = 'wp-downloadmanager-options';
+	const GROUP = 'wp_downloadmanager_options';
 
 	/**
-	 * Settings group for the templates screen.
+	 * Paths, permalinks and categories.
 	 *
 	 * @var string
 	 */
-	const GROUP_TEMPLATES = 'wp-downloadmanager-templates';
+	const SECTION_GENERAL = 'wp_downloadmanager_general';
+
+	/**
+	 * How the downloads page lists and pages its files.
+	 *
+	 * @var string
+	 */
+	const SECTION_LISTING = 'wp_downloadmanager_listing';
+
+	/**
+	 * The downloads feed.
+	 *
+	 * @var string
+	 */
+	const SECTION_RSS = 'wp_downloadmanager_rss';
+
+	/**
+	 * What this plugin contributes to WP-Stats.
+	 *
+	 * @var string
+	 */
+	const SECTION_STATS = 'wp_downloadmanager_stats';
+
+	/**
+	 * Prefix for the eight template sections, which are generated rather than
+	 * named one by one.
+	 *
+	 * @var string
+	 */
+	const SECTION_TEMPLATES = 'wp_downloadmanager_templates';
 
 	/**
 	 * Hook up.
@@ -43,19 +76,59 @@ class WP_DownloadManager_Settings {
 	}
 
 	/**
-	 * Register the option under both groups.
+	 * The two tabs, in the order they appear.
+	 *
+	 * @return array Tab slug => label.
+	 */
+	public static function tabs() {
+		return array(
+			'general'   => __( 'General', 'wp-downloadmanager' ),
+			'templates' => __( 'Templates', 'wp-downloadmanager' ),
+		);
+	}
+
+	/**
+	 * The registry page slug one tab's sections are registered against.
+	 *
+	 * The settings group is shared - both tabs save the same option - so the
+	 * tabs are told apart by the page they hand to add_settings_section() and
+	 * do_settings_sections(), which is a separate registry from the group.
+	 *
+	 * @param string $tab Tab slug.
+	 * @return string
+	 */
+	public static function tab_page( $tab ) {
+		return self::GROUP . '_' . $tab;
+	}
+
+	/**
+	 * The tab the request is asking for, constrained to the ones that exist.
+	 *
+	 * @return string
+	 */
+	public static function current_tab() {
+		$tabs = self::tabs();
+		// Choosing a tab changes nothing, so there is no nonce to check here.
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
+
+		return isset( $tabs[ $tab ] ) ? $tab : 'general';
+	}
+
+	/**
+	 * Register the option and everything on both tabs.
 	 *
 	 * @return void
 	 */
 	public static function register() {
-		$args = array(
-			'type'              => 'array',
-			'sanitize_callback' => array( __CLASS__, 'sanitize' ),
-			'default'           => WP_DownloadManager_Options::defaults(),
+		register_setting(
+			self::GROUP,
+			WP_DownloadManager_Options::OPTION,
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( __CLASS__, 'sanitize' ),
+				'default'           => WP_DownloadManager_Options::defaults(),
+			)
 		);
-
-		register_setting( self::GROUP_OPTIONS, WP_DownloadManager_Options::OPTION, $args );
-		register_setting( self::GROUP_TEMPLATES, WP_DownloadManager_Options::OPTION, $args );
 
 		self::register_fields();
 	}
@@ -92,6 +165,17 @@ class WP_DownloadManager_Settings {
 		}
 		if ( isset( $input['use_filename'] ) ) {
 			$values['use_filename'] = 1 === (int) $input['use_filename'] ? 1 : 0;
+		}
+
+		// An unticked checkbox posts nothing at all, so "off" is indistinguishable
+		// from "this tab was not submitted" unless something else on the tab
+		// identifies it. page_url is on the General tab and always posts, so its
+		// presence is what says the toggle beside it is authoritative.
+		if ( isset( $input['page_url'] ) ) {
+			$values['stats_display'] = empty( $input['stats_display'] ) ? 0 : 1;
+		}
+		if ( isset( $input['stats_most_limit'] ) ) {
+			$values['stats_most_limit'] = max( 1, (int) $input['stats_most_limit'] );
 		}
 
 		if ( isset( $input['categories'] ) ) {
@@ -269,7 +353,7 @@ class WP_DownloadManager_Settings {
 				$section,
 				$spec['title'],
 				isset( $spec['description'] ) ? $spec['description'] : '__return_false',
-				self::GROUP_OPTIONS
+				self::tab_page( 'general' )
 			);
 
 			foreach ( $spec['fields'] as $field ) {
@@ -277,7 +361,7 @@ class WP_DownloadManager_Settings {
 					$field['id'],
 					$field['label'],
 					array( __CLASS__, 'render_field' ),
-					self::GROUP_OPTIONS,
+					self::tab_page( 'general' ),
 					$section,
 					// label_for makes core wrap the title in a <label>, which only
 					// makes sense for the fields that are a single control.
@@ -290,10 +374,10 @@ class WP_DownloadManager_Settings {
 
 		$index = 0;
 		foreach ( self::template_fields() as $title => $fields ) {
-			$section = 'downloadmanager_templates_' . $index;
+			$section = self::SECTION_TEMPLATES . '_' . $index;
 			++$index;
 
-			add_settings_section( $section, $title, '__return_false', self::GROUP_TEMPLATES );
+			add_settings_section( $section, $title, '__return_false', self::tab_page( 'templates' ) );
 
 			foreach ( $fields as $field ) {
 				$field['index']  = isset( $field['index'] ) ? (int) $field['index'] : 0;
@@ -309,7 +393,7 @@ class WP_DownloadManager_Settings {
 					$field['id'],
 					$field['label'],
 					array( __CLASS__, 'render_template_field' ),
-					self::GROUP_TEMPLATES,
+					self::tab_page( 'templates' ),
 					$section,
 					array_merge( $field, array( 'label_for' => $field['id'] ) )
 				);
@@ -330,7 +414,7 @@ class WP_DownloadManager_Settings {
 		$home = get_option( 'home' );
 
 		return array(
-			'downloadmanager_general' => array(
+			self::SECTION_GENERAL => array(
 				'title'  => __( 'Download Options', 'wp-downloadmanager' ),
 				'fields' => array(
 					array(
@@ -403,7 +487,7 @@ class WP_DownloadManager_Settings {
 					),
 				),
 			),
-			'downloadmanager_listing' => array(
+			self::SECTION_LISTING => array(
 				'title'  => __( 'Download Listing Options', 'wp-downloadmanager' ),
 				'fields' => array(
 					array(
@@ -441,7 +525,7 @@ class WP_DownloadManager_Settings {
 					),
 				),
 			),
-			'downloadmanager_rss'     => array(
+			self::SECTION_RSS     => array(
 				'title'  => __( 'Download RSS Options', 'wp-downloadmanager' ),
 				'fields' => array(
 					array(
@@ -457,6 +541,25 @@ class WP_DownloadManager_Settings {
 						'path'  => 'rss.limit',
 						'type'  => 'number',
 						'label' => __( 'No. Of Downloads In Feed:', 'wp-downloadmanager' ),
+					),
+				),
+			),
+			self::SECTION_STATS   => array(
+				'title'  => __( 'WP-Stats Options', 'wp-downloadmanager' ),
+				'fields' => array(
+					array(
+						'id'    => 'download_stats_display',
+						'path'  => 'stats_display',
+						'type'  => 'checkbox',
+						'label' => __( 'Show Downloads In WP-Stats:', 'wp-downloadmanager' ),
+						'text'  => __( 'Add a downloads section to the WP-Stats page', 'wp-downloadmanager' ),
+						'desc'  => __( 'These two settings used to live in WP-Stats\' own option rows, shared with six other plugins. They belong to this plugin now, and WP-Stats asks for the section rather than reading them. Nothing happens if WP-Stats is not installed.', 'wp-downloadmanager' ),
+					),
+					array(
+						'id'    => 'download_stats_most_limit',
+						'path'  => 'stats_most_limit',
+						'type'  => 'number',
+						'label' => __( 'No. Of Downloads In WP-Stats:', 'wp-downloadmanager' ),
 					),
 				),
 			),
@@ -513,6 +616,16 @@ class WP_DownloadManager_Settings {
 						wp_kses_post( $label )
 					);
 				}
+				break;
+
+			case 'checkbox':
+				printf(
+					'<label><input type="checkbox" id="%1$s" name="%2$s" value="1"%3$s /> %4$s</label>',
+					esc_attr( $args['id'] ),
+					esc_attr( $name ),
+					checked( (bool) $value, true, false ),
+					esc_html( isset( $args['text'] ) ? $args['text'] : '' )
+				);
 				break;
 
 			case 'categories':
@@ -751,55 +864,37 @@ class WP_DownloadManager_Settings {
 	}
 
 	/**
-	 * The Download Options screen.
+	 * The settings page: one page, two tabs, nothing hand-written.
 	 *
 	 * @return void
 	 */
-	public static function render_options_page() {
-		self::render_page(
-			__( 'Download Options', 'wp-downloadmanager' ),
-			self::GROUP_OPTIONS
-		);
-	}
-
-	/**
-	 * The Download Templates screen.
-	 *
-	 * @return void
-	 */
-	public static function render_templates_page() {
-		self::render_page(
-			__( 'Download Templates', 'wp-downloadmanager' ),
-			self::GROUP_TEMPLATES
-		);
-	}
-
-	/**
-	 * Both screens: core lays out the sections and fields registered above.
-	 *
-	 * @param string $title Screen heading.
-	 * @param string $group Settings group, which is also the page slug the
-	 *                      sections were registered against.
-	 * @return void
-	 */
-	protected static function render_page( $title, $group ) {
-		if ( ! current_user_can( 'manage_downloads' ) ) {
-			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'wp-downloadmanager' ) );
+	public static function render_page() {
+		if ( ! current_user_can( WP_DownloadManager_Admin::capability( 'settings' ) ) ) {
+			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'wp-downloadmanager' ), '', array( 'response' => 403 ) );
 		}
 
+		$current = self::current_tab();
 		?>
 		<div class="wrap">
-			<h1><?php echo esc_html( $title ); ?></h1>
+			<h1><?php esc_html_e( 'Download Settings', 'wp-downloadmanager' ); ?></h1>
 			<?php
 			// A custom menu page has to render its own settings errors; WordPress
 			// only does it automatically on the built-in Settings screens. Without
 			// this a rejected value is corrected silently.
 			settings_errors( WP_DownloadManager_Options::OPTION );
 			?>
+			<nav class="nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Settings tabs', 'wp-downloadmanager' ); ?>">
+				<?php foreach ( self::tabs() as $tab => $label ) : ?>
+					<a class="nav-tab<?php echo $tab === $current ? ' nav-tab-active' : ''; ?>"
+						href="<?php echo esc_url( add_query_arg( 'tab', $tab, WP_DownloadManager_Admin::screen_url( 'settings' ) ) ); ?>">
+						<?php echo esc_html( $label ); ?>
+					</a>
+				<?php endforeach; ?>
+			</nav>
 			<form method="post" action="options.php">
 				<?php
-				settings_fields( $group );
-				do_settings_sections( $group );
+				settings_fields( self::GROUP );
+				do_settings_sections( self::tab_page( $current ) );
 				submit_button();
 				?>
 			</form>

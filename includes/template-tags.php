@@ -323,14 +323,3 @@ if ( ! function_exists( 'download_category_name' ) ) {
 		return WP_DownloadManager_Display::category_name( $categories, $cat_id );
 	}
 }
-
-if ( ! function_exists( 'downloadmanager_feed_files' ) ) {
-	/**
-	 * The files the downloads feed lists.
-	 *
-	 * @return array
-	 */
-	function downloadmanager_feed_files() {
-		return WP_DownloadManager_Display::feed_files();
-	}
-}
