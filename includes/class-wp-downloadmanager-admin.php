@@ -1063,6 +1063,7 @@ class WP_DownloadManager_Admin {
 	 * @return string
 	 */
 	protected static function request( $key ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Routing only: ?action and ?id pick which of the three modes of the downloads screen to draw. Every handler that writes returns early unless a nonce is posted and then verifies the admin referer - add, edit, delete and bulk delete all do, and the edit and delete nonces have the file id baked into them.
 		return isset( $_REQUEST[ $key ] ) ? sanitize_text_field( wp_unslash( $_REQUEST[ $key ] ) ) : '';
 	}
 

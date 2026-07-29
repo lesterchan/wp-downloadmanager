@@ -477,6 +477,7 @@ class WP_DownloadManager_File {
 		$file     = preg_replace( '/[^A-Za-z0-9\-._\/]/', '', $file );
 
 		if ( $file !== $file_old ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Both names are inside the plugin's own downloads directory, on the same filesystem, and this runs during an upload the visitor is waiting on. WP_Filesystem::move() would need credentials that an upload handler has no way to ask for, and would fall back to a read-write-delete of the whole file to do a same-directory rename.
 			$rename = rename( $file_path . $file_old, $file_path . $file );
 		}
 
@@ -571,8 +572,10 @@ class WP_DownloadManager_File {
 
 			if ( 0 === $method ) {
 				self::send_headers( basename( $file_name ), filesize( $file_path . $file_name ) );
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Streaming the bytes out is what this endpoint is for: readfile() writes straight to the output buffer, so a multi-gigabyte download never has to fit in the PHP memory limit. WP_Filesystem has no streaming read at all - get_contents() returns the whole file as a string.
 				readfile( $file_path . $file_name );
 			} else {
+				// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- Sends the visitor to the configured download URL, which is deliberately allowed to be off-site: a CDN or a mirror is the normal reason to choose this method over streaming. wp_safe_redirect() would send every one of those visitors to the dashboard instead.
 				wp_redirect( $file_url . $file_name );
 			}
 			self::finish();
@@ -581,8 +584,10 @@ class WP_DownloadManager_File {
 		if ( ini_get( 'allow_url_fopen' ) && 0 === $method ) {
 			$file_size = self::remote_filesize( $file_name );
 			self::send_headers( basename( $file_name ), __( 'unknown', 'wp-downloadmanager' ) === $file_size ? 0 : $file_size );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- $file_name is an http(s) URL here, so this proxies a remote file through to the client a chunk at a time. WP_Filesystem does not read URLs, and wp_remote_get() would buffer the entire remote file in memory first.
 			readfile( $file_name );
 		} else {
+			// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- $file_name is the off-site URL the file is stored at; handing the visitor to it is the whole of this branch. wp_safe_redirect() rejects any host but this one, so it would send every remote download to the dashboard.
 			wp_redirect( $file_name );
 		}
 		self::finish();

@@ -108,7 +108,7 @@ class WP_DownloadManager_Settings {
 	 */
 	public static function current_tab() {
 		$tabs = self::tabs();
-		// Choosing a tab changes nothing, so there is no nonce to check here.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reads ?tab= to decide which tab to render, and the value is checked against self::tabs() below. The form itself is posted to options.php, which checks the settings nonce.
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
 
 		return isset( $tabs[ $tab ] ) ? $tab : 'general';
