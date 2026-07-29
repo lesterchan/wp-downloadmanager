@@ -485,13 +485,35 @@ class WP_DownloadManager_Metadata_Test extends WP_DownloadManager_TestCase {
 		}
 	}
 
-	public function test_no_source_file_suppresses_a_coding_standard_sniff() {
+	/**
+	 * Section 9: phpcs.xml is the shared template and nothing else, so a sniff
+	 * that is wrong for one plugin cannot quietly be turned off for all of them.
+	 * The residue is an inline suppression, allowed only inside includes/ and
+	 * only when it carries a -- reason on the same line saying why the sniff is
+	 * wrong. A bare suppression is the failure, not the suppression itself.
+	 */
+	public function test_every_inline_sniff_suppression_is_inside_includes_and_carries_a_reason() {
 		foreach ( $this->plugin_php_files() as $file ) {
-			$this->assertStringNotContainsString(
-				'phpcs:',
-				file_get_contents( dirname( __DIR__ ) . '/' . $file ),
-				$file . ' silences a sniff inline; fix the code or record the exception in phpcs.xml where it can be reviewed'
-			);
+			$lines = explode( "\n", (string) file_get_contents( dirname( __DIR__ ) . '/' . $file ) );
+
+			foreach ( $lines as $number => $line ) {
+				if ( ! preg_match( '/phpcs:(disable|ignore)\b(.*)$/', $line, $matches ) ) {
+					continue;
+				}
+
+				$where = $file . ':' . ( $number + 1 );
+
+				$this->assertStringStartsWith(
+					'includes/',
+					$file,
+					$where . ' silences a sniff outside includes/; fix the code instead'
+				);
+				$this->assertStringContainsString(
+					'--',
+					$matches[2],
+					$where . ' silences a sniff with no reason on the same line'
+				);
+			}
 		}
 	}
 }
