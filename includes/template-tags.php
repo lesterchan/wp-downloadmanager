@@ -1,12 +1,12 @@
 <?php
 /**
- * Public template tags for WP-DownloadManager.
+ * Public template tags for WP-WP_DownloadManager.
  *
  * These are the plugin's API: themes call them directly, so their names and
  * signatures do not move even though everything behind them did in 2.0.0.
  * Each one is a thin wrapper over the class that now owns the behaviour.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -19,7 +19,7 @@ if ( ! function_exists( 'downloads_page' ) ) {
 	 * @return string
 	 */
 	function downloads_page( $category_id = 0 ) {
-		return DownloadManager_Display::downloads_page( $category_id );
+		return WP_DownloadManager_Display::downloads_page( $category_id );
 	}
 }
 
@@ -35,7 +35,7 @@ if ( ! function_exists( 'download_embedded' ) ) {
 	 * @return string
 	 */
 	function download_embedded( $condition = '', $display = 'both', $sort_by = 'file_id', $sort_order = 'asc', $stream_limit = 0 ) {
-		return DownloadManager_Display::download_embedded( $condition, $display, $sort_by, $sort_order, $stream_limit );
+		return WP_DownloadManager_Display::download_embedded( $condition, $display, $sort_by, $sort_order, $stream_limit );
 	}
 }
 
@@ -49,7 +49,7 @@ if ( ! function_exists( 'get_most_downloaded' ) ) {
 	 * @return string|void
 	 */
 	function get_most_downloaded( $limit = 10, $chars = 0, $display = true ) {
-		return DownloadManager_Display::most_downloaded( $limit, $chars, $display );
+		return WP_DownloadManager_Display::most_downloaded( $limit, $chars, $display );
 	}
 }
 
@@ -63,7 +63,7 @@ if ( ! function_exists( 'get_recent_downloads' ) ) {
 	 * @return string|void
 	 */
 	function get_recent_downloads( $limit = 10, $chars = 0, $display = true ) {
-		return DownloadManager_Display::recent_downloads( $limit, $chars, $display );
+		return WP_DownloadManager_Display::recent_downloads( $limit, $chars, $display );
 	}
 }
 
@@ -78,7 +78,7 @@ if ( ! function_exists( 'get_downloads_category' ) ) {
 	 * @return string|void
 	 */
 	function get_downloads_category( $cat_id = 0, $limit = 10, $chars = 0, $display = true ) {
-		return DownloadManager_Display::downloads_category( $cat_id, $limit, $chars, $display );
+		return WP_DownloadManager_Display::downloads_category( $cat_id, $limit, $chars, $display );
 	}
 }
 
@@ -90,7 +90,7 @@ if ( ! function_exists( 'get_download_files' ) ) {
 	 * @return string|void
 	 */
 	function get_download_files( $display = true ) {
-		return DownloadManager_Display::total_files( $display );
+		return WP_DownloadManager_Display::total_files( $display );
 	}
 }
 
@@ -102,7 +102,7 @@ if ( ! function_exists( 'get_download_size' ) ) {
 	 * @return string|void
 	 */
 	function get_download_size( $display = true ) {
-		return DownloadManager_Display::total_size( $display );
+		return WP_DownloadManager_Display::total_size( $display );
 	}
 }
 
@@ -114,7 +114,7 @@ if ( ! function_exists( 'get_download_hits' ) ) {
 	 * @return string|void
 	 */
 	function get_download_hits( $display = true ) {
-		return DownloadManager_Display::total_hits( $display );
+		return WP_DownloadManager_Display::total_hits( $display );
 	}
 }
 
@@ -127,7 +127,7 @@ if ( ! function_exists( 'download_file_url' ) ) {
 	 * @return string
 	 */
 	function download_file_url( $file_id, $file_name ) {
-		return DownloadManager_File::download_url( $file_id, $file_name );
+		return WP_DownloadManager_File::download_url( $file_id, $file_name );
 	}
 }
 
@@ -139,7 +139,7 @@ if ( ! function_exists( 'download_category_url' ) ) {
 	 * @return string
 	 */
 	function download_category_url( $cat_id ) {
-		return DownloadManager_Display::category_url( $cat_id );
+		return WP_DownloadManager_Display::category_url( $cat_id );
 	}
 }
 
@@ -151,7 +151,7 @@ if ( ! function_exists( 'download_page_link' ) ) {
 	 * @return string
 	 */
 	function download_page_link( $page ) {
-		return DownloadManager_Display::page_link( $page );
+		return WP_DownloadManager_Display::page_link( $page );
 	}
 }
 
@@ -164,7 +164,7 @@ if ( ! function_exists( 'download_search_highlight' ) ) {
 	 * @return string
 	 */
 	function download_search_highlight( $search_word, $search_text ) {
-		return DownloadManager_Display::search_highlight( $search_word, $search_text );
+		return WP_DownloadManager_Display::search_highlight( $search_word, $search_text );
 	}
 }
 
@@ -176,7 +176,7 @@ if ( ! function_exists( 'file_extension' ) ) {
 	 * @return string
 	 */
 	function file_extension( $filename ) {
-		return DownloadManager_File::extension( $filename );
+		return WP_DownloadManager_File::extension( $filename );
 	}
 }
 
@@ -187,7 +187,7 @@ if ( ! function_exists( 'file_extension_images' ) ) {
 	 * @return array
 	 */
 	function file_extension_images() {
-		return DownloadManager_File::extension_images();
+		return WP_DownloadManager_File::extension_images();
 	}
 }
 
@@ -200,7 +200,7 @@ if ( ! function_exists( 'file_extension_image' ) ) {
 	 * @return string
 	 */
 	function file_extension_image( $file_name, $images ) {
-		return DownloadManager_File::extension_image( $file_name, $images );
+		return WP_DownloadManager_File::extension_image( $file_name, $images );
 	}
 }
 
@@ -212,7 +212,7 @@ if ( ! function_exists( 'file_permission' ) ) {
 	 * @return string
 	 */
 	function file_permission( $permission ) {
-		return DownloadManager_File::permission_label( $permission );
+		return WP_DownloadManager_File::permission_label( $permission );
 	}
 }
 
@@ -224,7 +224,7 @@ if ( ! function_exists( 'is_remote_file' ) ) {
 	 * @return bool
 	 */
 	function is_remote_file( $file_name ) {
-		return DownloadManager_File::is_remote( $file_name );
+		return WP_DownloadManager_File::is_remote( $file_name );
 	}
 }
 
@@ -236,7 +236,7 @@ if ( ! function_exists( 'is_file_remote_valid' ) ) {
 	 * @return bool
 	 */
 	function is_file_remote_valid( $file ) {
-		return DownloadManager_File::is_remote_valid( $file );
+		return WP_DownloadManager_File::is_remote_valid( $file );
 	}
 }
 
@@ -248,7 +248,7 @@ if ( ! function_exists( 'remote_filesize' ) ) {
 	 * @return string
 	 */
 	function remote_filesize( $uri ) {
-		return DownloadManager_File::remote_filesize( $uri );
+		return WP_DownloadManager_File::remote_filesize( $uri );
 	}
 }
 
@@ -260,7 +260,7 @@ if ( ! function_exists( 'format_filesize' ) ) {
 	 * @return string
 	 */
 	function format_filesize( $raw_size ) {
-		return DownloadManager_File::format_size( $raw_size );
+		return WP_DownloadManager_File::format_size( $raw_size );
 	}
 }
 
@@ -272,7 +272,7 @@ if ( ! function_exists( 'format_filesize_dec' ) ) {
 	 * @return string
 	 */
 	function format_filesize_dec( $raw_size ) {
-		return DownloadManager_File::format_size_dec( $raw_size );
+		return WP_DownloadManager_File::format_size_dec( $raw_size );
 	}
 }
 
@@ -283,7 +283,7 @@ if ( ! function_exists( 'get_max_upload_size' ) ) {
 	 * @return int
 	 */
 	function get_max_upload_size() {
-		return DownloadManager_File::max_upload_size();
+		return WP_DownloadManager_File::max_upload_size();
 	}
 }
 
@@ -294,7 +294,7 @@ if ( ! function_exists( 'get_wp_user_level' ) ) {
 	 * @return int
 	 */
 	function get_wp_user_level() {
-		return DownloadManager_File::user_level();
+		return WP_DownloadManager_File::user_level();
 	}
 }
 
@@ -307,7 +307,7 @@ if ( ! function_exists( 'snippet_text' ) ) {
 	 * @return string
 	 */
 	function snippet_text( $text, $length = 0 ) {
-		return DownloadManager_Display::snippet_text( $text, $length );
+		return WP_DownloadManager_Display::snippet_text( $text, $length );
 	}
 }
 
@@ -320,7 +320,7 @@ if ( ! function_exists( 'download_category_name' ) ) {
 	 * @return string
 	 */
 	function download_category_name( $categories, $cat_id ) {
-		return DownloadManager_Display::category_name( $categories, $cat_id );
+		return WP_DownloadManager_Display::category_name( $categories, $cat_id );
 	}
 }
 
@@ -331,6 +331,6 @@ if ( ! function_exists( 'downloadmanager_feed_files' ) ) {
 	 * @return array
 	 */
 	function downloadmanager_feed_files() {
-		return DownloadManager_Display::feed_files();
+		return WP_DownloadManager_Display::feed_files();
 	}
 }

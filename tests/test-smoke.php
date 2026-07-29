@@ -2,13 +2,13 @@
 /**
  * Smoke test: the plugin loaded, the table exists, the fixtures are in it.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
  * Minimal checks that the harness itself works.
  */
-class Test_Smoke extends DownloadManager_TestCase {
+class Test_Smoke extends WP_DownloadManager_TestCase {
 
 	/**
 	 * The downloads table was created and registered on $wpdb.

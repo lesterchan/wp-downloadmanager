@@ -2,9 +2,9 @@
 /**
  * The downloads RSS feed.
  *
- * Loaded by DownloadManager_File::serve() for /download/rss/ and ?dl_name=rss.
+ * Loaded by WP_DownloadManager_File::serve() for /download/rss/ and ?dl_name=rss.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -13,7 +13,7 @@ global $wpdb;
 
 // phpcs:ignore WordPress.DB
 $file_last_download  = $wpdb->get_var( "SELECT file_updated_date FROM {$wpdb->downloads} WHERE file_permission != -2 ORDER BY file_updated_date DESC LIMIT 1" );
-$download_categories = (array) DownloadManager_Options::get( 'categories' );
+$download_categories = (array) WP_DownloadManager_Options::get( 'categories' );
 $files               = downloadmanager_feed_files();
 $feed_title          = get_bloginfo_rss( 'name' ) . __( ' Downloads RSS Feed', 'wp-downloadmanager' );
 
@@ -37,7 +37,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( get_option( 'blog_charset' ) )
 <channel>
 	<title><?php echo esc_html( $feed_title ); ?></title>
 	<atom:link href="<?php self_link(); ?>" rel="self" type="application/rss+xml" />
-	<link><?php echo esc_url( DownloadManager_Options::get( 'page_url' ) ); ?></link>
+	<link><?php echo esc_url( WP_DownloadManager_Options::get( 'page_url' ) ); ?></link>
 	<description><?php echo esc_html( $feed_title ); ?></description>
 	<pubDate><?php echo esc_html( mysql2date( 'D, d M Y H:i:s +0000', gmdate( 'Y-m-d H:i:s', (int) $file_last_download ) ) ); ?></pubDate>
 	<?php the_generator( 'rss2' ); ?>

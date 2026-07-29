@@ -1,17 +1,17 @@
 <?php
 /**
- * Shared fixtures for the WP-DownloadManager suite.
+ * Shared fixtures for the WP-WP_DownloadManager suite.
  *
  * Every test starts from the same table contents and the same option values,
  * so the golden-master assertions in test-golden.php compare like with like.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
  * Base class: a clean downloads table plus a known set of files.
  */
-abstract class DownloadManager_TestCase extends WP_UnitTestCase {
+abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 
 	/**
 	 * A fixed point in time, so rendered dates never depend on "now".
@@ -62,11 +62,11 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 	 * rows has its own tests, which seed the legacy names themselves.
 	 */
 	protected function reset_options() {
-		$defaults = DownloadManager_Options::defaults();
+		$defaults = WP_DownloadManager_Options::defaults();
 
 		$defaults['categories'] = array( '', 'General', 'Software' );
 
-		DownloadManager_Options::save( $defaults );
+		WP_DownloadManager_Options::save( $defaults );
 	}
 
 	/**
@@ -299,7 +299,7 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 	 * @return string Absolute path.
 	 */
 	protected function make_download_file( $name = 'sample.txt', $contents = 'sample' ) {
-		$dir = DownloadManager_Options::get( 'path.dir' );
+		$dir = WP_DownloadManager_Options::get( 'path.dir' );
 
 		if ( ! is_dir( $dir ) ) {
 			wp_mkdir_p( $dir );
@@ -318,7 +318,7 @@ abstract class DownloadManager_TestCase extends WP_UnitTestCase {
 	 * @return void
 	 */
 	protected function remove_download_files() {
-		$dir = DownloadManager_Options::get( 'path.dir' );
+		$dir = WP_DownloadManager_Options::get( 'path.dir' );
 
 		if ( ! is_dir( $dir ) ) {
 			return;

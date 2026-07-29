@@ -8,13 +8,13 @@
  * present, and through the legacy option row when it is not - and the suite
  * runs without WP-Stats installed, which exercises the fallback.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
  * The download panels WP-Stats renders.
  */
-class Test_WPStats extends DownloadManager_TestCase {
+class Test_WPStats extends WP_DownloadManager_TestCase {
 
 	/**
 	 * Put the legacy toggle row back to a known state.
@@ -40,7 +40,7 @@ class Test_WPStats extends DownloadManager_TestCase {
 	 * somebody had saved the WP-Stats options screen.
 	 */
 	public function test_toggles_are_registered_as_defaults() {
-		$defaults = DownloadManager_WPStats::defaults( array() );
+		$defaults = WP_DownloadManager_WPStats::defaults( array() );
 
 		$this->assertSame( 1, $defaults['downloads'] );
 		$this->assertSame( 1, $defaults['recent_downloads'] );
@@ -51,7 +51,7 @@ class Test_WPStats extends DownloadManager_TestCase {
 	 * WP-Stats' own defaults win over ours.
 	 */
 	public function test_existing_defaults_are_not_overridden() {
-		$defaults = DownloadManager_WPStats::defaults( array( 'downloads' => 0 ) );
+		$defaults = WP_DownloadManager_WPStats::defaults( array( 'downloads' => 0 ) );
 
 		$this->assertSame( 0, $defaults['downloads'] );
 	}
@@ -60,10 +60,10 @@ class Test_WPStats extends DownloadManager_TestCase {
 	 * A toggle reads from the legacy row when WP-Stats is absent.
 	 */
 	public function test_toggle_reads_the_legacy_row() {
-		$this->assertTrue( DownloadManager_WPStats::enabled( 'downloads' ) );
+		$this->assertTrue( WP_DownloadManager_WPStats::enabled( 'downloads' ) );
 
 		update_option( 'stats_display', array( 'downloads' => 0 ) );
-		$this->assertFalse( DownloadManager_WPStats::enabled( 'downloads' ) );
+		$this->assertFalse( WP_DownloadManager_WPStats::enabled( 'downloads' ) );
 	}
 
 	/**
@@ -72,24 +72,24 @@ class Test_WPStats extends DownloadManager_TestCase {
 	public function test_missing_toggle_is_off() {
 		delete_option( 'stats_display' );
 
-		$this->assertFalse( DownloadManager_WPStats::enabled( 'downloads' ) );
-		$this->assertFalse( DownloadManager_WPStats::enabled( 'nonexistent' ) );
+		$this->assertFalse( WP_DownloadManager_WPStats::enabled( 'downloads' ) );
+		$this->assertFalse( WP_DownloadManager_WPStats::enabled( 'nonexistent' ) );
 	}
 
 	/**
 	 * The limit falls back to the legacy row too.
 	 */
 	public function test_limit_reads_the_legacy_row() {
-		$this->assertSame( 5, DownloadManager_WPStats::limit() );
+		$this->assertSame( 5, WP_DownloadManager_WPStats::limit() );
 	}
 
 	/**
 	 * The general panel reports the totals across the whole table.
 	 */
 	public function test_general_panel_reports_totals() {
-		$content = DownloadManager_WPStats::page_general( '' );
+		$content = WP_DownloadManager_WPStats::page_general( '' );
 
-		$this->assertStringContainsString( 'WP-DownloadManager', $content );
+		$this->assertStringContainsString( 'WP-WP_DownloadManager', $content );
 		// Five fixtures, 126 hits between them, just over a megabyte.
 		$this->assertStringContainsString( '5', $content );
 		$this->assertStringContainsString( '126', $content );
@@ -109,7 +109,7 @@ class Test_WPStats extends DownloadManager_TestCase {
 
 		$this->assertSame(
 			'existing',
-			DownloadManager_WPStats::$method( 'existing' ),
+			WP_DownloadManager_WPStats::$method( 'existing' ),
 			$method . ' should add nothing when switched off'
 		);
 	}
@@ -125,7 +125,7 @@ class Test_WPStats extends DownloadManager_TestCase {
 	public function test_panel_appends_when_enabled( $method, $toggle ) {
 		update_option( 'stats_display', array( $toggle => 1 ) );
 
-		$content = DownloadManager_WPStats::$method( 'existing' );
+		$content = WP_DownloadManager_WPStats::$method( 'existing' );
 
 		$this->assertStringStartsWith( 'existing', $content );
 		$this->assertGreaterThan( strlen( 'existing' ), strlen( $content ) );
@@ -148,7 +148,7 @@ class Test_WPStats extends DownloadManager_TestCase {
 	 * The recent panel lists files, newest first, and skips hidden ones.
 	 */
 	public function test_recent_panel_lists_files() {
-		$content = DownloadManager_WPStats::page_recent( '' );
+		$content = WP_DownloadManager_WPStats::page_recent( '' );
 
 		$this->assertStringContainsString( 'The Manual', $content );
 		$this->assertStringNotContainsString( 'Hidden File', $content );
@@ -160,7 +160,7 @@ class Test_WPStats extends DownloadManager_TestCase {
 	 * The most-downloaded panel orders by hits.
 	 */
 	public function test_most_panel_orders_by_hits() {
-		$content = DownloadManager_WPStats::page_most( '' );
+		$content = WP_DownloadManager_WPStats::page_most( '' );
 
 		$this->assertLessThan(
 			strpos( $content, 'Remote Bundle' ),
@@ -175,7 +175,7 @@ class Test_WPStats extends DownloadManager_TestCase {
 	public function test_panels_honour_the_limit() {
 		update_option( 'stats_mostlimit', 1 );
 
-		$content = DownloadManager_WPStats::page_most( '' );
+		$content = WP_DownloadManager_WPStats::page_most( '' );
 
 		$this->assertSame( 1, substr_count( $content, '<li>' ) );
 	}
@@ -189,7 +189,7 @@ class Test_WPStats extends DownloadManager_TestCase {
 	 * @param string $value  Toggle key it renders.
 	 */
 	public function test_admin_checkbox_renders( $method, $value ) {
-		$html = DownloadManager_WPStats::$method( '' );
+		$html = WP_DownloadManager_WPStats::$method( '' );
 
 		$this->assertStringContainsString( 'type="checkbox"', $html );
 		$this->assertStringContainsString( 'value="' . $value . '"', $html );
@@ -217,14 +217,14 @@ class Test_WPStats extends DownloadManager_TestCase {
 	public function test_admin_checkbox_reflects_an_off_toggle() {
 		update_option( 'stats_display', array( 'downloads' => 0 ) );
 
-		$this->assertStringNotContainsString( 'checked', DownloadManager_WPStats::admin_general( '' ) );
+		$this->assertStringNotContainsString( 'checked', WP_DownloadManager_WPStats::admin_general( '' ) );
 	}
 
 	/**
 	 * Every filter WP-Stats offers is hooked up.
 	 */
 	public function test_filters_are_registered() {
-		DownloadManager_WPStats::register();
+		WP_DownloadManager_WPStats::register();
 
 		$filters = array(
 			'wp_stats_display_defaults',
@@ -251,13 +251,13 @@ class Test_WPStats extends DownloadManager_TestCase {
 		global $wpdb;
 		$wpdb->query( "TRUNCATE TABLE {$wpdb->downloads}" ); // phpcs:ignore WordPress.DB
 
-		$this->assertStringContainsString( 'N/A', DownloadManager_WPStats::page_recent( '' ) );
-		$this->assertStringContainsString( 'N/A', DownloadManager_WPStats::page_most( '' ) );
+		$this->assertStringContainsString( 'N/A', WP_DownloadManager_WPStats::page_recent( '' ) );
+		$this->assertStringContainsString( 'N/A', WP_DownloadManager_WPStats::page_most( '' ) );
 
 		// SUM() is NULL with no rows, and _n() and number_format() are both
 		// deprecated for null on PHP 8.1 and later. The panel must report zeroes.
-		$general = DownloadManager_WPStats::page_general( '' );
-		$this->assertStringContainsString( 'WP-DownloadManager', $general );
+		$general = WP_DownloadManager_WPStats::page_general( '' );
+		$this->assertStringContainsString( 'WP-WP_DownloadManager', $general );
 		$this->assertStringContainsString( '<strong>0</strong> files were added.', $general );
 		$this->assertStringContainsString( '<strong>0</strong> hits were generated.', $general );
 	}
@@ -298,8 +298,8 @@ class Test_WPStats extends DownloadManager_TestCase {
 		update_option( 'stats_display', array( 'downloads' => 0 ) );
 		update_option( 'stats_mostlimit', 5 );
 
-		$this->assertTrue( DownloadManager_WPStats::enabled( 'downloads' ) );
-		$this->assertFalse( DownloadManager_WPStats::enabled( 'recent_downloads' ) );
-		$this->assertSame( 42, DownloadManager_WPStats::limit() );
+		$this->assertTrue( WP_DownloadManager_WPStats::enabled( 'downloads' ) );
+		$this->assertFalse( WP_DownloadManager_WPStats::enabled( 'recent_downloads' ) );
+		$this->assertSame( 42, WP_DownloadManager_WPStats::limit() );
 	}
 }

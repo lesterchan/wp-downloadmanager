@@ -13,13 +13,13 @@
  * value escaped twice, a stray cast that made a branch permanently false. So
  * these tests assert on the HTML.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
  * The Manage Downloads and Add File screens.
  */
-class Test_Admin_Pages extends DownloadManager_TestCase {
+class Test_Admin_Pages extends WP_DownloadManager_TestCase {
 
 	/**
 	 * Become an administrator before each render.

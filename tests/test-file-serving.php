@@ -2,17 +2,17 @@
 /**
  * The download endpoint.
  *
- * DownloadManager_File::serve() is what actually hands a file over, so it is
+ * WP_DownloadManager_File::serve() is what actually hands a file over, so it is
  * where the permission model is enforced for real - the templates only decide
  * whether to show a link. It had no coverage at all before 2.0.0.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
  * Serving, permission gating and hit counting.
  */
-class Test_File_Serving extends DownloadManager_TestCase {
+class Test_File_Serving extends WP_DownloadManager_TestCase {
 
 	/**
 	 * Give the endpoint a real directory to serve from.
@@ -20,8 +20,8 @@ class Test_File_Serving extends DownloadManager_TestCase {
 	public function set_up() {
 		parent::set_up();
 
-		DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-serve-files' );
-		DownloadManager_Options::set( 'path.url', content_url( 'dm-serve-files' ) );
+		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-serve-files' );
+		WP_DownloadManager_Options::set( 'path.url', content_url( 'dm-serve-files' ) );
 
 		// serve() checks is_file() before it looks at the download method, so
 		// even the redirect branch needs the local fixtures to exist on disk.
@@ -64,7 +64,7 @@ class Test_File_Serving extends DownloadManager_TestCase {
 		};
 		add_filter( 'wp_redirect', $capture );
 
-		// serve() ends every branch through DownloadManager_File::finish(),
+		// serve() ends every branch through WP_DownloadManager_File::finish(),
 		// which fires this action and then exits. Throwing here unwinds before
 		// the exit so the runner survives.
 		$served = static function () {
@@ -78,7 +78,7 @@ class Test_File_Serving extends DownloadManager_TestCase {
 
 		ob_start();
 		try {
-			DownloadManager_File::serve();
+			WP_DownloadManager_File::serve();
 		} catch ( WPDieException $e ) {
 			$died = $e->getMessage();
 		} catch ( Exception $e ) {
@@ -116,7 +116,7 @@ class Test_File_Serving extends DownloadManager_TestCase {
 		add_filter( 'wp_redirect', '__return_false' );
 
 		try {
-			DownloadManager_File::serve();
+			WP_DownloadManager_File::serve();
 		} catch ( Exception $e ) {
 			unset( $e );
 		}
@@ -168,7 +168,7 @@ class Test_File_Serving extends DownloadManager_TestCase {
 
 		$this->assertNull( $result['died'] );
 		$this->assertSame(
-			DownloadManager_Options::get( 'path.url' ) . '/manual.pdf',
+			WP_DownloadManager_Options::get( 'path.url' ) . '/manual.pdf',
 			$result['redirect']
 		);
 	}
@@ -281,7 +281,7 @@ class Test_File_Serving extends DownloadManager_TestCase {
 	 * Under the output method a missing local file is a 404, not a blank body.
 	 */
 	public function test_output_method_404s_a_missing_file() {
-		DownloadManager_Options::set( 'method', 0 );
+		WP_DownloadManager_Options::set( 'method', 0 );
 		$this->login_as( '' );
 
 		$id = $this->insert_file(
@@ -324,7 +324,7 @@ class Test_File_Serving extends DownloadManager_TestCase {
 	 * Under the output method an existing file is sent.
 	 */
 	public function test_output_method_sends_the_file() {
-		DownloadManager_Options::set( 'method', 0 );
+		WP_DownloadManager_Options::set( 'method', 0 );
 		$this->make_download_file( 'served.txt', 'file contents here' );
 
 		$id = $this->insert_file(
@@ -345,7 +345,7 @@ class Test_File_Serving extends DownloadManager_TestCase {
 	 * Lookup by file name works when the option asks for it.
 	 */
 	public function test_lookup_by_file_name() {
-		DownloadManager_Options::set( 'use_filename', 1 );
+		WP_DownloadManager_Options::set( 'use_filename', 1 );
 		$this->login_as( '' );
 
 		$result = $this->serve( array( 'dl_name' => 'manual.pdf' ) );
@@ -360,7 +360,7 @@ class Test_File_Serving extends DownloadManager_TestCase {
 	public function test_lookup_by_file_name_is_not_injectable() {
 		global $wpdb;
 
-		DownloadManager_Options::set( 'use_filename', 1 );
+		WP_DownloadManager_Options::set( 'use_filename', 1 );
 		$this->login_as( '' );
 
 		$result = $this->serve( array( 'dl_name' => 'manual.pdf" OR "1"="1' ) );
@@ -376,7 +376,7 @@ class Test_File_Serving extends DownloadManager_TestCase {
 	 * marked Hidden could be reached by the other key.
 	 */
 	public function test_id_lookup_is_ignored_when_names_are_configured() {
-		DownloadManager_Options::set( 'use_filename', 1 );
+		WP_DownloadManager_Options::set( 'use_filename', 1 );
 		$this->login_as( '' );
 
 		$result = $this->serve( array( 'dl_id' => $this->ids['public'] ) );

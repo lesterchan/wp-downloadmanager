@@ -6,13 +6,13 @@
  * outside a migration, and the only code that touches the filesystem. They had
  * no coverage at all before, which is why the 2.0.0 rewrite left them alone.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
  * Form processing on the two legacy admin screens.
  */
-class Test_Admin_Writes extends DownloadManager_TestCase {
+class Test_Admin_Writes extends WP_DownloadManager_TestCase {
 
 	/**
 	 * Become an administrator and give the write paths a real directory.
@@ -21,7 +21,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		parent::set_up();
 		$this->become_download_admin();
 
-		DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-test-files' );
+		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-test-files' );
 	}
 
 	/**
@@ -524,12 +524,12 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 	 * @param string $subfolder The posted subfolder.
 	 */
 	public function test_upload_subfolder_cannot_escape( $subfolder ) {
-		$dir = DownloadManager_Options::get( 'path.dir' );
+		$dir = WP_DownloadManager_Options::get( 'path.dir' );
 		wp_mkdir_p( $dir . '/real' );
 
 		$this->assertSame(
 			'/',
-			DownloadManager_File::safe_subfolder( $dir, $subfolder ),
+			WP_DownloadManager_File::safe_subfolder( $dir, $subfolder ),
 			$subfolder . ' should be refused'
 		);
 	}
@@ -554,11 +554,11 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 	 * A genuine subfolder is accepted.
 	 */
 	public function test_upload_subfolder_accepts_a_real_folder() {
-		$dir = DownloadManager_Options::get( 'path.dir' );
+		$dir = WP_DownloadManager_Options::get( 'path.dir' );
 		wp_mkdir_p( $dir . '/real' );
 
-		$this->assertSame( '/real', DownloadManager_File::safe_subfolder( $dir, '/real' ) );
-		$this->assertSame( '/', DownloadManager_File::safe_subfolder( $dir, '/' ) );
+		$this->assertSame( '/real', WP_DownloadManager_File::safe_subfolder( $dir, '/real' ) );
+		$this->assertSame( '/', WP_DownloadManager_File::safe_subfolder( $dir, '/' ) );
 	}
 
 	/**
@@ -568,11 +568,11 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 	 * as being inside /files.
 	 */
 	public function test_upload_subfolder_rejects_a_prefix_sibling() {
-		$dir = DownloadManager_Options::get( 'path.dir' );
+		$dir = WP_DownloadManager_Options::get( 'path.dir' );
 		wp_mkdir_p( $dir );
 		wp_mkdir_p( $dir . '-public' );
 
-		$this->assertSame( '/', DownloadManager_File::safe_subfolder( $dir, '/../' . basename( $dir ) . '-public' ) );
+		$this->assertSame( '/', WP_DownloadManager_File::safe_subfolder( $dir, '/../' . basename( $dir ) . '-public' ) );
 
 		rmdir( $dir . '-public' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	}
@@ -581,10 +581,10 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 	 * Stored file names are stripped of characters that do not belong.
 	 */
 	public function test_rename_file_normalises_the_name() {
-		$dir = DownloadManager_Options::get( 'path.dir' );
+		$dir = WP_DownloadManager_Options::get( 'path.dir' );
 		$this->make_download_file( 'my file (1).txt' );
 
-		$renamed = DownloadManager_File::rename_file( trailingslashit( $dir ), 'my file (1).txt' );
+		$renamed = WP_DownloadManager_File::rename_file( trailingslashit( $dir ), 'my file (1).txt' );
 
 		$this->assertSame( 'my_file_1.txt', $renamed );
 		$this->assertFileExists( trailingslashit( $dir ) . 'my_file_1.txt' );
@@ -594,12 +594,12 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 	 * A name that needs no change is returned untouched.
 	 */
 	public function test_rename_file_leaves_a_clean_name_alone() {
-		$dir = DownloadManager_Options::get( 'path.dir' );
+		$dir = WP_DownloadManager_Options::get( 'path.dir' );
 		$this->make_download_file( 'clean-name.txt' );
 
 		$this->assertSame(
 			'clean-name.txt',
-			DownloadManager_File::rename_file( trailingslashit( $dir ), 'clean-name.txt' )
+			WP_DownloadManager_File::rename_file( trailingslashit( $dir ), 'clean-name.txt' )
 		);
 	}
 }

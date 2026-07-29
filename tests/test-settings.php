@@ -2,13 +2,13 @@
 /**
  * The two Settings API screens.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
  * Registration, sanitizing and the save round-trip.
  */
-class Test_Settings extends DownloadManager_TestCase {
+class Test_Settings extends WP_DownloadManager_TestCase {
 
 	/**
 	 * Register the sections and fields before each test.
@@ -25,7 +25,7 @@ class Test_Settings extends DownloadManager_TestCase {
 	public function set_up() {
 		parent::set_up();
 
-		DownloadManager_Settings::register();
+		WP_DownloadManager_Settings::register();
 	}
 
 	/**
@@ -34,14 +34,14 @@ class Test_Settings extends DownloadManager_TestCase {
 	public function test_option_is_registered_under_both_groups() {
 		// Called directly rather than through do_action( 'admin_init' ), which
 		// also fires core handlers that try to send headers.
-		DownloadManager_Settings::register();
+		WP_DownloadManager_Settings::register();
 
 		global $wp_registered_settings;
 
-		$this->assertArrayHasKey( DownloadManager_Options::OPTION, $wp_registered_settings );
+		$this->assertArrayHasKey( WP_DownloadManager_Options::OPTION, $wp_registered_settings );
 		$this->assertSame(
-			array( 'DownloadManager_Settings', 'sanitize' ),
-			$wp_registered_settings[ DownloadManager_Options::OPTION ]['sanitize_callback']
+			array( 'WP_DownloadManager_Settings', 'sanitize' ),
+			$wp_registered_settings[ WP_DownloadManager_Options::OPTION ]['sanitize_callback']
 		);
 	}
 
@@ -49,7 +49,7 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * The options screen round-trips.
 	 */
 	public function test_options_screen_round_trip() {
-		$saved = DownloadManager_Settings::sanitize(
+		$saved = WP_DownloadManager_Settings::sanitize(
 			array(
 				'path'           => array(
 					'dir' => WP_CONTENT_DIR . '/files',
@@ -94,14 +94,14 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * This is the "saves, says Settings saved., then silently reverts" bug: two
 	 * places computing the same list with slightly different rules, so the
 	 * select offered a value the sanitizer rejected. Both now derive from
-	 * DownloadManager_File::sort_columns().
+	 * WP_DownloadManager_File::sort_columns().
 	 */
 	public function test_every_offered_sort_column_is_accepted() {
-		foreach ( DownloadManager_File::sort_columns() as $column ) {
-			$saved = DownloadManager_Settings::sanitize( array( 'sort' => array( 'by' => $column ) ) );
+		foreach ( WP_DownloadManager_File::sort_columns() as $column ) {
+			$saved = WP_DownloadManager_Settings::sanitize( array( 'sort' => array( 'by' => $column ) ) );
 			$this->assertSame( $column, $saved['sort']['by'], "{$column} should be accepted" );
 
-			$saved = DownloadManager_Settings::sanitize( array( 'rss' => array( 'sortby' => $column ) ) );
+			$saved = WP_DownloadManager_Settings::sanitize( array( 'rss' => array( 'sortby' => $column ) ) );
 			$this->assertSame( $column, $saved['rss']['sortby'], "{$column} should be accepted for the feed" );
 		}
 	}
@@ -113,7 +113,7 @@ class Test_Settings extends DownloadManager_TestCase {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 
 		ob_start();
-		DownloadManager_Settings::render_options_page();
+		WP_DownloadManager_Settings::render_options_page();
 		$html = ob_get_clean();
 
 		preg_match( '#<select id="download_sort_by".*?</select>#s', $html, $matches );
@@ -121,7 +121,7 @@ class Test_Settings extends DownloadManager_TestCase {
 
 		preg_match_all( '/value="([^"]+)"/', $matches[0], $values );
 
-		$this->assertSame( DownloadManager_File::sort_columns(), $values[1] );
+		$this->assertSame( WP_DownloadManager_File::sort_columns(), $values[1] );
 	}
 
 	/**
@@ -133,11 +133,11 @@ class Test_Settings extends DownloadManager_TestCase {
 	public function test_sections_and_fields_are_registered() {
 		global $wp_settings_sections, $wp_settings_fields;
 
-		$this->assertArrayHasKey( DownloadManager_Settings::GROUP_OPTIONS, $wp_settings_sections );
-		$this->assertArrayHasKey( DownloadManager_Settings::GROUP_TEMPLATES, $wp_settings_sections );
+		$this->assertArrayHasKey( WP_DownloadManager_Settings::GROUP_OPTIONS, $wp_settings_sections );
+		$this->assertArrayHasKey( WP_DownloadManager_Settings::GROUP_TEMPLATES, $wp_settings_sections );
 
 		$option_fields = array();
-		foreach ( $wp_settings_fields[ DownloadManager_Settings::GROUP_OPTIONS ] as $fields ) {
+		foreach ( $wp_settings_fields[ WP_DownloadManager_Settings::GROUP_OPTIONS ] as $fields ) {
 			$option_fields = array_merge( $option_fields, array_keys( $fields ) );
 		}
 
@@ -147,7 +147,7 @@ class Test_Settings extends DownloadManager_TestCase {
 
 		// One registered field per template, both halves of each pair included.
 		$template_fields = array();
-		foreach ( $wp_settings_fields[ DownloadManager_Settings::GROUP_TEMPLATES ] as $fields ) {
+		foreach ( $wp_settings_fields[ WP_DownloadManager_Settings::GROUP_TEMPLATES ] as $fields ) {
 			$template_fields = array_merge( $template_fields, array_keys( $fields ) );
 		}
 
@@ -179,7 +179,7 @@ class Test_Settings extends DownloadManager_TestCase {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 
 		ob_start();
-		DownloadManager_Settings::render_options_page();
+		WP_DownloadManager_Settings::render_options_page();
 		$html = ob_get_clean();
 
 		$wp_settings_sections = $sections; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
@@ -187,23 +187,23 @@ class Test_Settings extends DownloadManager_TestCase {
 
 		// The form and its nonce still render; only the fields are missing.
 		$this->assertStringContainsString( 'options.php', $html );
-		$this->assertStringNotContainsString( 'name="' . DownloadManager_Options::OPTION . '[page_url]"', $html );
+		$this->assertStringNotContainsString( 'name="' . WP_DownloadManager_Options::OPTION . '[page_url]"', $html );
 
 		// And with registration in place, they are there.
-		DownloadManager_Settings::register();
+		WP_DownloadManager_Settings::register();
 
 		ob_start();
-		DownloadManager_Settings::render_options_page();
+		WP_DownloadManager_Settings::render_options_page();
 		$html = ob_get_clean();
 
-		$this->assertStringContainsString( 'name="' . DownloadManager_Options::OPTION . '[page_url]"', $html );
+		$this->assertStringContainsString( 'name="' . WP_DownloadManager_Options::OPTION . '[page_url]"', $html );
 	}
 
 	/**
 	 * An unknown sort column falls back rather than being stored.
 	 */
 	public function test_unknown_sort_column_falls_back() {
-		$saved = DownloadManager_Settings::sanitize( array( 'sort' => array( 'by' => 'DROP TABLE' ) ) );
+		$saved = WP_DownloadManager_Settings::sanitize( array( 'sort' => array( 'by' => 'DROP TABLE' ) ) );
 
 		$this->assertSame( 'file_name', $saved['sort']['by'] );
 	}
@@ -212,7 +212,7 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * A download path outside wp-content is refused.
 	 */
 	public function test_download_path_is_constrained_to_wp_content() {
-		$saved = DownloadManager_Settings::sanitize(
+		$saved = WP_DownloadManager_Settings::sanitize(
 			array( 'path' => array( 'dir' => '/etc' ) )
 		);
 
@@ -223,7 +223,7 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * Traversal is refused even when it lands back inside wp-content.
 	 */
 	public function test_download_path_rejects_traversal() {
-		$saved = DownloadManager_Settings::sanitize(
+		$saved = WP_DownloadManager_Settings::sanitize(
 			array( 'path' => array( 'dir' => WP_CONTENT_DIR . '/../../etc' ) )
 		);
 
@@ -243,7 +243,7 @@ class Test_Settings extends DownloadManager_TestCase {
 		$missing = WP_CONTENT_DIR . '/files-not-created-yet';
 		$this->assertDirectoryDoesNotExist( $missing );
 
-		$saved = DownloadManager_Settings::sanitize(
+		$saved = WP_DownloadManager_Settings::sanitize(
 			array( 'path' => array( 'dir' => $missing ) )
 		);
 
@@ -255,9 +255,9 @@ class Test_Settings extends DownloadManager_TestCase {
 	 */
 	public function test_saving_another_field_keeps_the_download_path() {
 		$path = WP_CONTENT_DIR . '/files-not-created-yet';
-		DownloadManager_Options::set( 'path.dir', $path );
+		WP_DownloadManager_Options::set( 'path.dir', $path );
 
-		$saved = DownloadManager_Settings::sanitize(
+		$saved = WP_DownloadManager_Settings::sanitize(
 			array( 'sort' => array( 'perpage' => '7' ) )
 		);
 
@@ -269,7 +269,7 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * A trailing slash is normalised away rather than stored.
 	 */
 	public function test_download_path_drops_a_trailing_slash() {
-		$saved = DownloadManager_Settings::sanitize(
+		$saved = WP_DownloadManager_Settings::sanitize(
 			array( 'path' => array( 'dir' => WP_CONTENT_DIR . '/uploads/' ) )
 		);
 
@@ -287,7 +287,7 @@ class Test_Settings extends DownloadManager_TestCase {
 		foreach ( array( 'render_options_page', 'render_templates_page' ) as $method ) {
 			$this->assertStringContainsString(
 				'settings_errors(',
-				$this->code( 'includes/class-downloadmanager-settings.php' ),
+				$this->code( 'includes/class-wp-downloadmanager-settings.php' ),
 				"{$method} should display settings errors"
 			);
 		}
@@ -300,9 +300,9 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * rather than merged would wipe whichever screen was not submitted.
 	 */
 	public function test_saving_templates_keeps_options() {
-		DownloadManager_Options::set( 'page_url', 'https://example.com/keep-me' );
+		WP_DownloadManager_Options::set( 'page_url', 'https://example.com/keep-me' );
 
-		$saved = DownloadManager_Settings::sanitize(
+		$saved = WP_DownloadManager_Settings::sanitize(
 			array( 'templates' => array( 'header' => '<p>new header</p>' ) )
 		);
 
@@ -314,9 +314,9 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * And the other way round.
 	 */
 	public function test_saving_options_keeps_templates() {
-		DownloadManager_Options::set( 'templates.header', '<p>keep this header</p>' );
+		WP_DownloadManager_Options::set( 'templates.header', '<p>keep this header</p>' );
 
-		$saved = DownloadManager_Settings::sanitize( array( 'page_url' => 'https://example.com/new' ) );
+		$saved = WP_DownloadManager_Settings::sanitize( array( 'page_url' => 'https://example.com/new' ) );
 
 		$this->assertSame( '<p>keep this header</p>', $saved['templates']['header'] );
 		$this->assertSame( 'https://example.com/new', $saved['page_url'] );
@@ -326,7 +326,7 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * Permission pairs keep both halves.
 	 */
 	public function test_paired_templates_round_trip() {
-		$saved = DownloadManager_Settings::sanitize(
+		$saved = WP_DownloadManager_Settings::sanitize(
 			array(
 				'templates' => array(
 					'listing' => array( '<p>yes</p>', '<p>no</p>' ),
@@ -345,7 +345,7 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * search box from the one template that ships with one.
 	 */
 	public function test_footer_template_keeps_its_form() {
-		$saved = DownloadManager_Settings::sanitize(
+		$saved = WP_DownloadManager_Settings::sanitize(
 			array(
 				'templates' => array(
 					'footer' => '<form action="%DOWNLOAD_PAGE_URL%" method="get"><input type="text" name="dl_search" value="" /></form>',
@@ -361,7 +361,7 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * Templates are still run through kses.
 	 */
 	public function test_templates_are_kses_filtered() {
-		$saved = DownloadManager_Settings::sanitize(
+		$saved = WP_DownloadManager_Settings::sanitize(
 			array(
 				'templates' => array(
 					'header' => '<p>ok</p><script>alert(1)</script>',
@@ -377,9 +377,9 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * A non-array submission leaves the stored value alone.
 	 */
 	public function test_garbage_submission_is_ignored() {
-		DownloadManager_Options::set( 'page_url', 'https://example.com/intact' );
+		WP_DownloadManager_Options::set( 'page_url', 'https://example.com/intact' );
 
-		$saved = DownloadManager_Settings::sanitize( 'not an array' );
+		$saved = WP_DownloadManager_Settings::sanitize( 'not an array' );
 
 		$this->assertSame( 'https://example.com/intact', $saved['page_url'] );
 	}
@@ -391,20 +391,20 @@ class Test_Settings extends DownloadManager_TestCase {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 
 		ob_start();
-		DownloadManager_Settings::render_options_page();
+		WP_DownloadManager_Settings::render_options_page();
 		$options = ob_get_clean();
 
 		ob_start();
-		DownloadManager_Settings::render_templates_page();
+		WP_DownloadManager_Settings::render_templates_page();
 		$templates = ob_get_clean();
 
 		// settings_fields() emits single-quoted attributes.
-		$this->assertStringContainsString( "option_page' value='" . DownloadManager_Settings::GROUP_OPTIONS, $options );
-		$this->assertStringContainsString( "option_page' value='" . DownloadManager_Settings::GROUP_TEMPLATES, $templates );
+		$this->assertStringContainsString( "option_page' value='" . WP_DownloadManager_Settings::GROUP_OPTIONS, $options );
+		$this->assertStringContainsString( "option_page' value='" . WP_DownloadManager_Settings::GROUP_TEMPLATES, $templates );
 
 		// Every field posts into the one consolidated option.
-		$this->assertStringContainsString( 'name="' . DownloadManager_Options::OPTION . '[page_url]"', $options );
-		$this->assertStringContainsString( 'name="' . DownloadManager_Options::OPTION . '[templates][header]"', $templates );
+		$this->assertStringContainsString( 'name="' . WP_DownloadManager_Options::OPTION . '[page_url]"', $options );
+		$this->assertStringContainsString( 'name="' . WP_DownloadManager_Options::OPTION . '[templates][header]"', $templates );
 
 		// The reset buttons are data attributes, not inline onclick handlers.
 		$this->assertStringContainsString( 'class="button download-template-reset"', $templates );
@@ -421,12 +421,12 @@ class Test_Settings extends DownloadManager_TestCase {
 	 * Every template the screen shows has a reset default behind it.
 	 */
 	public function test_every_template_has_a_default_for_its_reset_button() {
-		$defaults = DownloadManager_Templates::for_script();
+		$defaults = WP_DownloadManager_Template::for_script();
 
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 
 		ob_start();
-		DownloadManager_Settings::render_templates_page();
+		WP_DownloadManager_Settings::render_templates_page();
 		$html = ob_get_clean();
 
 		preg_match_all( '/data-template="([^"]+)"/', $html, $matches );

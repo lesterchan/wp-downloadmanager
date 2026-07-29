@@ -5,13 +5,13 @@
  * The nineteen separate rows fold into one. This is the change most likely to
  * silently reset somebody's settings, so it gets the most tests.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
  * Migration from the pre-2.0.0 option rows.
  */
-class Test_Migration extends DownloadManager_TestCase {
+class Test_Migration extends WP_DownloadManager_TestCase {
 
 	/**
 	 * Wipe the consolidated row and the version marker, then write the legacy
@@ -20,9 +20,9 @@ class Test_Migration extends DownloadManager_TestCase {
 	 * @return void
 	 */
 	protected function seed_legacy_rows() {
-		delete_option( DownloadManager_Options::OPTION );
-		delete_option( DownloadManager_Install::DB_VERSION_OPTION );
-		DownloadManager_Options::flush();
+		delete_option( WP_DownloadManager_Options::OPTION );
+		delete_option( WP_DownloadManager_Install::DB_VERSION_OPTION );
+		WP_DownloadManager_Options::flush();
 
 		update_option( 'download_path', WP_CONTENT_DIR . '/legacy-files' );
 		update_option( 'download_path_url', 'https://example.com/legacy-files' );
@@ -66,17 +66,17 @@ class Test_Migration extends DownloadManager_TestCase {
 	public function test_scalar_and_array_rows_migrate() {
 		$this->seed_legacy_rows();
 
-		DownloadManager_Install::upgrade();
+		WP_DownloadManager_Install::upgrade();
 
-		$this->assertSame( WP_CONTENT_DIR . '/legacy-files', DownloadManager_Options::get( 'path.dir' ) );
-		$this->assertSame( 'https://example.com/legacy-files', DownloadManager_Options::get( 'path.url' ) );
-		$this->assertSame( 'https://example.com/legacy-downloads', DownloadManager_Options::get( 'page_url' ) );
-		$this->assertSame( 0, (int) DownloadManager_Options::get( 'method' ) );
-		$this->assertSame( 0, (int) DownloadManager_Options::get( 'nice_permalink' ) );
-		$this->assertSame( array( '', 'Legacy One', 'Legacy Two' ), DownloadManager_Options::get( 'categories' ) );
-		$this->assertSame( 'file_hits', DownloadManager_Options::get( 'sort.by' ) );
-		$this->assertSame( 'desc', DownloadManager_Options::get( 'sort.order' ) );
-		$this->assertSame( 7, (int) DownloadManager_Options::get( 'sort.perpage' ) );
+		$this->assertSame( WP_CONTENT_DIR . '/legacy-files', WP_DownloadManager_Options::get( 'path.dir' ) );
+		$this->assertSame( 'https://example.com/legacy-files', WP_DownloadManager_Options::get( 'path.url' ) );
+		$this->assertSame( 'https://example.com/legacy-downloads', WP_DownloadManager_Options::get( 'page_url' ) );
+		$this->assertSame( 0, (int) WP_DownloadManager_Options::get( 'method' ) );
+		$this->assertSame( 0, (int) WP_DownloadManager_Options::get( 'nice_permalink' ) );
+		$this->assertSame( array( '', 'Legacy One', 'Legacy Two' ), WP_DownloadManager_Options::get( 'categories' ) );
+		$this->assertSame( 'file_hits', WP_DownloadManager_Options::get( 'sort.by' ) );
+		$this->assertSame( 'desc', WP_DownloadManager_Options::get( 'sort.order' ) );
+		$this->assertSame( 7, (int) WP_DownloadManager_Options::get( 'sort.perpage' ) );
 	}
 
 	/**
@@ -85,14 +85,14 @@ class Test_Migration extends DownloadManager_TestCase {
 	public function test_templates_migrate() {
 		$this->seed_legacy_rows();
 
-		DownloadManager_Install::upgrade();
+		WP_DownloadManager_Install::upgrade();
 
-		$this->assertSame( '<p>legacy header</p>', DownloadManager_Options::template( 'header' ) );
-		$this->assertSame( '<p>legacy none</p>', DownloadManager_Options::template( 'none' ) );
-		$this->assertSame( '<p>legacy listing yes</p>', DownloadManager_Options::template( 'listing', 0 ) );
-		$this->assertSame( '<p>legacy listing no</p>', DownloadManager_Options::template( 'listing', 1 ) );
-		$this->assertSame( '<li>legacy most yes</li>', DownloadManager_Options::template( 'most', 0 ) );
-		$this->assertSame( '<li>legacy most no</li>', DownloadManager_Options::template( 'most', 1 ) );
+		$this->assertSame( '<p>legacy header</p>', WP_DownloadManager_Options::template( 'header' ) );
+		$this->assertSame( '<p>legacy none</p>', WP_DownloadManager_Options::template( 'none' ) );
+		$this->assertSame( '<p>legacy listing yes</p>', WP_DownloadManager_Options::template( 'listing', 0 ) );
+		$this->assertSame( '<p>legacy listing no</p>', WP_DownloadManager_Options::template( 'listing', 1 ) );
+		$this->assertSame( '<li>legacy most yes</li>', WP_DownloadManager_Options::template( 'most', 0 ) );
+		$this->assertSame( '<li>legacy most no</li>', WP_DownloadManager_Options::template( 'most', 1 ) );
 	}
 
 	/**
@@ -101,11 +101,11 @@ class Test_Migration extends DownloadManager_TestCase {
 	public function test_untouched_templates_fall_back_to_defaults() {
 		$this->seed_legacy_rows();
 
-		DownloadManager_Install::upgrade();
+		WP_DownloadManager_Install::upgrade();
 
 		$this->assertSame(
-			DownloadManager_Templates::get_default( 'category_header' ),
-			DownloadManager_Options::template( 'category_header' )
+			WP_DownloadManager_Template::get_default( 'category_header' ),
+			WP_DownloadManager_Options::template( 'category_header' )
 		);
 	}
 
@@ -120,13 +120,13 @@ class Test_Migration extends DownloadManager_TestCase {
 	public function test_reused_row_keys_migrate() {
 		$this->seed_legacy_rows();
 
-		DownloadManager_Install::upgrade();
+		WP_DownloadManager_Install::upgrade();
 
-		$this->assertSame( 1, (int) DownloadManager_Options::get( 'use_filename' ) );
-		$this->assertSame( 'file_hits', DownloadManager_Options::get( 'rss.sortby' ) );
-		$this->assertSame( 3, (int) DownloadManager_Options::get( 'rss.limit' ) );
+		$this->assertSame( 1, (int) WP_DownloadManager_Options::get( 'use_filename' ) );
+		$this->assertSame( 'file_hits', WP_DownloadManager_Options::get( 'rss.sortby' ) );
+		$this->assertSame( 3, (int) WP_DownloadManager_Options::get( 'rss.limit' ) );
 
-		$stored = get_option( DownloadManager_Options::OPTION );
+		$stored = get_option( WP_DownloadManager_Options::OPTION );
 		$this->assertArrayNotHasKey( 'rss_sortby', $stored, 'the stray top level key should be gone' );
 		$this->assertArrayNotHasKey( 'rss_limit', $stored );
 	}
@@ -137,9 +137,9 @@ class Test_Migration extends DownloadManager_TestCase {
 	public function test_legacy_rows_are_removed() {
 		$this->seed_legacy_rows();
 
-		DownloadManager_Install::upgrade();
+		WP_DownloadManager_Install::upgrade();
 
-		foreach ( array_keys( DownloadManager_Options::legacy_map() ) as $legacy ) {
+		foreach ( array_keys( WP_DownloadManager_Options::legacy_map() ) as $legacy ) {
 			$this->assertFalse( get_option( $legacy, false ), "{$legacy} should be gone" );
 		}
 	}
@@ -154,11 +154,11 @@ class Test_Migration extends DownloadManager_TestCase {
 	public function test_consolidated_row_survives() {
 		$this->seed_legacy_rows();
 
-		DownloadManager_Install::upgrade();
+		WP_DownloadManager_Install::upgrade();
 
-		$this->assertNotFalse( get_option( DownloadManager_Options::OPTION, false ) );
-		$this->assertNotContains( DownloadManager_Options::OPTION, array_keys( DownloadManager_Options::legacy_map() ) );
-		$this->assertNotContains( DownloadManager_Options::OPTION, DownloadManager_Options::legacy_extra_rows() );
+		$this->assertNotFalse( get_option( WP_DownloadManager_Options::OPTION, false ) );
+		$this->assertNotContains( WP_DownloadManager_Options::OPTION, array_keys( WP_DownloadManager_Options::legacy_map() ) );
+		$this->assertNotContains( WP_DownloadManager_Options::OPTION, WP_DownloadManager_Options::legacy_extra_rows() );
 	}
 
 	/**
@@ -167,13 +167,13 @@ class Test_Migration extends DownloadManager_TestCase {
 	public function test_migration_is_idempotent() {
 		$this->seed_legacy_rows();
 
-		DownloadManager_Install::upgrade();
-		$first = get_option( DownloadManager_Options::OPTION );
+		WP_DownloadManager_Install::upgrade();
+		$first = get_option( WP_DownloadManager_Options::OPTION );
 
-		DownloadManager_Install::upgrade();
-		DownloadManager_Options::flush();
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
 
-		$this->assertSame( $first, get_option( DownloadManager_Options::OPTION ) );
+		$this->assertSame( $first, get_option( WP_DownloadManager_Options::OPTION ) );
 	}
 
 	/**
@@ -183,13 +183,13 @@ class Test_Migration extends DownloadManager_TestCase {
 	 * presence check would write defaults straight over its settings.
 	 */
 	public function test_already_migrated_install_is_untouched() {
-		DownloadManager_Options::set( 'page_url', 'https://example.com/kept' );
-		update_option( DownloadManager_Install::DB_VERSION_OPTION, DownloadManager_Install::DB_VERSION );
+		WP_DownloadManager_Options::set( 'page_url', 'https://example.com/kept' );
+		update_option( WP_DownloadManager_Install::DB_VERSION_OPTION, WP_DownloadManager_Install::DB_VERSION );
 
-		DownloadManager_Install::upgrade();
-		DownloadManager_Options::flush();
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
 
-		$this->assertSame( 'https://example.com/kept', DownloadManager_Options::get( 'page_url' ) );
+		$this->assertSame( 'https://example.com/kept', WP_DownloadManager_Options::get( 'page_url' ) );
 	}
 
 	/**
@@ -202,15 +202,15 @@ class Test_Migration extends DownloadManager_TestCase {
 	 * from.
 	 */
 	public function test_missing_version_marker_does_not_reset_settings() {
-		DownloadManager_Options::set( 'page_url', 'https://example.com/survivor' );
-		DownloadManager_Options::set( 'sort.perpage', 42 );
-		delete_option( DownloadManager_Install::DB_VERSION_OPTION );
+		WP_DownloadManager_Options::set( 'page_url', 'https://example.com/survivor' );
+		WP_DownloadManager_Options::set( 'sort.perpage', 42 );
+		delete_option( WP_DownloadManager_Install::DB_VERSION_OPTION );
 
-		DownloadManager_Install::upgrade();
-		DownloadManager_Options::flush();
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
 
-		$this->assertSame( 'https://example.com/survivor', DownloadManager_Options::get( 'page_url' ) );
-		$this->assertSame( 42, (int) DownloadManager_Options::get( 'sort.perpage' ) );
+		$this->assertSame( 'https://example.com/survivor', WP_DownloadManager_Options::get( 'page_url' ) );
+		$this->assertSame( 42, (int) WP_DownloadManager_Options::get( 'sort.perpage' ) );
 	}
 
 	/**
@@ -219,11 +219,11 @@ class Test_Migration extends DownloadManager_TestCase {
 	public function test_version_is_recorded() {
 		$this->seed_legacy_rows();
 
-		DownloadManager_Install::upgrade();
+		WP_DownloadManager_Install::upgrade();
 
 		$this->assertSame(
-			DownloadManager_Install::DB_VERSION,
-			(int) get_option( DownloadManager_Install::DB_VERSION_OPTION )
+			WP_DownloadManager_Install::DB_VERSION,
+			(int) get_option( WP_DownloadManager_Install::DB_VERSION_OPTION )
 		);
 	}
 
@@ -234,7 +234,7 @@ class Test_Migration extends DownloadManager_TestCase {
 		global $wpdb;
 
 		$this->seed_legacy_rows();
-		DownloadManager_Install::upgrade();
+		WP_DownloadManager_Install::upgrade();
 
 		// phpcs:ignore WordPress.DB
 		$rows = $wpdb->get_col(
@@ -253,7 +253,7 @@ class Test_Migration extends DownloadManager_TestCase {
 	 * The schema version stays outside the row it gates.
 	 *
 	 * It is read to decide whether download_options needs migrating, and
-	 * DownloadManager_Options::all() merges the *new* schema's defaults over
+	 * WP_DownloadManager_Options::all() merges the *new* schema's defaults over
 	 * whatever is stored - so reading the version from inside the row would mean
 	 * using the post-migration accessor to decide whether to migrate.
 	 *
@@ -266,21 +266,21 @@ class Test_Migration extends DownloadManager_TestCase {
 	 */
 	public function test_schema_version_is_not_stored_inside_the_consolidated_row() {
 		$this->seed_legacy_rows();
-		DownloadManager_Install::upgrade();
+		WP_DownloadManager_Install::upgrade();
 
-		$stored = get_option( DownloadManager_Options::OPTION );
+		$stored = get_option( WP_DownloadManager_Options::OPTION );
 
 		$this->assertArrayNotHasKey( 'db_version', $stored );
-		$this->assertArrayNotHasKey( DownloadManager_Install::DB_VERSION_OPTION, $stored );
+		$this->assertArrayNotHasKey( WP_DownloadManager_Install::DB_VERSION_OPTION, $stored );
 		$this->assertNotContains(
-			DownloadManager_Install::DB_VERSION_OPTION,
-			array_keys( DownloadManager_Options::defaults() )
+			WP_DownloadManager_Install::DB_VERSION_OPTION,
+			array_keys( WP_DownloadManager_Options::defaults() )
 		);
 
 		// And it is genuinely its own row.
 		$this->assertSame(
-			DownloadManager_Install::DB_VERSION,
-			(int) get_option( DownloadManager_Install::DB_VERSION_OPTION )
+			WP_DownloadManager_Install::DB_VERSION,
+			(int) get_option( WP_DownloadManager_Install::DB_VERSION_OPTION )
 		);
 	}
 
@@ -294,14 +294,14 @@ class Test_Migration extends DownloadManager_TestCase {
 	public function test_pre_200_row_without_a_version_key_still_migrates() {
 		$this->seed_legacy_rows();
 
-		$stored = get_option( DownloadManager_Options::OPTION );
+		$stored = get_option( WP_DownloadManager_Options::OPTION );
 		$this->assertArrayNotHasKey( 'db_version', $stored, 'the 1.x row carries no version' );
 
-		DownloadManager_Install::upgrade();
+		WP_DownloadManager_Install::upgrade();
 
 		// The other legacy rows were folded in rather than abandoned.
-		$this->assertSame( 'https://example.com/legacy-downloads', DownloadManager_Options::get( 'page_url' ) );
-		$this->assertSame( '<p>legacy header</p>', DownloadManager_Options::template( 'header' ) );
+		$this->assertSame( 'https://example.com/legacy-downloads', WP_DownloadManager_Options::get( 'page_url' ) );
+		$this->assertSame( '<p>legacy header</p>', WP_DownloadManager_Options::template( 'header' ) );
 	}
 
 	/**
@@ -312,7 +312,7 @@ class Test_Migration extends DownloadManager_TestCase {
 
 		$this->assertStringContainsString( 'legacy_map', $source );
 		$this->assertStringContainsString( 'legacy_extra_rows', $source );
-		$this->assertStringContainsString( 'DownloadManager_Options::OPTION', $source );
+		$this->assertStringContainsString( 'WP_DownloadManager_Options::OPTION', $source );
 		$this->assertStringContainsString( 'download_db_version', $source );
 	}
 }

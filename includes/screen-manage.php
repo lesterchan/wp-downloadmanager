@@ -5,7 +5,7 @@
  * Included by wp-admin: the menu uses the legacy "plugin file as menu slug"
  * form, so this file's path relative to the plugins directory is its slug.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 // Check whether the user can manage downloads.
@@ -25,8 +25,8 @@ $base_name           = WP_DOWNLOADMANAGER_SLUG . '/includes/screen-manage.php';
 $base_page           = 'admin.php?page=' . $base_name;
 $dl_mode             = ! empty( $_GET['mode'] ) ? sanitize_text_field( wp_unslash( $_GET['mode'] ) ) : '';
 $file_id             = ! empty( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
-$file_path           = DownloadManager_Options::get( 'path.dir' );
-$file_categories     = DownloadManager_Options::get( 'categories' );
+$file_path           = WP_DownloadManager_Options::get( 'path.dir' );
+$file_categories     = WP_DownloadManager_Options::get( 'categories' );
 $file_page           = ! empty( $_GET['filepage'] ) ? intval( $_GET['filepage'] ) : 0;
 $file_sortby         = ! empty( $_GET['by'] ) ? sanitize_text_field( wp_unslash( $_GET['by'] ) ) : '';
 $file_sortby_text    = '';
@@ -159,7 +159,7 @@ if ( ! empty( $_POST['do'] ) ) {
 					break;
 				case 0:
 					$file      = ! empty( $_POST['file'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['file'] ) ) ) : '';
-					$file      = DownloadManager_File::rename_file( $file_path, $file );
+					$file      = WP_DownloadManager_File::rename_file( $file_path, $file );
 					$file_size = filesize( $file_path . $file );
 					break;
 				case 1:
@@ -172,7 +172,7 @@ if ( ! empty( $_POST['do'] ) ) {
 						break;
 					} elseif ( is_uploaded_file( $tmp_name ) ) {
 							$file_upload_to = ! empty( $_POST['file_upload_to'] ) ? sanitize_text_field( wp_unslash( $_POST['file_upload_to'] ) ) : '';
-							$file_upload_to = DownloadManager_File::safe_subfolder( $file_path, $file_upload_to );
+							$file_upload_to = WP_DownloadManager_File::safe_subfolder( $file_path, $file_upload_to );
 						if ( '/' !== $file_upload_to ) {
 							$file_upload_to = $file_upload_to . '/';
 						}
@@ -183,7 +183,7 @@ if ( ! empty( $_POST['do'] ) ) {
 						}
 						if ( move_uploaded_file( $tmp_name, $file_path . $file_upload_to . $upload_name ) ) {
 							$file      = $file_upload_to . $upload_name;
-							$file      = DownloadManager_File::rename_file( $file_path, $file );
+							$file      = WP_DownloadManager_File::rename_file( $file_path, $file );
 							$file_size = filesize( $file_path . $file );
 						} else {
 							$text = '<p style="color: red;">' . __( 'Error In Uploading File', 'wp-downloadmanager' ) . '</p>';
@@ -313,7 +313,7 @@ switch ( $dl_mode ) {
 							<!-- Browse File -->
 							<input type="radio" id="file_type_0" name="file_type" value="0" />&nbsp;&nbsp;<label for="file_type_0"><?php esc_html_e( 'Browse File:', 'wp-downloadmanager' ); ?></label>&nbsp;
 							<select name="file" size="1" data-checks="file_type_0" dir="ltr">
-								<?php DownloadManager_Admin::print_files( $file_path, $file_path, stripslashes( $file->file ) ); ?>
+								<?php WP_DownloadManager_Admin::print_files( $file_path, $file_path, stripslashes( $file->file ) ); ?>
 							</select>
 							<br /><small>
 							<?php
@@ -326,7 +326,7 @@ switch ( $dl_mode ) {
 							<input type="radio" id="file_type_1" name="file_type" value="1" />&nbsp;&nbsp;<label for="file_type_1"><?php esc_html_e( 'Upload File:', 'wp-downloadmanager' ); ?></label>&nbsp;
 							<input type="file" name="file_upload" size="25" data-checks="file_type_1" dir="ltr" />&nbsp;&nbsp;<?php esc_html_e( 'to', 'wp-downloadmanager' ); ?>&nbsp;&nbsp;
 							<select name="file_upload_to" size="1" data-checks="file_type_1" dir="ltr">
-								<?php DownloadManager_Admin::print_folders( $file_path, $file_path ); ?>
+								<?php WP_DownloadManager_Admin::print_folders( $file_path, $file_path ); ?>
 							</select>
 							<br /><small>
 							<?php
@@ -383,7 +383,7 @@ switch ( $dl_mode ) {
 					</tr>
 					<tr>
 						<td valign="top"><strong><?php esc_html_e( 'File Date:', 'wp-downloadmanager' ); ?></strong></td>
-						<td><?php esc_html_e( 'Existing Timestamp:', 'wp-downloadmanager' ); ?> <?php echo esc_html( mysql2date( sprintf( '%s @ %s', get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $file->file_date ) ) ); ?><br /><?php DownloadManager_Admin::file_timestamp( $file->file_date ); ?><br /><input type="checkbox" id="edit_filetimestamp" name="edit_filetimestamp" value="1" />&nbsp;<label for="edit_filetimestamp"><?php esc_html_e( 'Edit Timestamp', 'wp-downloadmanager' ); ?></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" id="edit_usetodaydate" value="1"
+						<td><?php esc_html_e( 'Existing Timestamp:', 'wp-downloadmanager' ); ?> <?php echo esc_html( mysql2date( sprintf( '%s @ %s', get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $file->file_date ) ) ); ?><br /><?php WP_DownloadManager_Admin::file_timestamp( $file->file_date ); ?><br /><input type="checkbox" id="edit_filetimestamp" name="edit_filetimestamp" value="1" />&nbsp;<label for="edit_filetimestamp"><?php esc_html_e( 'Edit Timestamp', 'wp-downloadmanager' ); ?></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" id="edit_usetodaydate" value="1"
 							data-actual="
 							<?php
 							echo esc_attr(

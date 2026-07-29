@@ -1,23 +1,23 @@
 <?php
 /**
- * Uninstall WP-DownloadManager.
+ * Uninstall WP-WP_DownloadManager.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit();
 }
 
-require_once __DIR__ . '/includes/class-downloadmanager-templates.php';
-require_once __DIR__ . '/includes/class-downloadmanager-options.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-template.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-options.php';
 
 /**
  * Remove every option row and the downloads table for the current site.
  *
  * @return void
  */
-function downloadmanager_uninstall_site() {
+function wp_downloadmanager_uninstall_site() {
 	global $wpdb;
 
 	// The legacy rows are listed by the options class, so this and the migration
@@ -25,10 +25,10 @@ function downloadmanager_uninstall_site() {
 	// consolidated them into download_options, but an install that never reached
 	// the migration may still have them.
 	$option_names = array_merge(
-		array_keys( DownloadManager_Options::legacy_map() ),
-		DownloadManager_Options::legacy_extra_rows(),
+		array_keys( WP_DownloadManager_Options::legacy_map() ),
+		WP_DownloadManager_Options::legacy_extra_rows(),
 		array(
-			DownloadManager_Options::OPTION,
+			WP_DownloadManager_Options::OPTION,
 			'download_db_version',
 			'widget_downloads',
 		)
@@ -57,11 +57,11 @@ if ( is_multisite() ) {
 
 	foreach ( $site_ids as $site_id ) {
 		switch_to_blog( (int) $site_id );
-		downloadmanager_uninstall_site();
+		wp_downloadmanager_uninstall_site();
 		// switch_to_blog() pushes onto a stack, so the restore belongs inside
 		// the loop rather than once at the end.
 		restore_current_blog();
 	}
 } else {
-	downloadmanager_uninstall_site();
+	wp_downloadmanager_uninstall_site();
 }//end if

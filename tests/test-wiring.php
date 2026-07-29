@@ -6,15 +6,15 @@
  * and had already drifted: the loader still listed a download-uninstall.php
  * that has not existed for years, so the admin stylesheet was being matched
  * against a page that could never load. Both now come from
- * DownloadManager_Admin::pages(), and these tests are what keeps them together.
+ * WP_DownloadManager_Admin::pages(), and these tests are what keeps them together.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
- * DownloadManager and DownloadManager_Admin wiring.
+ * WP_DownloadManager and WP_DownloadManager_Admin wiring.
  */
-class Test_Wiring extends DownloadManager_TestCase {
+class Test_Wiring extends WP_DownloadManager_TestCase {
 
 	/**
 	 * The page list is derived from the plugin directory name.
@@ -24,7 +24,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 * and every extension icon.
 	 */
 	public function test_pages_are_derived_from_the_slug() {
-		$pages = DownloadManager_Admin::pages();
+		$pages = WP_DownloadManager_Admin::pages();
 
 		$this->assertSame( WP_DOWNLOADMANAGER_SLUG . '/includes/screen-manage.php', $pages['manager'] );
 		$this->assertSame( WP_DOWNLOADMANAGER_SLUG . '/includes/screen-add.php', $pages['add'] );
@@ -38,7 +38,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 * This is the assertion that would have caught download-uninstall.php.
 	 */
 	public function test_every_file_backed_page_exists() {
-		$pages = DownloadManager_Admin::pages();
+		$pages = WP_DownloadManager_Admin::pages();
 
 		foreach ( array( 'manager', 'add' ) as $key ) {
 			$file = WP_DOWNLOADMANAGER_DIR . basename( $pages[ $key ] );
@@ -98,9 +98,9 @@ class Test_Wiring extends DownloadManager_TestCase {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		set_current_screen( 'dashboard' );
 
-		DownloadManager_Admin::menu();
+		WP_DownloadManager_Admin::menu();
 
-		$pages = DownloadManager_Admin::pages();
+		$pages = WP_DownloadManager_Admin::pages();
 		$this->assertArrayHasKey( $pages['manager'], $submenu );
 
 		$slugs = wp_list_pluck( $submenu[ $pages['manager'] ], 2 );
@@ -131,7 +131,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 		wp_dequeue_script( 'wp-downloadmanager-admin' );
 		wp_deregister_script( 'wp-downloadmanager-admin' );
 
-		DownloadManager_Admin::enqueue_assets( $hook_suffix );
+		WP_DownloadManager_Admin::enqueue_assets( $hook_suffix );
 
 		$this->assertSame(
 			$expected,
@@ -151,7 +151,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 * @return array
 	 */
 	public function admin_asset_provider() {
-		$pages = DownloadManager_Admin::pages();
+		$pages = WP_DownloadManager_Admin::pages();
 
 		return array(
 			'templates callback' => array( 'downloads_page_' . $pages['templates'], true ),
@@ -170,9 +170,9 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 * A guard against the empty one coming back.
 	 */
 	public function test_no_admin_stylesheet_is_enqueued() {
-		foreach ( DownloadManager_Admin::pages() as $slug ) {
-			DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $slug );
-			DownloadManager_Admin::enqueue_assets( $slug );
+		foreach ( WP_DownloadManager_Admin::pages() as $slug ) {
+			WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $slug );
+			WP_DownloadManager_Admin::enqueue_assets( $slug );
 		}
 
 		$ours = array_filter(
@@ -214,15 +214,15 @@ class Test_Wiring extends DownloadManager_TestCase {
 		wp_dequeue_script( 'wp-downloadmanager-admin' );
 		wp_deregister_script( 'wp-downloadmanager-admin' );
 
-		$pages = DownloadManager_Admin::pages();
-		DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $pages['templates'] );
+		$pages = WP_DownloadManager_Admin::pages();
+		WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $pages['templates'] );
 
 		$this->assertTrue( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ) );
 
 		$data = wp_scripts()->get_data( 'wp-downloadmanager-admin', 'data' );
 		$this->assertStringContainsString( 'wpDownloadManagerL10n', (string) $data );
 		// The reset buttons read every template from here.
-		foreach ( DownloadManager_Templates::for_script() as $key => $unused ) {
+		foreach ( WP_DownloadManager_Template::for_script() as $key => $unused ) {
 			$this->assertStringContainsString( '"' . $key . '"', (string) $data, $key . ' should be localised' );
 		}
 	}
@@ -234,8 +234,8 @@ class Test_Wiring extends DownloadManager_TestCase {
 		wp_dequeue_script( 'wp-downloadmanager-admin' );
 		wp_deregister_script( 'wp-downloadmanager-admin' );
 
-		$pages = DownloadManager_Admin::pages();
-		DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $pages['options'] );
+		$pages = WP_DownloadManager_Admin::pages();
+		WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $pages['options'] );
 
 		$this->assertFalse( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ) );
 	}
@@ -247,7 +247,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 		wp_dequeue_script( 'wp-downloadmanager-quicktag' );
 		wp_deregister_script( 'wp-downloadmanager-quicktag' );
 
-		DownloadManager_Admin::quicktag();
+		WP_DownloadManager_Admin::quicktag();
 
 		$this->assertTrue( wp_script_is( 'wp-downloadmanager-quicktag', 'enqueued' ) );
 
@@ -263,8 +263,8 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 * No plugin script depends on jQuery.
 	 */
 	public function test_no_script_depends_on_jquery() {
-		DownloadManager_Admin::quicktag();
-		DownloadManager_Admin::enqueue_assets( 'downloads_page_' . DownloadManager_Admin::pages()['templates'] );
+		WP_DownloadManager_Admin::quicktag();
+		WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . WP_DownloadManager_Admin::pages()['templates'] );
 
 		foreach ( wp_scripts()->registered as $handle => $script ) {
 			if ( 0 !== strpos( $handle, 'wp-downloadmanager' ) ) {
@@ -285,17 +285,17 @@ class Test_Wiring extends DownloadManager_TestCase {
 		remove_all_filters( 'mce_external_plugins' );
 		remove_all_filters( 'mce_buttons' );
 
-		DownloadManager_Admin::editor_buttons();
+		WP_DownloadManager_Admin::editor_buttons();
 
 		$this->assertNotFalse( has_filter( 'mce_external_plugins' ) );
 		$this->assertNotFalse( has_filter( 'mce_buttons' ) );
 
-		$plugins = DownloadManager_Admin::mce_plugin( array() );
+		$plugins = WP_DownloadManager_Admin::mce_plugin( array() );
 		$this->assertStringContainsString( 'tinymce/plugins/downloadmanager/plugin.js', $plugins['downloadmanager'] );
 		// The hand-minified twin is gone, so nothing may point at it.
 		$this->assertStringNotContainsString( 'plugin.min.js', $plugins['downloadmanager'] );
 
-		$this->assertContains( 'downloadmanager', DownloadManager_Admin::mce_button( array() ) );
+		$this->assertContains( 'downloadmanager', WP_DownloadManager_Admin::mce_button( array() ) );
 	}
 
 	/**
@@ -308,7 +308,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 
 		remove_all_filters( 'mce_external_plugins' );
 
-		DownloadManager_Admin::editor_buttons();
+		WP_DownloadManager_Admin::editor_buttons();
 
 		$this->assertFalse( has_filter( 'mce_external_plugins' ) );
 	}
@@ -320,7 +320,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 * inserts them into the DOM.
 	 */
 	public function test_tinymce_translations() {
-		$strings = DownloadManager_Admin::mce_translation( array() );
+		$strings = WP_DownloadManager_Admin::mce_translation( array() );
 
 		$this->assertArrayHasKey( 'Insert File Download', $strings );
 		$this->assertSame( 'Insert File Download', $strings['Insert File Download'] );
@@ -334,7 +334,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 		wp_dequeue_style( 'wp-downloadmanager' );
 		wp_deregister_style( 'wp-downloadmanager' );
 
-		DownloadManager::enqueue_styles();
+		WP_DownloadManager::enqueue_styles();
 
 		$this->assertTrue( wp_style_is( 'wp-downloadmanager', 'enqueued' ) );
 		$this->assertSame(
@@ -354,7 +354,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 		wp_dequeue_style( 'wp-downloadmanager' );
 		wp_deregister_style( 'wp-downloadmanager' );
 
-		DownloadManager::enqueue_styles();
+		WP_DownloadManager::enqueue_styles();
 
 		$this->assertSame(
 			get_stylesheet_directory_uri() . '/wp-downloadmanager.css',
@@ -377,11 +377,11 @@ class Test_Wiring extends DownloadManager_TestCase {
 		);
 		$this->go_to( get_permalink( $page_id ) );
 
-		DownloadManager_Options::set( 'page_url', get_permalink( $page_id ) );
+		WP_DownloadManager_Options::set( 'page_url', get_permalink( $page_id ) );
 		$_SERVER['REQUEST_URI'] = wp_parse_url( get_permalink( $page_id ), PHP_URL_PATH );
 
 		ob_start();
-		DownloadManager::feed_link();
+		WP_DownloadManager::feed_link();
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString( 'application/rss+xml', $html );
@@ -401,12 +401,12 @@ class Test_Wiring extends DownloadManager_TestCase {
 		);
 		$this->go_to( get_permalink( $page_id ) );
 
-		DownloadManager_Options::set( 'page_url', get_permalink( $page_id ) );
-		DownloadManager_Options::set( 'nice_permalink', 0 );
+		WP_DownloadManager_Options::set( 'page_url', get_permalink( $page_id ) );
+		WP_DownloadManager_Options::set( 'nice_permalink', 0 );
 		$_SERVER['REQUEST_URI'] = wp_parse_url( get_permalink( $page_id ), PHP_URL_PATH );
 
 		ob_start();
-		DownloadManager::feed_link();
+		WP_DownloadManager::feed_link();
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString( 'dl_name=rss', $html );
@@ -419,7 +419,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 		$this->go_to( home_url( '/' ) );
 
 		ob_start();
-		DownloadManager::feed_link();
+		WP_DownloadManager::feed_link();
 		$html = ob_get_clean();
 
 		$this->assertSame( '', $html );
@@ -429,21 +429,21 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 * The file listing helpers render the downloads directory.
 	 */
 	public function test_print_files_and_folders() {
-		DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-wiring-files' );
-		$dir = DownloadManager_Options::get( 'path.dir' );
+		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-wiring-files' );
+		$dir = WP_DownloadManager_Options::get( 'path.dir' );
 
 		$this->make_download_file( 'top.txt' );
 		$this->make_download_file( 'sub/deep.txt' );
 
 		ob_start();
-		DownloadManager_Admin::print_files( $dir, $dir, '/top.txt' );
+		WP_DownloadManager_Admin::print_files( $dir, $dir, '/top.txt' );
 		$files = ob_get_clean();
 
 		$this->assertStringContainsString( '<option value="/top.txt" selected', $files );
 		$this->assertStringContainsString( '/sub/deep.txt', $files );
 
 		ob_start();
-		DownloadManager_Admin::print_folders( $dir, $dir );
+		WP_DownloadManager_Admin::print_folders( $dir, $dir );
 		$folders = ob_get_clean();
 
 		$this->assertStringContainsString( '<option value="/">/</option>', $folders );
@@ -456,12 +456,12 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 * A missing downloads directory is not a fatal.
 	 */
 	public function test_print_files_with_no_directory() {
-		DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-does-not-exist' );
-		$dir = DownloadManager_Options::get( 'path.dir' );
+		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-does-not-exist' );
+		$dir = WP_DownloadManager_Options::get( 'path.dir' );
 
 		ob_start();
-		DownloadManager_Admin::print_files( $dir, $dir );
-		DownloadManager_Admin::print_folders( $dir, $dir );
+		WP_DownloadManager_Admin::print_files( $dir, $dir );
+		WP_DownloadManager_Admin::print_folders( $dir, $dir );
 		$html = ob_get_clean();
 
 		$this->assertStringNotContainsString( 'Warning', $html );
@@ -472,7 +472,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 */
 	public function test_file_timestamp_selects() {
 		ob_start();
-		DownloadManager_Admin::file_timestamp( gmmktime( 14, 25, 36, 6, 15, 2020 ) );
+		WP_DownloadManager_Admin::file_timestamp( gmmktime( 14, 25, 36, 6, 15, 2020 ) );
 		$html = ob_get_clean();
 
 		foreach ( array( 'day', 'month', 'year', 'hour', 'minute', 'second' ) as $part ) {
@@ -495,8 +495,8 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 * Activation grants the capability and creates the table.
 	 */
 	public function test_activation_is_idempotent() {
-		DownloadManager_Install::activate();
-		DownloadManager_Install::activate();
+		WP_DownloadManager_Install::activate();
+		WP_DownloadManager_Install::activate();
 
 		global $wpdb;
 		$this->assertSame(

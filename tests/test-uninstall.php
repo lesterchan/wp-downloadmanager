@@ -12,13 +12,13 @@
  * it are pinned at source level, against the comment-stripped file so that a
  * docblock explaining a fix cannot satisfy the assertion.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
  * Option and table cleanup.
  */
-class Test_Uninstall extends DownloadManager_TestCase {
+class Test_Uninstall extends WP_DownloadManager_TestCase {
 
 	/**
 	 * Put the option row back for whatever runs next.
@@ -27,8 +27,8 @@ class Test_Uninstall extends DownloadManager_TestCase {
 	 * framework rewrites the drop, so the real table is never actually removed.
 	 */
 	public function tear_down() {
-		DownloadManager_Install::create_table();
-		DownloadManager_Options::flush();
+		WP_DownloadManager_Install::create_table();
+		WP_DownloadManager_Options::flush();
 
 		parent::tear_down();
 	}
@@ -61,13 +61,13 @@ class Test_Uninstall extends DownloadManager_TestCase {
 
 		// Settings, the version marker, the widget, and leftovers from an
 		// install that never reached the migration.
-		DownloadManager_Options::set( 'page_url', 'https://example.com/downloads' );
-		update_option( DownloadManager_Install::DB_VERSION_OPTION, DownloadManager_Install::DB_VERSION );
+		WP_DownloadManager_Options::set( 'page_url', 'https://example.com/downloads' );
+		update_option( WP_DownloadManager_Install::DB_VERSION_OPTION, WP_DownloadManager_Install::DB_VERSION );
 		update_option( 'widget_downloads', array( 'anything' ) );
 
 		$legacy = array_merge(
-			array_keys( DownloadManager_Options::legacy_map() ),
-			DownloadManager_Options::legacy_extra_rows()
+			array_keys( WP_DownloadManager_Options::legacy_map() ),
+			WP_DownloadManager_Options::legacy_extra_rows()
 		);
 		foreach ( $legacy as $option ) {
 			update_option( $option, 'left over' );
@@ -109,8 +109,8 @@ class Test_Uninstall extends DownloadManager_TestCase {
 		$this->assertStringContainsString( $wpdb->prefix . 'downloads', $drops[0] );
 		$this->assertStringContainsString( 'IF EXISTS', $drops[0] );
 
-		$this->assertFalse( get_option( DownloadManager_Options::OPTION, false ) );
-		$this->assertFalse( get_option( DownloadManager_Install::DB_VERSION_OPTION, false ) );
+		$this->assertFalse( get_option( WP_DownloadManager_Options::OPTION, false ) );
+		$this->assertFalse( get_option( WP_DownloadManager_Install::DB_VERSION_OPTION, false ) );
 		$this->assertFalse( get_option( 'widget_downloads', false ) );
 
 		foreach ( $legacy as $option ) {
@@ -132,9 +132,9 @@ class Test_Uninstall extends DownloadManager_TestCase {
 	public function test_row_list_comes_from_the_options_class() {
 		$source = $this->code( 'uninstall.php' );
 
-		$this->assertStringContainsString( 'DownloadManager_Options::legacy_map()', $source );
-		$this->assertStringContainsString( 'DownloadManager_Options::legacy_extra_rows()', $source );
-		$this->assertStringContainsString( 'DownloadManager_Options::OPTION', $source );
+		$this->assertStringContainsString( 'WP_DownloadManager_Options::legacy_map()', $source );
+		$this->assertStringContainsString( 'WP_DownloadManager_Options::legacy_extra_rows()', $source );
+		$this->assertStringContainsString( 'WP_DownloadManager_Options::OPTION', $source );
 	}
 
 	/**

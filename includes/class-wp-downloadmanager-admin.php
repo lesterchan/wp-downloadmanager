@@ -1,8 +1,8 @@
 <?php
 /**
- * Admin wiring for WP-DownloadManager.
+ * Admin wiring for WP-WP_DownloadManager.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -10,7 +10,48 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The Downloads menu, its assets and the editor buttons.
  */
-class DownloadManager_Admin {
+class WP_DownloadManager_Admin {
+
+	/**
+	 * Slug of the top-level menu, and of the first screen under it.
+	 *
+	 * @var string
+	 */
+	const PAGE = 'wp-downloadmanager';
+
+	/**
+	 * Capability guarding the data screens.
+	 *
+	 * The plugin has granted administrators manage_downloads since its first
+	 * release, which is what lets a site hand the downloads library to an editor
+	 * without handing over the whole dashboard. Settings stay on manage_options
+	 * per section 2.7; capability() is where the two are told apart.
+	 *
+	 * @var string
+	 */
+	const CAPABILITY = 'manage_downloads';
+
+	/**
+	 * The capability required to reach one of the plugin's screens.
+	 *
+	 * @param string $context Screen context: 'downloads' or 'settings'.
+	 * @return string
+	 */
+	public static function capability( $context = 'downloads' ) {
+		/**
+		 * Filters the capability a WP-DownloadManager screen requires.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param string $capability Capability name.
+		 * @param string $context    Screen context: 'downloads' or 'settings'.
+		 */
+		return apply_filters(
+			'wp_downloadmanager_capability',
+			'settings' === $context ? 'manage_options' : self::CAPABILITY,
+			$context
+		);
+	}
 
 	/**
 	 * Hook up.
@@ -86,7 +127,7 @@ class DownloadManager_Admin {
 			__( 'Download Options', 'wp-downloadmanager' ),
 			'manage_downloads',
 			$pages['options'],
-			array( 'DownloadManager_Settings', 'render_options_page' )
+			array( 'WP_DownloadManager_Settings', 'render_options_page' )
 		);
 		add_submenu_page(
 			$pages['manager'],
@@ -94,7 +135,7 @@ class DownloadManager_Admin {
 			__( 'Download Templates', 'wp-downloadmanager' ),
 			'manage_downloads',
 			$pages['templates'],
-			array( 'DownloadManager_Settings', 'render_templates_page' )
+			array( 'WP_DownloadManager_Settings', 'render_templates_page' )
 		);
 	}
 
@@ -160,7 +201,7 @@ class DownloadManager_Admin {
 	 */
 	public static function script_data() {
 		return array(
-			'templates' => DownloadManager_Templates::for_script(),
+			'templates' => WP_DownloadManager_Template::for_script(),
 			'quicktag'  => array(
 				'label'  => __( 'Download', 'wp-downloadmanager' ),
 				'prompt' => __( 'Enter File ID (Separate Multiple IDs By A Comma)', 'wp-downloadmanager' ),

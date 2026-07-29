@@ -1,11 +1,11 @@
 <?php
 /**
- * PHPUnit bootstrap for WP-DownloadManager.
+ * PHPUnit bootstrap for WP-WP_DownloadManager.
  *
  * Runs inside the wp-env "tests" container, where WP_TESTS_DIR is already
  * exported and the WordPress test library is present.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
@@ -25,20 +25,20 @@ require_once $_tests_dir . '/includes/functions.php';
 /**
  * Load the plugin under test before WordPress finishes booting.
  */
-function _downloadmanager_manually_load_plugin() {
+function _wp_downloadmanager_manually_load_plugin() {
 	require dirname( __DIR__ ) . '/wp-downloadmanager.php';
 
 	// register_activation_hook() never fires in the test environment, so the
 	// table and the option rows have to be created by hand.
-	if ( class_exists( 'DownloadManager_Install' ) ) {
-		DownloadManager_Install::activate();
+	if ( class_exists( 'WP_DownloadManager_Install' ) ) {
+		WP_DownloadManager_Install::activate();
 	} else {
 		// Pre-2.0.0 layout, still used while the golden master runs against the
 		// baseline.
-		downloadmanager_activate();
+		wp_downloadmanager_activate();
 	}
 }
-tests_add_filter( 'muplugins_loaded', '_downloadmanager_manually_load_plugin' );
+tests_add_filter( 'muplugins_loaded', '_wp_downloadmanager_manually_load_plugin' );
 
 require $_tests_dir . '/includes/bootstrap.php';
 

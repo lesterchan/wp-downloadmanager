@@ -1,8 +1,8 @@
 <?php
 /**
- * Installation, schema and migration for WP-DownloadManager.
+ * Installation, schema and migration for WP-WP_DownloadManager.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -10,24 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Creates the table, grants the capability and migrates old installs.
  */
-class DownloadManager_Install {
-
-	/**
-	 * Schema version. Bumped when the table or the option layout changes.
-	 *
-	 * @var int
-	 */
-	const DB_VERSION = 2;
-
-	/**
-	 * Option holding the installed schema version.
-	 *
-	 * Kept in its own row: it is read to decide whether the consolidated option
-	 * needs migrating, so it cannot live inside the thing being migrated.
-	 *
-	 * @var string
-	 */
-	const DB_VERSION_OPTION = 'download_db_version';
+class WP_DownloadManager_Install {
 
 	/**
 	 * Hook up.
@@ -90,7 +73,7 @@ class DownloadManager_Install {
 	 * @return void
 	 */
 	public static function maybe_upgrade() {
-		if ( (int) get_option( self::DB_VERSION_OPTION, 0 ) >= self::DB_VERSION ) {
+		if ( (int) get_option( WP_DownloadManager_Options::VERSION, 0 ) >= (int) WP_DOWNLOADMANAGER_DB_VERSION ) {
 			return;
 		}
 
@@ -104,20 +87,20 @@ class DownloadManager_Install {
 	 * @return void
 	 */
 	public static function upgrade() {
-		$installed = (int) get_option( self::DB_VERSION_OPTION, 0 );
+		$installed = (int) get_option( WP_DownloadManager_Options::VERSION, 0 );
 
-		if ( $installed >= self::DB_VERSION ) {
+		if ( $installed >= (int) WP_DOWNLOADMANAGER_DB_VERSION ) {
 			return;
 		}
 
 		if ( $installed < 2 ) {
 			self::upgrade_pre_130();
 			self::upgrade_pre_150();
-			DownloadManager_Options::migrate_from_legacy_rows();
+			WP_DownloadManager_Options::migrate_from_legacy_rows();
 		}
 
-		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
-		DownloadManager_Options::flush();
+		update_option( WP_DownloadManager_Options::VERSION, (int) WP_DOWNLOADMANAGER_DB_VERSION );
+		WP_DownloadManager_Options::flush();
 	}
 
 	/**
@@ -210,7 +193,7 @@ class DownloadManager_Install {
 	 * @return void
 	 */
 	protected static function create_files_dir() {
-		$dir = DownloadManager_Options::get( 'path.dir' );
+		$dir = WP_DownloadManager_Options::get( 'path.dir' );
 
 		if ( $dir && ! is_dir( $dir ) ) {
 			wp_mkdir_p( $dir );

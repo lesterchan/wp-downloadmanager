@@ -9,7 +9,7 @@
  * The callback merges whatever the submitted screen sent over the stored value
  * rather than replacing it, so saving one screen cannot blank the other.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Registers and renders the two settings screens.
  */
-class DownloadManager_Settings {
+class WP_DownloadManager_Settings {
 
 	/**
 	 * Settings group for the options screen.
@@ -51,11 +51,11 @@ class DownloadManager_Settings {
 		$args = array(
 			'type'              => 'array',
 			'sanitize_callback' => array( __CLASS__, 'sanitize' ),
-			'default'           => DownloadManager_Options::defaults(),
+			'default'           => WP_DownloadManager_Options::defaults(),
 		);
 
-		register_setting( self::GROUP_OPTIONS, DownloadManager_Options::OPTION, $args );
-		register_setting( self::GROUP_TEMPLATES, DownloadManager_Options::OPTION, $args );
+		register_setting( self::GROUP_OPTIONS, WP_DownloadManager_Options::OPTION, $args );
+		register_setting( self::GROUP_TEMPLATES, WP_DownloadManager_Options::OPTION, $args );
 
 		self::register_fields();
 	}
@@ -67,8 +67,8 @@ class DownloadManager_Settings {
 	 * @return array
 	 */
 	public static function sanitize( $input ) {
-		DownloadManager_Options::flush();
-		$values = DownloadManager_Options::all();
+		WP_DownloadManager_Options::flush();
+		$values = WP_DownloadManager_Options::all();
 
 		if ( ! is_array( $input ) ) {
 			return $values;
@@ -103,11 +103,11 @@ class DownloadManager_Settings {
 			// the screen offers a value the sanitizer silently rejects and the
 			// setting reverts on the next load.
 			$values['sort'] = array(
-				'by'      => DownloadManager_File::sort_column(
+				'by'      => WP_DownloadManager_File::sort_column(
 					isset( $input['sort']['by'] ) ? $input['sort']['by'] : '',
 					'file_name'
 				),
-				'order'   => DownloadManager_File::sort_order( isset( $input['sort']['order'] ) ? $input['sort']['order'] : '' ),
+				'order'   => WP_DownloadManager_File::sort_order( isset( $input['sort']['order'] ) ? $input['sort']['order'] : '' ),
 				'perpage' => max( 1, (int) ( isset( $input['sort']['perpage'] ) ? $input['sort']['perpage'] : 20 ) ),
 				'group'   => ! empty( $input['sort']['group'] ) ? 1 : 0,
 			);
@@ -115,7 +115,7 @@ class DownloadManager_Settings {
 
 		if ( isset( $input['rss'] ) ) {
 			$values['rss'] = array(
-				'sortby' => DownloadManager_File::sort_column(
+				'sortby' => WP_DownloadManager_File::sort_column(
 					isset( $input['rss']['sortby'] ) ? $input['rss']['sortby'] : '',
 					'file_date'
 				),
@@ -155,7 +155,7 @@ class DownloadManager_Settings {
 
 		if ( $escapes ) {
 			add_settings_error(
-				DownloadManager_Options::OPTION,
+				WP_DownloadManager_Options::OPTION,
 				'download_path',
 				sprintf(
 					/* translators: %s: the wp-content directory. */
@@ -214,9 +214,9 @@ class DownloadManager_Settings {
 			'type'  => true,
 			'value' => true,
 		);
-		$paired             = DownloadManager_Templates::paired_keys();
+		$paired             = WP_DownloadManager_Template::paired_keys();
 
-		foreach ( DownloadManager_Templates::keys() as $key ) {
+		foreach ( WP_DownloadManager_Template::keys() as $key ) {
 			if ( ! isset( $input[ $key ] ) ) {
 				continue;
 			}
@@ -243,7 +243,7 @@ class DownloadManager_Settings {
 	 * @return string
 	 */
 	protected static function name( $path ) {
-		$name = DownloadManager_Options::OPTION;
+		$name = WP_DownloadManager_Options::OPTION;
 
 		foreach ( explode( '.', $path ) as $segment ) {
 			$name .= '[' . $segment . ']';
@@ -297,7 +297,7 @@ class DownloadManager_Settings {
 
 			foreach ( $fields as $field ) {
 				$field['index']  = isset( $field['index'] ) ? (int) $field['index'] : 0;
-				$paired          = in_array( $field['key'], DownloadManager_Templates::paired_keys(), true );
+				$paired          = in_array( $field['key'], WP_DownloadManager_Template::paired_keys(), true );
 				$field['id']     = 'download_template_' . $field['key'] . ( $paired && $field['index'] ? '_2' : '' );
 				$field['reset']  = $field['key'] . ( $paired && $field['index'] ? '_2' : '' );
 				$field['name']   = $paired
@@ -471,7 +471,7 @@ class DownloadManager_Settings {
 	 */
 	public static function render_field( $args ) {
 		$name    = self::name( $args['path'] );
-		$value   = DownloadManager_Options::get( $args['path'] );
+		$value   = WP_DownloadManager_Options::get( $args['path'] );
 		$choices = isset( $args['choices'] ) ? $args['choices'] : array();
 
 		// The sort selects take their options from the same allow list the query
@@ -555,7 +555,7 @@ class DownloadManager_Settings {
 			'<textarea cols="80" rows="12" class="large-text code" id="%1$s" name="%2$s">%3$s</textarea>',
 			esc_attr( $args['id'] ),
 			esc_attr( $args['name'] ),
-			esc_textarea( DownloadManager_Options::template( $args['key'], $args['index'] ) )
+			esc_textarea( WP_DownloadManager_Options::template( $args['key'], $args['index'] ) )
 		);
 
 		if ( ! empty( $args['desc'] ) ) {
@@ -597,7 +597,7 @@ class DownloadManager_Settings {
 		);
 
 		$choices = array();
-		foreach ( DownloadManager_File::sort_columns() as $column ) {
+		foreach ( WP_DownloadManager_File::sort_columns() as $column ) {
 			$choices[ $column ] = isset( $labels[ $column ] ) ? $labels[ $column ] : $column;
 		}
 
@@ -794,7 +794,7 @@ class DownloadManager_Settings {
 			// A custom menu page has to render its own settings errors; WordPress
 			// only does it automatically on the built-in Settings screens. Without
 			// this a rejected value is corrected silently.
-			settings_errors( DownloadManager_Options::OPTION );
+			settings_errors( WP_DownloadManager_Options::OPTION );
 			?>
 			<form method="post" action="options.php">
 				<?php

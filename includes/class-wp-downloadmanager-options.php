@@ -1,6 +1,6 @@
 <?php
 /**
- * Consolidated option storage for WP-DownloadManager.
+ * Consolidated option storage for WP-WP_DownloadManager.
  *
  * Everything the plugin configures lives in one wp_options row holding a nested
  * array, rather than the nineteen separate rows used up to 2.0.0. It reuses the
@@ -17,7 +17,7 @@
  * is read to decide whether this option needs migrating and so cannot live
  * inside the thing being migrated.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Reads and writes the single download_options row.
  */
-class DownloadManager_Options {
+class WP_DownloadManager_Options {
 
 	/**
 	 * Name of the consolidated option row.
@@ -33,6 +33,19 @@ class DownloadManager_Options {
 	 * @var string
 	 */
 	const OPTION = 'download_options';
+
+	/**
+	 * Name of the row holding the two version markers.
+	 *
+	 * Kept out of the settings array on purpose: the settings form never posts
+	 * the markers, so anything living in that array has to be rescued from the
+	 * stored value on every save. With a separate row the settings screen writes
+	 * OPTION, the upgrade routine writes VERSION, and neither can corrupt the
+	 * other.
+	 *
+	 * @var string
+	 */
+	const VERSION = 'download_db_version';
 
 	/**
 	 * Runtime cache so a page render does not re-read the row per lookup.
@@ -60,7 +73,7 @@ class DownloadManager_Options {
 			'download_sort'           => 'sort',
 		);
 
-		foreach ( DownloadManager_Templates::keys() as $key ) {
+		foreach ( WP_DownloadManager_Template::keys() as $key ) {
 			$map[ 'download_template_' . $key ] = 'templates.' . $key;
 		}
 
@@ -111,7 +124,7 @@ class DownloadManager_Options {
 				'sortby' => 'file_date',
 				'limit'  => 20,
 			),
-			'templates'      => DownloadManager_Templates::defaults(),
+			'templates'      => WP_DownloadManager_Template::defaults(),
 		);
 	}
 

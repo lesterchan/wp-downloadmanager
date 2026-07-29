@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: WP-DownloadManager
+ * Plugin Name: WP-WP_DownloadManager
  * Plugin URI: https://lesterchan.net/portfolio/programming/php/
  * Description: Adds a simple download manager to your WordPress blog.
  * Version: 2.0.0
@@ -13,7 +13,7 @@
  * Text Domain: wp-downloadmanager
  * Domain Path: /languages
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /*
@@ -41,40 +41,40 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 
-// Version.
+// WP_DOWNLOADMANAGER_VERSION is the last-run plugin version and
+// WP_DOWNLOADMANAGER_DB_VERSION the schema counter; both are compared against
+// the two keys of the wp_downloadmanager_version option row on every admin
+// request. Bump DB_VERSION whenever the table or the shape of the settings
+// array changes.
 define( 'WP_DOWNLOADMANAGER_VERSION', '2.0.0' );
+define( 'WP_DOWNLOADMANAGER_DB_VERSION', '3' );
+define( 'WP_DOWNLOADMANAGER_SLUG', 'wp-downloadmanager' );
 define( 'WP_DOWNLOADMANAGER_MAIN_FILE', __FILE__ );
-
-// Paths. Derived from this file so the plugin keeps working if its directory is
-// renamed. WP_DOWNLOADMANAGER_SLUG is that directory name on its own: the admin
-// menu uses the legacy "plugin file as menu slug" form, so the slug ends up
-// inside page URLs and in the hook suffix WordPress hands back.
 define( 'WP_DOWNLOADMANAGER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WP_DOWNLOADMANAGER_URL', plugin_dir_url( __FILE__ ) );
-define( 'WP_DOWNLOADMANAGER_SLUG', dirname( plugin_basename( __FILE__ ) ) );
 
 // Classes. Required at file load because the activation hook and the option
 // accessor are both reached before any action fires.
-require_once __DIR__ . '/includes/class-downloadmanager-templates.php';
-require_once __DIR__ . '/includes/class-downloadmanager-options.php';
-require_once __DIR__ . '/includes/class-downloadmanager-file.php';
-require_once __DIR__ . '/includes/class-downloadmanager-display.php';
-require_once __DIR__ . '/includes/class-downloadmanager-install.php';
-require_once __DIR__ . '/includes/class-downloadmanager-settings.php';
-require_once __DIR__ . '/includes/class-downloadmanager-widget.php';
-require_once __DIR__ . '/includes/class-downloadmanager-wpstats.php';
-require_once __DIR__ . '/includes/class-downloadmanager-admin.php';
-require_once __DIR__ . '/includes/class-downloadmanager.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-template.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-options.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-file.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-display.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-install.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-settings.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-widget.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-wpstats.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-admin.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager.php';
 require_once __DIR__ . '/includes/template-tags.php';
 
-DownloadManager_Install::init();
-DownloadManager_File::init();
-DownloadManager_Display::init();
-DownloadManager_Settings::init();
-DownloadManager_Widget::init();
-DownloadManager_WPStats::init();
-DownloadManager_Admin::init();
-DownloadManager::init();
+WP_DownloadManager_Install::init();
+WP_DownloadManager_File::init();
+WP_DownloadManager_Display::init();
+WP_DownloadManager_Settings::init();
+WP_DownloadManager_Widget::init();
+WP_DownloadManager_WPStats::init();
+WP_DownloadManager_Admin::init();
+WP_DownloadManager::init();
 
 
 // Downloads table name.

@@ -2,7 +2,7 @@
 /**
  * WP-Stats integration.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Adds the download panels to WP-Stats.
  */
-class DownloadManager_WPStats {
+class WP_DownloadManager_WPStats {
 
 	/**
 	 * Hook up.
@@ -115,7 +115,7 @@ class DownloadManager_WPStats {
 	 * @return string
 	 */
 	public static function admin_general( $content ) {
-		return $content . self::checkbox( 'downloads', __( 'WP-DownloadManager', 'wp-downloadmanager' ) );
+		return $content . self::checkbox( 'downloads', __( 'WP-WP_DownloadManager', 'wp-downloadmanager' ) );
 	}
 
 	/**
@@ -170,7 +170,7 @@ class DownloadManager_WPStats {
 		$total_size  = (int) $stats->total_size;
 		$total_hits  = (int) $stats->total_hits;
 
-		$content .= '<p><strong>' . __( 'WP-DownloadManager', 'wp-downloadmanager' ) . '</strong></p>' . "\n";
+		$content .= '<p><strong>' . __( 'WP-WP_DownloadManager', 'wp-downloadmanager' ) . '</strong></p>' . "\n";
 		$content .= '<ul>' . "\n";
 		$content .= '<li>' . sprintf(
 			/* translators: %s: number of files. */
@@ -180,7 +180,7 @@ class DownloadManager_WPStats {
 		$content .= '<li>' . sprintf(
 			/* translators: %s: total size of all files. */
 			_n( '<strong>%s</strong> worth of files.', '<strong>%s</strong> worth of files.', $total_size, 'wp-downloadmanager' ),
-			DownloadManager_File::format_size( $total_size )
+			WP_DownloadManager_File::format_size( $total_size )
 		) . '</li>' . "\n";
 		$content .= '<li>' . sprintf(
 			/* translators: %s: number of hits. */
@@ -211,7 +211,7 @@ class DownloadManager_WPStats {
 			number_format_i18n( $limit )
 		) . '</strong></p>' . "\n";
 		$content .= '<ul>' . "\n";
-		$content .= DownloadManager_Display::recent_downloads( $limit, 0, false );
+		$content .= WP_DownloadManager_Display::recent_downloads( $limit, 0, false );
 		$content .= '</ul>' . "\n";
 
 		return $content;
@@ -236,7 +236,7 @@ class DownloadManager_WPStats {
 			number_format_i18n( $limit )
 		) . '</strong></p>' . "\n";
 		$content .= '<ul>' . "\n";
-		$content .= DownloadManager_Display::most_downloaded( $limit, 0, false );
+		$content .= WP_DownloadManager_Display::most_downloaded( $limit, 0, false );
 		$content .= '</ul>' . "\n";
 
 		return $content;

@@ -1,8 +1,8 @@
 <?php
 /**
- * Front-end wiring for WP-DownloadManager.
+ * Front-end wiring for WP-WP_DownloadManager.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Query vars, rewrite rules, assets and the feed link.
  */
-class DownloadManager {
+class WP_DownloadManager {
 
 	/**
 	 * Hook up.
@@ -78,14 +78,14 @@ class DownloadManager {
 			return;
 		}
 
-		$page_url    = DownloadManager_Options::get( 'page_url' );
+		$page_url    = WP_DownloadManager_Options::get( 'page_url' );
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 
 		if ( ! $page_url || ! $request_uri || ! strpos( $page_url, $request_uri ) ) {
 			return;
 		}
 
-		$link = 1 === (int) DownloadManager_Options::get( 'nice_permalink', 1 )
+		$link = 1 === (int) WP_DownloadManager_Options::get( 'nice_permalink', 1 )
 			? get_option( 'home' ) . '/download/rss/'
 			: get_option( 'home' ) . '/?dl_name=rss';
 

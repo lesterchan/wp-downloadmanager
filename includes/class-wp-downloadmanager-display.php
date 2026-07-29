@@ -1,8 +1,8 @@
 <?php
 /**
- * Front-end rendering for WP-DownloadManager.
+ * Front-end rendering for WP-WP_DownloadManager.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Renders the downloads page, embedded downloads and the stats lists.
  */
-class DownloadManager_Display {
+class WP_DownloadManager_Display {
 
 	/**
 	 * Hook up.
@@ -66,7 +66,7 @@ class DownloadManager_Display {
 	public static function category_url( $cat_id ) {
 		$args = array_merge( self::query_args(), array( 'dl_cat' => (int) $cat_id ) );
 
-		return esc_url( DownloadManager_Options::get( 'page_url' ) . '?' . http_build_query( $args ) );
+		return esc_url( WP_DownloadManager_Options::get( 'page_url' ) . '?' . http_build_query( $args ) );
 	}
 
 	/**
@@ -165,11 +165,11 @@ class DownloadManager_Display {
 			'%FILE_ID%'            => $file->file_id,
 			'%FILE%'               => stripslashes( $file->file ),
 			'%FILE_NAME%'          => self::search_highlight( $search, $file_name ),
-			'%FILE_EXT%'           => self::search_highlight( $search, DownloadManager_File::extension( stripslashes( $file->file ) ) ),
-			'%FILE_ICON%'          => DownloadManager_File::extension_image( stripslashes( $file->file ), $context['icons'] ),
+			'%FILE_EXT%'           => self::search_highlight( $search, WP_DownloadManager_File::extension( stripslashes( $file->file ) ) ),
+			'%FILE_ICON%'          => WP_DownloadManager_File::extension_image( stripslashes( $file->file ), $context['icons'] ),
 			'%FILE_DESCRIPTION%'   => self::search_highlight( $search, $file_des ),
-			'%FILE_SIZE%'          => DownloadManager_File::format_size( $file->file_size ),
-			'%FILE_SIZE_DEC%'      => DownloadManager_File::format_size_dec( $file->file_size ),
+			'%FILE_SIZE%'          => WP_DownloadManager_File::format_size( $file->file_size ),
+			'%FILE_SIZE_DEC%'      => WP_DownloadManager_File::format_size_dec( $file->file_size ),
 			'%FILE_CATEGORY_ID%'   => $cat_id,
 			'%FILE_CATEGORY_NAME%' => self::category_name( $context['categories'], $cat_id ),
 			'%FILE_DATE%'          => mysql2date( get_option( 'date_format' ), gmdate( 'Y-m-d H:i:s', (int) $file->file_date ) ),
@@ -177,7 +177,7 @@ class DownloadManager_Display {
 			'%FILE_UPDATED_DATE%'  => mysql2date( get_option( 'date_format' ), gmdate( 'Y-m-d H:i:s', (int) $file->file_updated_date ) ),
 			'%FILE_UPDATED_TIME%'  => mysql2date( get_option( 'time_format' ), gmdate( 'Y-m-d H:i:s', (int) $file->file_updated_date ) ),
 			'%FILE_HITS%'          => number_format_i18n( $file->file_hits ),
-			'%FILE_DOWNLOAD_URL%'  => DownloadManager_File::download_url( $file->file_id, $file->file ),
+			'%FILE_DOWNLOAD_URL%'  => WP_DownloadManager_File::download_url( $file->file_id, $file->file ),
 		);
 
 		return str_replace( array_keys( $replacements ), array_values( $replacements ), $template );
@@ -206,8 +206,8 @@ class DownloadManager_Display {
 			'%CATEGORY_URL%'         => self::category_url( $cat_id ),
 			'%CATEGORY_FILES_COUNT%' => number_format_i18n( $stat['files'] ),
 			'%CATEGORY_HITS%'        => number_format_i18n( $stat['hits'] ),
-			'%CATEGORY_SIZE%'        => DownloadManager_File::format_size( $stat['size'] ),
-			'%CATEGORY_SIZE_DEC%'    => DownloadManager_File::format_size_dec( $stat['size'] ),
+			'%CATEGORY_SIZE%'        => WP_DownloadManager_File::format_size( $stat['size'] ),
+			'%CATEGORY_SIZE_DEC%'    => WP_DownloadManager_File::format_size_dec( $stat['size'] ),
 		);
 
 		return str_replace( array_keys( $replacements ), array_values( $replacements ), $template );
@@ -222,11 +222,11 @@ class DownloadManager_Display {
 	 * @return string
 	 */
 	protected static function replace_page_vars( $template, $totals, $context ) {
-		$page_url = DownloadManager_Options::get( 'page_url' );
+		$page_url = WP_DownloadManager_Options::get( 'page_url' );
 
 		// The search form posts to the downloads page. With plain permalinks the
 		// page is identified by ?page_id=N, which a GET form would drop.
-		if ( 0 === (int) DownloadManager_Options::get( 'nice_permalink', 1 )
+		if ( 0 === (int) WP_DownloadManager_Options::get( 'nice_permalink', 1 )
 			&& preg_match( '/[\?\&]page_id=(\d+)/i', $page_url, $matches ) ) {
 			$template = preg_replace(
 				'/(<form[^>]+>)/i',
@@ -238,8 +238,8 @@ class DownloadManager_Display {
 		$replacements = array(
 			'%TOTAL_FILES_COUNT%'  => number_format_i18n( $totals['files'] ),
 			'%TOTAL_HITS%'         => number_format_i18n( $totals['hits'] ),
-			'%TOTAL_SIZE%'         => DownloadManager_File::format_size( $totals['size'] ),
-			'%TOTAL_SIZE_DEC%'     => DownloadManager_File::format_size_dec( $totals['size'] ),
+			'%TOTAL_SIZE%'         => WP_DownloadManager_File::format_size( $totals['size'] ),
+			'%TOTAL_SIZE_DEC%'     => WP_DownloadManager_File::format_size_dec( $totals['size'] ),
 			'%RECORD_START%'       => number_format_i18n( $context['record_start'] ),
 			'%RECORD_END%'         => number_format_i18n( $context['record_end'] ),
 			'%CATEGORY_ID%'        => $context['category'],
@@ -271,7 +271,7 @@ class DownloadManager_Display {
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$search     = $search_word;
-		$categories = (array) DownloadManager_Options::get( 'categories', array() );
+		$categories = (array) WP_DownloadManager_Options::get( 'categories', array() );
 		// Index 0 is the "all categories" label rather than a real category.
 		$categories[0] = __( 'total', 'wp-downloadmanager' );
 
@@ -282,14 +282,14 @@ class DownloadManager_Display {
 			'hits'  => 0,
 		);
 
-		$sort            = (array) DownloadManager_Options::get( 'sort', array() );
-		$sort_by         = DownloadManager_File::sort_column( isset( $sort['by'] ) ? $sort['by'] : '', 'file_name' );
-		$sort_order      = DownloadManager_File::sort_order( isset( $sort['order'] ) ? $sort['order'] : '' );
+		$sort            = (array) WP_DownloadManager_Options::get( 'sort', array() );
+		$sort_by         = WP_DownloadManager_File::sort_column( isset( $sort['by'] ) ? $sort['by'] : '', 'file_name' );
+		$sort_order      = WP_DownloadManager_File::sort_order( isset( $sort['order'] ) ? $sort['order'] : '' );
 		$per_page        = max( 1, (int) ( isset( $sort['perpage'] ) ? $sort['perpage'] : 20 ) );
 		$group           = (int) ( isset( $sort['group'] ) ? $sort['group'] : 0 );
 		$order_by_column = 'file_date' === $sort_by ? 'FROM_UNIXTIME(file_date)' : $sort_by;
 
-		$icons = DownloadManager_File::extension_images();
+		$icons = WP_DownloadManager_File::extension_images();
 
 		if ( 0 === $category && $category_id > 0 ) {
 			$category = $category_id;
@@ -358,7 +358,7 @@ class DownloadManager_Display {
 			);
 
 			$output .= self::replace_page_vars(
-				stripslashes( DownloadManager_Options::template( 'header' ) ),
+				stripslashes( WP_DownloadManager_Options::template( 'header' ) ),
 				$totals,
 				$page_context
 			);
@@ -371,7 +371,7 @@ class DownloadManager_Display {
 
 				if ( $need_footer && $temp_cat_id !== $cat_id && 1 === $group ) {
 					$output     .= self::replace_category_vars(
-						stripslashes( DownloadManager_Options::template( 'category_footer' ) ),
+						stripslashes( WP_DownloadManager_Options::template( 'category_footer' ) ),
 						$temp_cat_id,
 						$category_stats,
 						$categories
@@ -381,7 +381,7 @@ class DownloadManager_Display {
 
 				if ( $temp_cat_id !== $cat_id && 1 === $group ) {
 					$output     .= self::replace_category_vars(
-						stripslashes( DownloadManager_Options::template( 'category_header' ) ),
+						stripslashes( WP_DownloadManager_Options::template( 'category_header' ) ),
 						$cat_id,
 						$category_stats,
 						$categories
@@ -389,9 +389,9 @@ class DownloadManager_Display {
 					$need_footer = true;
 				}
 
-				$index   = DownloadManager_File::can_download( $file->file_permission ) ? 0 : 1;
+				$index   = WP_DownloadManager_File::can_download( $file->file_permission ) ? 0 : 1;
 				$output .= self::replace_file_vars(
-					stripslashes( DownloadManager_Options::template( 'listing', $index ) ),
+					stripslashes( WP_DownloadManager_Options::template( 'listing', $index ) ),
 					$file,
 					array(
 						'icons'      => $icons,
@@ -405,7 +405,7 @@ class DownloadManager_Display {
 
 			if ( $need_footer ) {
 				$output .= self::replace_category_vars(
-					stripslashes( DownloadManager_Options::template( 'category_footer' ) ),
+					stripslashes( WP_DownloadManager_Options::template( 'category_footer' ) ),
 					$temp_cat_id,
 					$category_stats,
 					$categories
@@ -413,12 +413,12 @@ class DownloadManager_Display {
 			}
 
 			$output .= self::replace_page_vars(
-				stripslashes( DownloadManager_Options::template( 'footer' ) ),
+				stripslashes( WP_DownloadManager_Options::template( 'footer' ) ),
 				$totals,
 				$page_context
 			);
 		} else {
-			$output .= stripslashes( DownloadManager_Options::template( 'none' ) );
+			$output .= stripslashes( WP_DownloadManager_Options::template( 'none' ) );
 		}//end if
 
 		$output .= self::paging_markup( $paging );
@@ -488,7 +488,7 @@ class DownloadManager_Display {
 		$page     = $paging['page'];
 		$max_page = $paging['max_page'];
 
-		$output  = stripslashes( DownloadManager_Options::template( 'pagingheader' ) );
+		$output  = stripslashes( WP_DownloadManager_Options::template( 'pagingheader' ) );
 		$output .= function_exists( 'wp_pagenavi' )
 			? '<div class="wp-pagenavi">' . "\n"
 			: '<div class="wp-downloadmanager-paging">' . "\n";
@@ -523,7 +523,7 @@ class DownloadManager_Display {
 		}
 
 		$output .= '</div>';
-		$output .= stripslashes( DownloadManager_Options::template( 'pagingfooter' ) );
+		$output .= stripslashes( WP_DownloadManager_Options::template( 'pagingfooter' ) );
 
 		return $output;
 	}
@@ -541,8 +541,8 @@ class DownloadManager_Display {
 	public static function download_embedded( $condition = '', $display = 'both', $sort_by = 'file_id', $sort_order = 'asc', $stream_limit = 0 ) {
 		global $wpdb;
 
-		$sort_by         = DownloadManager_File::sort_column( $sort_by, 'file_id' );
-		$sort_order      = DownloadManager_File::sort_order( $sort_order );
+		$sort_by         = WP_DownloadManager_File::sort_column( $sort_by, 'file_id' );
+		$sort_order      = WP_DownloadManager_File::sort_order( $sort_order );
 		$order_by_column = 'file_date' === $sort_by ? 'FROM_UNIXTIME(file_date)' : $sort_by;
 		$stream_limit    = max( (int) $stream_limit, 0 );
 
@@ -565,8 +565,8 @@ class DownloadManager_Display {
 			return apply_filters( 'download_embedded', '' );
 		}
 
-		$icons      = DownloadManager_File::extension_images();
-		$categories = (array) DownloadManager_Options::get( 'categories', array() );
+		$icons      = WP_DownloadManager_File::extension_images();
+		$categories = (array) WP_DownloadManager_Options::get( 'categories', array() );
 
 		$shown = ( is_single() || 0 === $stream_limit )
 			? count( $files )
@@ -576,9 +576,9 @@ class DownloadManager_Display {
 
 		for ( $i = 0; $i < $shown; $i++ ) {
 			$file    = $files[ $i ];
-			$index   = DownloadManager_File::can_download( $file->file_permission ) ? 0 : 1;
+			$index   = WP_DownloadManager_File::can_download( $file->file_permission ) ? 0 : 1;
 			$output .= self::replace_file_vars(
-				stripslashes( DownloadManager_Options::template( 'embedded', $index ) ),
+				stripslashes( WP_DownloadManager_Options::template( 'embedded', $index ) ),
 				$file,
 				array(
 					'icons'       => $icons,
@@ -607,18 +607,18 @@ class DownloadManager_Display {
 			return '<li>' . __( 'N/A', 'wp-downloadmanager' ) . '</li>' . "\n";
 		}
 
-		$icons      = DownloadManager_File::extension_images();
-		$categories = (array) DownloadManager_Options::get( 'categories', array() );
+		$icons      = WP_DownloadManager_File::extension_images();
+		$categories = (array) WP_DownloadManager_Options::get( 'categories', array() );
 		$output     = '';
 
 		foreach ( $files as $file ) {
-			$index     = DownloadManager_File::can_download( $file->file_permission ) ? 0 : 1;
+			$index     = WP_DownloadManager_File::can_download( $file->file_permission ) ? 0 : 1;
 			$file_name = $chars > 0
 				? self::snippet_text( stripslashes( $file->file_name ), $chars )
 				: stripslashes( $file->file_name );
 
 			$output .= self::replace_file_vars(
-				stripslashes( DownloadManager_Options::template( 'most', $index ) ),
+				stripslashes( WP_DownloadManager_Options::template( 'most', $index ) ),
 				$file,
 				array(
 					'icons'      => $icons,
@@ -710,8 +710,8 @@ class DownloadManager_Display {
 	public static function feed_files() {
 		global $wpdb;
 
-		$sortby = DownloadManager_File::sort_column( DownloadManager_Options::get( 'rss.sortby', '' ), 'file_date' );
-		$limit  = max( 1, (int) DownloadManager_Options::get( 'rss.limit', 20 ) );
+		$sortby = WP_DownloadManager_File::sort_column( WP_DownloadManager_Options::get( 'rss.sortby', '' ), 'file_date' );
+		$limit  = max( 1, (int) WP_DownloadManager_Options::get( 'rss.limit', 20 ) );
 
 		// phpcs:ignore WordPress.DB
 		return (array) $wpdb->get_results(
@@ -743,7 +743,7 @@ class DownloadManager_Display {
 
 		// phpcs:ignore WordPress.DB
 		// Cast: SUM() is NULL on an empty table.
-		return self::output( DownloadManager_File::format_size( (int) $wpdb->get_var( "SELECT SUM(file_size) FROM {$wpdb->downloads}" ) ), $display );
+		return self::output( WP_DownloadManager_File::format_size( (int) $wpdb->get_var( "SELECT SUM(file_size) FROM {$wpdb->downloads}" ) ), $display );
 	}
 
 	/**

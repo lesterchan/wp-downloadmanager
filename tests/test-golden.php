@@ -7,13 +7,13 @@
  * A modernization is allowed to move every one of these functions into a class,
  * but it is not allowed to change a single byte of what they emit.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 /**
  * Rendering and formatting, byte for byte.
  */
-class Test_Golden extends DownloadManager_TestCase {
+class Test_Golden extends WP_DownloadManager_TestCase {
 
 	/**
 	 * Byte sizes render in binary units.
@@ -110,18 +110,18 @@ class Test_Golden extends DownloadManager_TestCase {
 	public function test_download_file_url() {
 		$home = get_option( 'home' );
 
-		DownloadManager_Options::set( 'nice_permalink', 1 );
-		DownloadManager_Options::set( 'use_filename', 0 );
+		WP_DownloadManager_Options::set( 'nice_permalink', 1 );
+		WP_DownloadManager_Options::set( 'use_filename', 0 );
 		$this->assertSame( $home . '/download/7/', download_file_url( 7, '/manual.pdf' ) );
 
-		DownloadManager_Options::set( 'use_filename', 1 );
+		WP_DownloadManager_Options::set( 'use_filename', 1 );
 		$this->assertSame( $home . '/download/manual.pdf', download_file_url( 7, '/manual.pdf' ) );
 
-		DownloadManager_Options::set( 'nice_permalink', 0 );
-		DownloadManager_Options::set( 'use_filename', 0 );
+		WP_DownloadManager_Options::set( 'nice_permalink', 0 );
+		WP_DownloadManager_Options::set( 'use_filename', 0 );
 		$this->assertSame( $home . '/?dl_id=7', download_file_url( 7, '/manual.pdf' ) );
 
-		DownloadManager_Options::set( 'use_filename', 1 );
+		WP_DownloadManager_Options::set( 'use_filename', 1 );
 		$this->assertSame( $home . '/?dl_name=manual.pdf', download_file_url( 7, '/manual.pdf' ) );
 	}
 
@@ -131,8 +131,8 @@ class Test_Golden extends DownloadManager_TestCase {
 	public function test_download_file_url_remote() {
 		$home = get_option( 'home' );
 
-		DownloadManager_Options::set( 'nice_permalink', 1 );
-		DownloadManager_Options::set( 'use_filename', 1 );
+		WP_DownloadManager_Options::set( 'nice_permalink', 1 );
+		WP_DownloadManager_Options::set( 'use_filename', 1 );
 
 		$this->assertSame(
 			$home . '/download/https://example.com/remote.zip',
@@ -372,8 +372,8 @@ class Test_Golden extends DownloadManager_TestCase {
 	 * Pagination appears once there are more files than fit on a page.
 	 */
 	public function test_downloads_page_pagination() {
-		DownloadManager_Options::set( 'sort.perpage', 2 );
-		DownloadManager_Options::set( 'sort.group', 0 );
+		WP_DownloadManager_Options::set( 'sort.perpage', 2 );
+		WP_DownloadManager_Options::set( 'sort.group', 0 );
 
 		$out = downloads_page();
 
@@ -549,7 +549,7 @@ class Test_Golden extends DownloadManager_TestCase {
 	public function test_widget_renders() {
 		$this->login_as( '' );
 
-		$widget = new DownloadManager_Widget();
+		$widget = new WP_DownloadManager_Widget();
 
 		ob_start();
 		$widget->widget(
@@ -594,7 +594,7 @@ class Test_Golden extends DownloadManager_TestCase {
 		$rewrite        = new stdClass();
 		$rewrite->rules = array( 'existing/?$' => 'index.php?x=1' );
 
-		DownloadManager::rewrite_rules( $rewrite );
+		WP_DownloadManager::rewrite_rules( $rewrite );
 
 		$this->assertSame(
 			'index.php?dl_id=$matches[1]',

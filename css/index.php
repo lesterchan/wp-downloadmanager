@@ -2,5 +2,5 @@
 /**
  * Silence is golden.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */

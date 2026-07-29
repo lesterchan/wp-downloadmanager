@@ -2,7 +2,7 @@
 /**
  * The Downloads widget.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Lists downloads by category, recency or popularity.
  */
-class DownloadManager_Widget extends WP_Widget {
+class WP_DownloadManager_Widget extends WP_Widget {
 
 	/**
 	 * Register the widget.
@@ -20,7 +20,7 @@ class DownloadManager_Widget extends WP_Widget {
 			'downloads',
 			__( 'Downloads', 'wp-downloadmanager' ),
 			array(
-				'description'                 => __( 'WP-DownloadManager downloads statistics', 'wp-downloadmanager' ),
+				'description'                 => __( 'WP-WP_DownloadManager downloads statistics', 'wp-downloadmanager' ),
 				'customize_selective_refresh' => true,
 			)
 		);
@@ -35,7 +35,7 @@ class DownloadManager_Widget extends WP_Widget {
 		add_action(
 			'widgets_init',
 			static function () {
-				register_widget( 'DownloadManager_Widget' );
+				register_widget( 'WP_DownloadManager_Widget' );
 			}
 		);
 	}
@@ -78,21 +78,21 @@ class DownloadManager_Widget extends WP_Widget {
 
 		switch ( $type ) {
 			case 'downloads_category':
-				DownloadManager_Display::downloads_category( $cat_ids, $limit, $chars );
+				WP_DownloadManager_Display::downloads_category( $cat_ids, $limit, $chars );
 				break;
 			case 'recent_downloads':
-				DownloadManager_Display::recent_downloads( $limit, $chars );
+				WP_DownloadManager_Display::recent_downloads( $limit, $chars );
 				break;
 			case 'most_downloaded':
-				DownloadManager_Display::most_downloaded( $limit, $chars );
+				WP_DownloadManager_Display::most_downloaded( $limit, $chars );
 				break;
 		}
 
 		echo '</ul>' . "\n";
 
 		if ( $link ) {
-			$template = stripslashes( DownloadManager_Options::template( 'download_page_link' ) );
-			echo str_replace( '%DOWNLOAD_PAGE_URL%', DownloadManager_Options::get( 'page_url' ), $template ); // phpcs:ignore WordPress.Security.EscapeOutput
+			$template = stripslashes( WP_DownloadManager_Options::template( 'download_page_link' ) );
+			echo str_replace( '%DOWNLOAD_PAGE_URL%', WP_DownloadManager_Options::get( 'page_url' ), $template ); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 
 		echo $args['after_widget']; // phpcs:ignore WordPress.Security.EscapeOutput

@@ -1,8 +1,8 @@
 <?php
 /**
- * File helpers and the download endpoint for WP-DownloadManager.
+ * File helpers and the download endpoint for WP-WP_DownloadManager.
  *
- * @package WP-DownloadManager
+ * @package WP-WP_DownloadManager
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Everything about a file: naming, sizing, permissions and serving.
  */
-class DownloadManager_File {
+class WP_DownloadManager_File {
 
 	/**
 	 * Hook up.
@@ -368,8 +368,8 @@ class DownloadManager_File {
 			$file_name = substr( $file_name, 1 );
 		}
 
-		$use_filename   = (int) DownloadManager_Options::get( 'use_filename', 0 );
-		$nice_permalink = (int) DownloadManager_Options::get( 'nice_permalink', 1 );
+		$use_filename   = (int) WP_DownloadManager_Options::get( 'use_filename', 0 );
+		$nice_permalink = (int) WP_DownloadManager_Options::get( 'nice_permalink', 1 );
 		$home           = get_option( 'home' );
 
 		if ( 1 === $nice_permalink ) {
@@ -407,7 +407,7 @@ class DownloadManager_File {
 			return;
 		}
 
-		$use_filename = (int) DownloadManager_Options::get( 'use_filename', 0 );
+		$use_filename = (int) WP_DownloadManager_Options::get( 'use_filename', 0 );
 		$file         = null;
 
 		if ( $dl_id > 0 && 0 === $use_filename ) {
@@ -424,9 +424,9 @@ class DownloadManager_File {
 			wp_die( esc_html__( 'Invalid File ID or File Name.', 'wp-downloadmanager' ), '', array( 'response' => 404 ) );
 		}
 
-		$file_path       = stripslashes( DownloadManager_Options::get( 'path.dir' ) );
-		$file_url        = stripslashes( DownloadManager_Options::get( 'path.url' ) );
-		$method          = (int) DownloadManager_Options::get( 'method', 1 );
+		$file_path       = stripslashes( WP_DownloadManager_Options::get( 'path.dir' ) );
+		$file_url        = stripslashes( WP_DownloadManager_Options::get( 'path.url' ) );
+		$method          = (int) WP_DownloadManager_Options::get( 'method', 1 );
 		$file_id         = (int) $file->file_id;
 		$file_name       = stripslashes( $file->file );
 		$file_permission = (int) $file->file_permission;
