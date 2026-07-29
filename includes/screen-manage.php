@@ -2,8 +2,8 @@
 /**
  * The Manage Downloads screen, and its Edit and Delete views.
  *
- * Kept at the plugin root rather than moved into includes/: the admin menu uses
- * the legacy "plugin file as menu slug" form, so this file's path is its slug.
+ * Included by wp-admin: the menu uses the legacy "plugin file as menu slug"
+ * form, so this file's path relative to the plugins directory is its slug.
  *
  * @package WP-DownloadManager
  */
@@ -21,7 +21,7 @@ if ( ! current_user_can( 'manage_downloads' ) ) {
 
 
 // Variables.
-$base_name           = WP_DOWNLOADMANAGER_SLUG . '/download-manager.php';
+$base_name           = WP_DOWNLOADMANAGER_SLUG . '/includes/screen-manage.php';
 $base_page           = 'admin.php?page=' . $base_name;
 $dl_mode             = ! empty( $_GET['mode'] ) ? sanitize_text_field( wp_unslash( $_GET['mode'] ) ) : '';
 $file_id             = ! empty( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
@@ -46,7 +46,7 @@ global $wpdb;
 // handlers. Enqueued for every mode: add, edit and delete all use it.
 wp_enqueue_script(
 	'wp-downloadmanager-forms',
-	WP_DOWNLOADMANAGER_URL . 'download-forms.js',
+	WP_DOWNLOADMANAGER_URL . 'js/wp-downloadmanager-forms.js',
 	array(),
 	WP_DOWNLOADMANAGER_VERSION,
 	true
@@ -296,7 +296,7 @@ switch ( $dl_mode ) {
 			echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . wp_kses_post( stripslashes( $text ) ) . '</p></div>'; }
 		?>
 		<!-- Edit A File -->
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/' . basename( __FILE__ ) . '&mode=edit&id=' . intval( $file->file_id ) ) ); ?>" enctype="multipart/form-data">
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/includes/' . basename( __FILE__ ) . '&mode=edit&id=' . intval( $file->file_id ) ) ); ?>" enctype="multipart/form-data">
 			<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo esc_attr( get_max_upload_size() ); ?>" />
 			<input type="hidden" name="file_id" value="<?php echo intval( $file->file_id ); ?>" />
 			<input type="hidden" name="old_file" value="<?php echo esc_attr( stripslashes( $file->file ) ); ?>" />
@@ -456,7 +456,7 @@ switch ( $dl_mode ) {
 			echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . wp_kses_post( stripslashes( $text ) ) . '</p></div>'; }
 		?>
 		<!-- Delete A File -->
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/' . basename( __FILE__ ) ) ); ?>">
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/includes/' . basename( __FILE__ ) ) ); ?>">
 			<input type="hidden" name="file_id" value="<?php echo esc_attr( intval( $file->file_id ) ); ?>" />
 			<?php wp_nonce_field( 'wp-downloadmanager_delete-file' ); ?>
 			<div class="wrap">
@@ -762,7 +762,7 @@ switch ( $dl_mode ) {
 			}
 			?>
 			<br />
-			<form action="<?php echo esc_url( admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/' . basename( __FILE__ ) ) ); ?>" method="get">
+			<form action="<?php echo esc_url( admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/includes/' . basename( __FILE__ ) ) ); ?>" method="get">
 				<table class="widefat">
 					<tr>
 						<th><?php esc_html_e( 'Filter Options: ', 'wp-downloadmanager' ); ?></th>

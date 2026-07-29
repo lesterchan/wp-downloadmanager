@@ -399,7 +399,7 @@ class DownloadManager_File {
 			// would make the feed render only the first time it is asked for in
 			// a given process. get_template_part() passes false for the same
 			// reason - this is a template, not a library.
-			load_template( WP_DOWNLOADMANAGER_DIR . 'download-rss.php', false );
+			load_template( WP_DOWNLOADMANAGER_DIR . 'includes/feed-rss.php', false );
 			self::finish();
 		}
 

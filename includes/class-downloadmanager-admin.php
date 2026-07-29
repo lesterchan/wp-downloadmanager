@@ -42,8 +42,8 @@ class DownloadManager_Admin {
 	 */
 	public static function pages() {
 		return array(
-			'manager'   => WP_DOWNLOADMANAGER_SLUG . '/download-manager.php',
-			'add'       => WP_DOWNLOADMANAGER_SLUG . '/download-add.php',
+			'manager'   => WP_DOWNLOADMANAGER_SLUG . '/includes/screen-manage.php',
+			'add'       => WP_DOWNLOADMANAGER_SLUG . '/includes/screen-add.php',
 			'options'   => 'wp-downloadmanager-options',
 			'templates' => 'wp-downloadmanager-templates',
 		);
@@ -121,7 +121,7 @@ class DownloadManager_Admin {
 
 		wp_enqueue_script(
 			'wp-downloadmanager-admin',
-			WP_DOWNLOADMANAGER_URL . 'download-admin.js',
+			WP_DOWNLOADMANAGER_URL . 'js/wp-downloadmanager-admin.js',
 			array(),
 			WP_DOWNLOADMANAGER_VERSION,
 			true
@@ -140,7 +140,7 @@ class DownloadManager_Admin {
 	public static function quicktag() {
 		wp_enqueue_script(
 			'wp-downloadmanager-quicktag',
-			WP_DOWNLOADMANAGER_URL . 'download-quicktag.js',
+			WP_DOWNLOADMANAGER_URL . 'js/wp-downloadmanager-quicktag.js',
 			array( 'quicktags' ),
 			WP_DOWNLOADMANAGER_VERSION,
 			true

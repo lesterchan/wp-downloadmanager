@@ -59,11 +59,11 @@ class DownloadManager {
 	 * @return void
 	 */
 	public static function enqueue_styles() {
-		$theme_css = get_stylesheet_directory() . '/download-css.css';
+		$theme_css = get_stylesheet_directory() . '/wp-downloadmanager.css';
 
 		$src = file_exists( $theme_css )
-			? get_stylesheet_directory_uri() . '/download-css.css'
-			: WP_DOWNLOADMANAGER_URL . 'download-css.css';
+			? get_stylesheet_directory_uri() . '/wp-downloadmanager.css'
+			: WP_DOWNLOADMANAGER_URL . 'css/wp-downloadmanager.css';
 
 		wp_enqueue_style( 'wp-downloadmanager', $src, array(), WP_DOWNLOADMANAGER_VERSION );
 	}

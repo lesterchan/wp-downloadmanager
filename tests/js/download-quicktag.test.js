@@ -1,5 +1,5 @@
 /**
- * Tests for download-quicktag.js, the Text tab button.
+ * Tests for js/wp-downloadmanager-quicktag.js, the Text tab button.
  *
  * This was an inline <script> printed into admin_footer that called
  * jQuery.trim( prompt( ... ) ). The guard on the entered id is the interesting
@@ -24,7 +24,7 @@ beforeAll( () => {
 		insertContent: vi.fn(),
 	};
 
-	loadScript( 'download-quicktag.js' );
+	loadScript( 'js/wp-downloadmanager-quicktag.js' );
 } );
 
 beforeEach( () => {

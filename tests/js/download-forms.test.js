@@ -1,5 +1,5 @@
 /**
- * Tests for download-forms.js.
+ * Tests for js/wp-downloadmanager-forms.js.
  *
  * This script replaced four kinds of inline handler on the Add / Edit / Delete
  * screens: onclick= radio selection, a jQuery "use today's date" function with
@@ -22,7 +22,7 @@ const TODAY = { day: 27, month: 7, year: 2026, hour: 14, minute: 5, second: 45 }
 beforeAll( () => {
 	// The script attaches its listeners on DOMContentLoaded, and jsdom reports
 	// the document as already complete, so it wires up immediately.
-	loadScript( 'download-forms.js' );
+	loadScript( 'js/wp-downloadmanager-forms.js' );
 } );
 
 beforeEach( () => {

@@ -54,7 +54,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		$this->make_download_file( 'brochure.txt', 'twelve bytes' );
 
 		$html = $this->render_admin_page(
-			'download-add.php',
+			'includes/screen-add.php',
 			array(),
 			array(
 				'do'                    => 'Add File',
@@ -96,7 +96,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		$this->make_download_file( 'brochure.txt', 'twelve bytes' );
 
 		$this->render_admin_page(
-			'download-add.php',
+			'includes/screen-add.php',
 			array(),
 			array(
 				'do'        => 'Add File',
@@ -118,7 +118,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		$this->make_download_file( 'unnamed.txt' );
 
 		$this->render_admin_page(
-			'download-add.php',
+			'includes/screen-add.php',
 			array(),
 			array(
 				'do'        => 'Add File',
@@ -137,7 +137,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 	 */
 	public function test_add_remote_file() {
 		$this->render_admin_page(
-			'download-add.php',
+			'includes/screen-add.php',
 			array(),
 			array(
 				'do'          => 'Add File',
@@ -159,7 +159,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 	 */
 	public function test_add_remote_file_rejects_a_bad_scheme() {
 		$html = $this->render_admin_page(
-			'download-add.php',
+			'includes/screen-add.php',
 			array(),
 			array(
 				'do'          => 'Add File',
@@ -187,7 +187,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		$this->make_download_file( 'quoted.txt' );
 
 		$this->render_admin_page(
-			'download-add.php',
+			'includes/screen-add.php',
 			array(),
 			array(
 				'do'        => 'Add File',
@@ -224,7 +224,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		$this->make_download_file( 'amp.txt' );
 
 		$this->render_admin_page(
-			'download-add.php',
+			'includes/screen-add.php',
 			array(),
 			array(
 				'do'        => 'Add File',
@@ -239,7 +239,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		$stored = $wpdb->get_var( "SELECT file_name FROM {$wpdb->downloads} WHERE file = '/amp.txt'" );
 		$this->assertSame( 'Tea &amp; Coffee', $stored );
 
-		$html = $this->render_admin_page( 'download-manager.php' );
+		$html = $this->render_admin_page( 'includes/screen-manage.php' );
 		$this->assertStringContainsString( 'Tea &amp; Coffee', $html );
 		$this->assertStringNotContainsString( '&amp;amp;', $html );
 	}
@@ -251,7 +251,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		$this->expectException( 'WPDieException' );
 
 		$this->render_admin_page(
-			'download-add.php',
+			'includes/screen-add.php',
 			array(),
 			array(
 				'do'        => 'Add File',
@@ -275,7 +275,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		);
 
 		$html = $this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(),
 			array(
 				'do'              => 'Edit File',
@@ -337,8 +337,8 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 			'file_size'       => '1024',
 		);
 
-		$this->render_admin_page( 'download-manager.php', array(), $post );
-		$html = $this->render_admin_page( 'download-manager.php', array(), $post );
+		$this->render_admin_page( 'includes/screen-manage.php', array(), $post );
+		$html = $this->render_admin_page( 'includes/screen-manage.php', array(), $post );
 
 		$this->assertStringContainsString( 'Edited Successfully', $html );
 		$this->assertStringNotContainsString( 'Error In Editing', $html );
@@ -356,7 +356,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		);
 
 		$this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(),
 			array(
 				'do'              => 'Edit File',
@@ -403,12 +403,12 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		);
 
 		// Without the checkbox the original date stands.
-		$this->render_admin_page( 'download-manager.php', array(), $base );
+		$this->render_admin_page( 'includes/screen-manage.php', array(), $base );
 		$this->assertSame( self::T0, (int) $this->row_named( 'Dated' )->file_date );
 
 		// With it, the posted parts are used.
 		$this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(),
 			array_merge( $base, array( 'edit_filetimestamp' => '1' ) )
 		);
@@ -427,7 +427,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		$this->expectException( 'WPDieException' );
 
 		$this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(),
 			array(
 				'do'        => 'Edit File',
@@ -452,7 +452,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		);
 
 		$html = $this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(),
 			array(
 				'do'       => 'Delete File',
@@ -479,7 +479,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		);
 
 		$html = $this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(),
 			array(
 				'do'         => 'Delete File',
@@ -503,7 +503,7 @@ class Test_Admin_Writes extends DownloadManager_TestCase {
 		$this->expectException( 'WPDieException' );
 
 		$this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(),
 			array(
 				'do'       => 'Delete File',

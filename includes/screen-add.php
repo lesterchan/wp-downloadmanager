@@ -2,8 +2,8 @@
 /**
  * The Add A File screen.
  *
- * Kept at the plugin root rather than moved into includes/: the admin menu uses
- * the legacy "plugin file as menu slug" form, so this file's path is its slug.
+ * Included by wp-admin: the menu uses the legacy "plugin file as menu slug"
+ * form, so this file's path relative to the plugins directory is its slug.
  *
  * @package WP-DownloadManager
  */
@@ -21,7 +21,7 @@ if ( ! current_user_can( 'manage_downloads' ) ) {
 
 
 // Variables.
-$base_name       = WP_DOWNLOADMANAGER_SLUG . '/download-manager.php';
+$base_name       = WP_DOWNLOADMANAGER_SLUG . '/includes/screen-manage.php';
 $base_page       = 'admin.php?page=' . $base_name;
 $file_path       = DownloadManager_Options::get( 'path.dir' );
 $file_categories = DownloadManager_Options::get( 'categories' );
@@ -36,7 +36,7 @@ global $wpdb;
 // handlers. Enqueued for every mode: add, edit and delete all use it.
 wp_enqueue_script(
 	'wp-downloadmanager-forms',
-	WP_DOWNLOADMANAGER_URL . 'download-forms.js',
+	WP_DOWNLOADMANAGER_URL . 'js/wp-downloadmanager-forms.js',
 	array(),
 	WP_DOWNLOADMANAGER_VERSION,
 	true
@@ -154,7 +154,7 @@ if ( ! empty( $text ) ) {
 }
 ?>
 <!-- Add A File -->
-<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/' . basename( __FILE__ ) ) ); ?>" enctype="multipart/form-data">
+<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . WP_DOWNLOADMANAGER_SLUG . '/includes/' . basename( __FILE__ ) ) ); ?>" enctype="multipart/form-data">
 	<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo esc_attr( get_max_upload_size() ); ?>" />
 	<?php wp_nonce_field( 'wp-downloadmanager_add-file' ); ?>
 	<div class="wrap">

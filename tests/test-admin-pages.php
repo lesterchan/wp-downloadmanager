@@ -2,7 +2,7 @@
 /**
  * Render tests for the two legacy admin screens.
  *
- * The two files download-manager.php and download-add.php are the only part of the plugin
+ * The two screen partials includes/screen-manage.php and includes/screen-add.php are the only part of the plugin
  * 2.0.0 did not rewrite - they keep the legacy "plugin file as menu slug" form,
  * so they stay at the plugin root - and they were the only files with no
  * coverage at all, which is why the escaping sniffs had to be excluded for
@@ -51,22 +51,22 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	 */
 	public function admin_page_provider() {
 		return array(
-			'manage downloads' => array( 'download-manager.php', array() ),
+			'manage downloads' => array( 'includes/screen-manage.php', array() ),
 			'edit file'        => array(
-				'download-manager.php',
+				'includes/screen-manage.php',
 				array(
 					'mode' => 'edit',
 					'id'   => '%FILE_ID%',
 				),
 			),
 			'delete file'      => array(
-				'download-manager.php',
+				'includes/screen-manage.php',
 				array(
 					'mode' => 'delete',
 					'id'   => '%FILE_ID%',
 				),
 			),
-			'add file'         => array( 'download-add.php', array() ),
+			'add file'         => array( 'includes/screen-add.php', array() ),
 		);
 	}
 
@@ -174,7 +174,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	 * Manage Downloads lists the files that exist.
 	 */
 	public function test_manage_lists_files() {
-		$html = $this->render_admin_page( 'download-manager.php' );
+		$html = $this->render_admin_page( 'includes/screen-manage.php' );
 
 		$this->assertStringContainsString( 'The Manual', $html );
 		$this->assertStringContainsString( 'Members Bundle', $html );
@@ -186,7 +186,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	 * The totals panel adds up the whole table.
 	 */
 	public function test_manage_shows_totals() {
-		$html = $this->render_admin_page( 'download-manager.php' );
+		$html = $this->render_admin_page( 'includes/screen-manage.php' );
 
 		$this->assertStringContainsString( 'Total Files:', $html );
 		$this->assertStringContainsString( 'Total Hits:', $html );
@@ -197,7 +197,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	 * The keyword filter narrows the list.
 	 */
 	public function test_manage_search_filters_the_list() {
-		$html = $this->render_admin_page( 'download-manager.php', array( 'search' => 'Manual' ) );
+		$html = $this->render_admin_page( 'includes/screen-manage.php', array( 'search' => 'Manual' ) );
 
 		$this->assertStringContainsString( 'The Manual', $html );
 		$this->assertStringNotContainsString( 'Members Bundle', $html );
@@ -210,7 +210,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	public function test_manage_search_with_a_quote_is_safe() {
 		global $wpdb;
 
-		$html = $this->render_admin_page( 'download-manager.php', array( 'search' => "' OR 1=1 -- " ) );
+		$html = $this->render_admin_page( 'includes/screen-manage.php', array( 'search' => "' OR 1=1 -- " ) );
 
 		$this->assertEmpty( $wpdb->last_error );
 		$this->assertStringContainsString( 'No Files Found', $html );
@@ -227,7 +227,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 			)
 		);
 
-		$html = $this->render_admin_page( 'download-manager.php', array( 'search' => '%' ) );
+		$html = $this->render_admin_page( 'includes/screen-manage.php', array( 'search' => '%' ) );
 
 		$this->assertStringContainsString( 'Complete', $html );
 		$this->assertStringNotContainsString( 'Members Bundle', $html );
@@ -237,7 +237,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	 * The search term comes back in the filter box without being mangled.
 	 */
 	public function test_manage_search_term_round_trips_into_the_box() {
-		$html = $this->render_admin_page( 'download-manager.php', array( 'search' => 'Tabs & "spaces"' ) );
+		$html = $this->render_admin_page( 'includes/screen-manage.php', array( 'search' => 'Tabs & "spaces"' ) );
 
 		$this->assertStringContainsString( 'value="Tabs &amp; &quot;spaces&quot;"', $html );
 		$this->assertStringNotContainsString( '&amp;amp;', $html );
@@ -253,7 +253,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	 */
 	public function test_manage_sorting( $by, $label ) {
 		$html = $this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(
 				'by'    => $by,
 				'order' => 'desc',
@@ -294,13 +294,13 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 			$this->insert_file( array( 'file_name' => 'Extra ' . $i ) );
 		}
 
-		$html = $this->render_admin_page( 'download-manager.php', array( 'perpage' => '10' ) );
+		$html = $this->render_admin_page( 'includes/screen-manage.php', array( 'perpage' => '10' ) );
 
 		$this->assertStringContainsString( 'Next Page', $html );
 		$this->assertStringContainsString( 'Pages', $html );
 
 		$page_two = $this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(
 				'perpage'  => '10',
 				'filepage' => '2',
@@ -317,7 +317,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 		global $wpdb;
 		$wpdb->query( "TRUNCATE TABLE {$wpdb->downloads}" ); // phpcs:ignore WordPress.DB
 
-		$html = $this->render_admin_page( 'download-manager.php' );
+		$html = $this->render_admin_page( 'includes/screen-manage.php' );
 
 		$this->assertStringContainsString( 'No Files Found', $html );
 		$this->assertSame( array(), $this->admin_page_notices );
@@ -337,7 +337,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 		);
 
 		$html = $this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(
 				'mode' => 'edit',
 				'id'   => (string) $file_id,
@@ -363,7 +363,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 		$file_id = $this->insert_file();
 
 		$html = $this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(
 				'mode' => 'edit',
 				'id'   => (string) $file_id,
@@ -397,7 +397,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 		);
 
 		$html = $this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(
 				'mode' => 'delete',
 				'id'   => (string) $file_id,
@@ -420,7 +420,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 		$file_id = $this->insert_file( array( 'file' => 'https://example.com/remote.zip' ) );
 
 		$html = $this->render_admin_page(
-			'download-manager.php',
+			'includes/screen-manage.php',
 			array(
 				'mode' => 'delete',
 				'id'   => (string) $file_id,
@@ -434,7 +434,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	 * The Add File screen renders its three file sources.
 	 */
 	public function test_add_screen_offers_every_file_source() {
-		$html = $this->render_admin_page( 'download-add.php' );
+		$html = $this->render_admin_page( 'includes/screen-add.php' );
 
 		$this->assertStringContainsString( 'Add A File', $html );
 		$this->assertStringContainsString( 'name="file_type" value="0"', $html );
@@ -448,7 +448,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	 * The radio auto-select is a data attribute, not an inline handler.
 	 */
 	public function test_add_screen_uses_data_attributes_not_inline_handlers() {
-		$html = $this->render_admin_page( 'download-add.php' );
+		$html = $this->render_admin_page( 'includes/screen-add.php' );
 
 		$this->assertStringContainsString( 'data-checks="file_type_0"', $html );
 		$this->assertStringContainsString( 'data-checks="file_type_1"', $html );
@@ -464,7 +464,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	 * must not appear as a choice.
 	 */
 	public function test_add_screen_lists_categories() {
-		$html = $this->render_admin_page( 'download-add.php' );
+		$html = $this->render_admin_page( 'includes/screen-add.php' );
 
 		$this->assertStringContainsString( '<option value="1">General</option>', $html );
 		$this->assertStringContainsString( '<option value="2">Software</option>', $html );
@@ -482,7 +482,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 			)
 		);
 
-		$html = $this->render_admin_page( 'download-manager.php' );
+		$html = $this->render_admin_page( 'includes/screen-manage.php' );
 
 		$this->assertStringContainsString( 'Orphaned File', $html );
 		$this->assertStringContainsString( 'N/A', $html );
@@ -496,7 +496,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 		$this->make_download_file( 'on-disk.txt' );
 		$this->make_download_file( 'nested/deeper.txt' );
 
-		$html = $this->render_admin_page( 'download-add.php' );
+		$html = $this->render_admin_page( 'includes/screen-add.php' );
 
 		$this->assertStringContainsString( '/on-disk.txt', $html );
 		$this->assertStringContainsString( '/nested/deeper.txt', $html );
@@ -508,7 +508,7 @@ class Test_Admin_Pages extends DownloadManager_TestCase {
 	 * Both screens enqueue the shared form script rather than inlining it.
 	 */
 	public function test_screens_enqueue_the_form_script() {
-		foreach ( array( 'download-manager.php', 'download-add.php' ) as $file ) {
+		foreach ( array( 'includes/screen-manage.php', 'includes/screen-add.php' ) as $file ) {
 			wp_dequeue_script( 'wp-downloadmanager-forms' );
 			wp_deregister_script( 'wp-downloadmanager-forms' );
 

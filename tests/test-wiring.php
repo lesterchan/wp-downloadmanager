@@ -26,8 +26,8 @@ class Test_Wiring extends DownloadManager_TestCase {
 	public function test_pages_are_derived_from_the_slug() {
 		$pages = DownloadManager_Admin::pages();
 
-		$this->assertSame( WP_DOWNLOADMANAGER_SLUG . '/download-manager.php', $pages['manager'] );
-		$this->assertSame( WP_DOWNLOADMANAGER_SLUG . '/download-add.php', $pages['add'] );
+		$this->assertSame( WP_DOWNLOADMANAGER_SLUG . '/includes/screen-manage.php', $pages['manager'] );
+		$this->assertSame( WP_DOWNLOADMANAGER_SLUG . '/includes/screen-add.php', $pages['add'] );
 		$this->assertSame( 'wp-downloadmanager-options', $pages['options'] );
 		$this->assertSame( 'wp-downloadmanager-templates', $pages['templates'] );
 	}
@@ -338,7 +338,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 
 		$this->assertTrue( wp_style_is( 'wp-downloadmanager', 'enqueued' ) );
 		$this->assertSame(
-			WP_DOWNLOADMANAGER_URL . 'download-css.css',
+			WP_DOWNLOADMANAGER_URL . 'css/wp-downloadmanager.css',
 			wp_styles()->registered['wp-downloadmanager']->src
 		);
 		$this->assertSame( WP_DOWNLOADMANAGER_VERSION, wp_styles()->registered['wp-downloadmanager']->ver );
@@ -348,7 +348,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 	 * A theme copy of the stylesheet wins.
 	 */
 	public function test_theme_stylesheet_overrides_the_plugin_one() {
-		$theme_css = get_stylesheet_directory() . '/download-css.css';
+		$theme_css = get_stylesheet_directory() . '/wp-downloadmanager.css';
 		file_put_contents( $theme_css, '/* theme copy */' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 
 		wp_dequeue_style( 'wp-downloadmanager' );
@@ -357,7 +357,7 @@ class Test_Wiring extends DownloadManager_TestCase {
 		DownloadManager::enqueue_styles();
 
 		$this->assertSame(
-			get_stylesheet_directory_uri() . '/download-css.css',
+			get_stylesheet_directory_uri() . '/wp-downloadmanager.css',
 			wp_styles()->registered['wp-downloadmanager']->src
 		);
 

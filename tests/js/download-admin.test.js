@@ -1,5 +1,5 @@
 /**
- * Tests for download-admin.js, the template reset buttons.
+ * Tests for js/wp-downloadmanager-admin.js, the template reset buttons.
  *
  * The stock markup used to be duplicated inside the script as a switch
  * statement, and had already fallen out of step with the defaults written on
@@ -19,7 +19,7 @@ const DEFAULTS = {
 
 beforeAll( () => {
 	window.downloadManagerDefaults = DEFAULTS;
-	loadScript( 'download-admin.js' );
+	loadScript( 'js/wp-downloadmanager-admin.js' );
 } );
 
 beforeEach( () => {
