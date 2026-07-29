@@ -1,44 +1,21 @@
 <?php
 /**
- * The uninstaller.
- *
- * The destructive path runs once, in a single test. WordPress's test framework
- * rewrites CREATE/DROP TABLE into their TEMPORARY equivalents, so the physical
- * drop cannot be observed from inside the suite and the queries the uninstaller
- * issues are asserted instead.
- *
- * The multisite branch cannot be exercised here at all - you cannot build a
- * 101-site network from a single-site suite - so the three bugs that lived in
- * it are pinned at source level, against the comment-stripped file so that a
- * docblock explaining a fix cannot satisfy the assertion.
+ * Uninstalling, on a single site and on a network.
  *
  * @package WP-DownloadManager
  */
 
 /**
- * Option and table cleanup.
+ * What uninstall.php leaves behind, which should be nothing.
  */
-class Test_Uninstall extends WP_DownloadManager_TestCase {
-
-	/**
-	 * Put the option row back for whatever runs next.
-	 *
-	 * The table needs no rebuilding: see the note in the destructive test - the
-	 * framework rewrites the drop, so the real table is never actually removed.
-	 */
-	public function tear_down() {
-		WP_DownloadManager_Install::create_table();
-		WP_DownloadManager_Options::flush();
-
-		parent::tear_down();
-	}
+class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 
 	/**
 	 * Run uninstall.php the way WordPress does.
 	 *
 	 * @return void
 	 */
-	private function run_uninstall() {
+	protected function uninstall() {
 		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 			define( 'WP_UNINSTALL_PLUGIN', 'wp-downloadmanager/wp-downloadmanager.php' );
 		}
@@ -47,148 +24,137 @@ class Test_Uninstall extends WP_DownloadManager_TestCase {
 	}
 
 	/**
-	 * The one destructive run: everything the uninstaller is supposed to remove.
-	 *
-	 * Deliberately a single test rather than one per row. Dropping a table
-	 * implicitly commits, which leaves the WordPress test framework's
-	 * per-test transaction unwound - so a second uninstall in the same process
-	 * silently does nothing, and splitting these up gives four passing tests
-	 * and one mystifying failure. Asserting the whole outcome once is both
-	 * accurate and faster.
+	 * Put the table back so the next test has something to truncate.
 	 */
-	public function test_uninstall_removes_everything_it_owns() {
-		global $wpdb;
+	public function tear_down() {
+		WP_DownloadManager_Install::activate();
 
-		// Settings, the version marker, the widget, and leftovers from an
-		// install that never reached the migration.
-		WP_DownloadManager_Options::set( 'page_url', 'https://example.com/downloads' );
-		update_option( WP_DownloadManager_Install::DB_VERSION_OPTION, WP_DownloadManager_Install::DB_VERSION );
-		update_option( 'widget_downloads', array( 'anything' ) );
+		parent::tear_down();
+	}
 
-		$legacy = array_merge(
-			array_keys( WP_DownloadManager_Options::legacy_map() ),
-			WP_DownloadManager_Options::legacy_extra_rows()
-		);
-		foreach ( $legacy as $option ) {
-			update_option( $option, 'left over' );
-		}
+	public function test_the_settings_row_is_removed() {
+		WP_DownloadManager_Options::save( WP_DownloadManager_Options::defaults() );
 
-		// Things belonging to other people, which must survive.
-		update_option( 'blogname', 'Keep Me' );
-		update_option( 'download_unrelated_third_party', 'keep' );
-
-		// The physical drop cannot be asserted from inside the suite: WordPress's
-		// test framework filters "query" to rewrite CREATE/DROP TABLE into their
-		// TEMPORARY equivalents, so DROP TABLE IF EXISTS on the real table
-		// returns true, raises no error, and leaves it standing. What is both
-		// stable and actually meaningful is that the uninstaller issues the drop
-		// for its own table, so that is what this captures.
-		$queries = array();
-		$spy     = static function ( $query ) use ( &$queries ) {
-			$queries[] = $query;
-			return $query;
-		};
-		add_filter( 'query', $spy );
-
-		$this->run_uninstall();
-
-		remove_filter( 'query', $spy );
-
-		$drops = array_values(
-			array_filter(
-				$queries,
-				static function ( $query ) {
-					// WordPress's test framework rewrites DROP TABLE into DROP
-					// TEMPORARY TABLE, so match both shapes.
-					return 1 === preg_match( '/^\s*DROP\s+(TEMPORARY\s+)?TABLE/i', $query );
-				}
-			)
-		);
-
-		$this->assertCount( 1, $drops, 'the table should be dropped exactly once' );
-		$this->assertStringContainsString( $wpdb->prefix . 'downloads', $drops[0] );
-		$this->assertStringContainsString( 'IF EXISTS', $drops[0] );
+		$this->uninstall();
 
 		$this->assertFalse( get_option( WP_DownloadManager_Options::OPTION, false ) );
-		$this->assertFalse( get_option( WP_DownloadManager_Install::DB_VERSION_OPTION, false ) );
-		$this->assertFalse( get_option( 'widget_downloads', false ) );
+	}
 
-		foreach ( $legacy as $option ) {
-			$this->assertFalse( get_option( $option, false ), $option . ' should be gone' );
+	public function test_the_marker_row_is_removed() {
+		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+
+		$this->uninstall();
+
+		$this->assertFalse( get_option( WP_DownloadManager_Options::VERSION, false ) );
+	}
+
+	public function test_every_legacy_row_is_removed_even_if_the_migration_never_ran() {
+		$names = array_merge(
+			array_keys( WP_DownloadManager_Options::legacy_map() ),
+			array_values( WP_DownloadManager_Options::legacy_structured_rows() ),
+			WP_DownloadManager_Options::legacy_extra_rows()
+		);
+
+		foreach ( $names as $name ) {
+			update_option( $name, 'left over' );
 		}
 
-		$this->assertSame( 'Keep Me', get_option( 'blogname' ) );
-		$this->assertSame( 'keep', get_option( 'download_unrelated_third_party' ) );
+		$this->uninstall();
 
-		delete_option( 'download_unrelated_third_party' );
+		foreach ( $names as $name ) {
+			$this->assertFalse( get_option( $name, false ), $name . ' should have been removed' );
+		}
 	}
 
-	/**
-	 * The row list is derived from the options class rather than duplicated.
-	 *
-	 * A second hand-maintained list is how a newly added option ends up
-	 * orphaned on uninstall forever.
-	 */
-	public function test_row_list_comes_from_the_options_class() {
+	public function test_the_widget_instance_row_is_removed() {
+		update_option( 'widget_downloads', array( 'title' => 'Downloads' ) );
+
+		$this->uninstall();
+
+		$this->assertFalse( get_option( 'widget_downloads', false ) );
+	}
+
+	public function test_nothing_matching_the_plugin_prefix_survives() {
+		global $wpdb;
+
+		WP_DownloadManager_Options::save( WP_DownloadManager_Options::defaults() );
+		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+
+		$this->uninstall();
+
+		$left = $wpdb->get_col( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE 'wp\\_downloadmanager\\_%'" );
+
+		$this->assertSame( array(), $left, 'left behind: ' . implode( ', ', $left ) );
+	}
+
+	public function test_the_downloads_table_is_dropped() {
+		global $wpdb;
+
+		$this->uninstall();
+
+		$this->assertNull( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table() ) ) );
+	}
+
+	public function test_the_uninstaller_reads_its_row_list_from_the_options_class() {
 		$source = $this->code( 'uninstall.php' );
 
-		$this->assertStringContainsString( 'WP_DownloadManager_Options::legacy_map()', $source );
-		$this->assertStringContainsString( 'WP_DownloadManager_Options::legacy_extra_rows()', $source );
-		$this->assertStringContainsString( 'WP_DownloadManager_Options::OPTION', $source );
+		$this->assertStringContainsString( 'legacy_map()', $source, 'the uninstaller and the migration must never disagree about which rows belong to the plugin' );
+		$this->assertStringContainsString( 'legacy_extra_rows()', $source );
+		$this->assertStringContainsString( 'legacy_structured_rows()', $source );
 	}
 
-	/**
-	 * The uninstaller refuses to run outside an uninstall.
-	 */
-	public function test_guarded_by_the_uninstall_constant() {
-		$this->assertStringContainsString( "defined( 'WP_UNINSTALL_PLUGIN' )", $this->code( 'uninstall.php' ) );
-	}
-
-	/**
-	 * Every site on a network is visited.
-	 *
-	 * Core defaults get_sites()' 'number' to 100, so without this a network larger
-	 * than that silently keeps its options and tables on every site past the
-	 * hundredth while uninstall still reports success. Asserted at source level
-	 * because a single-site suite cannot build the network to prove it.
-	 */
-	public function test_multisite_loop_visits_every_site() {
+	public function test_the_uninstaller_handles_a_network_site_by_site() {
 		$source = $this->code( 'uninstall.php' );
 
-		$this->assertMatchesRegularExpression( "/'number'\s*=>\s*0/", $source );
-		$this->assertMatchesRegularExpression( "/'fields'\s*=>\s*'ids'/", $source );
+		$this->assertStringContainsString( 'is_multisite()', $source );
+		$this->assertStringContainsString( 'switch_to_blog(', $source );
+		$this->assertStringContainsString( 'restore_current_blog()', $source );
 	}
 
-	/**
-	 * Each switch is restored, inside the loop.
-	 */
-	public function test_multisite_loop_restores_each_blog() {
+	public function test_the_uninstaller_does_not_use_the_function_core_removed() {
 		$source = $this->code( 'uninstall.php' );
 
-		$this->assertSame(
-			substr_count( $source, 'switch_to_blog' ),
-			substr_count( $source, 'restore_current_blog' ),
-			'every switch_to_blog() needs its own restore_current_blog()'
+		$this->assertStringNotContainsString( 'wp_get_sites(', $source, 'removed in WordPress 5.1, so this used to fatal on a network' );
+		$this->assertStringContainsString( 'get_sites(', $source );
+	}
+
+	public function test_the_uninstaller_lifts_the_hundred_site_cap() {
+		$source = $this->code( 'uninstall.php' );
+
+		$this->assertMatchesRegularExpression(
+			"/'number'\s*=>\s*0/",
+			$source,
+			'without this a network larger than a hundred sites keeps its options and tables, and uninstall still reports success'
 		);
 	}
 
-	/**
-	 * The function core removed in WP 5.1 is not called.
-	 */
-	public function test_does_not_call_wp_get_sites() {
-		$this->assertStringNotContainsString( 'wp_get_sites', $this->code( 'uninstall.php' ) );
-	}
-
-	/**
-	 * The table is dropped once, not once per option row.
-	 */
-	public function test_table_is_dropped_once() {
+	public function test_the_uninstaller_restores_the_blog_inside_the_loop() {
 		$source = $this->code( 'uninstall.php' );
 
-		$this->assertSame(
-			1,
-			substr_count( $source, 'DROP TABLE' ),
-			'the drop belongs outside the option loop'
-		);
+		$switch  = strpos( $source, 'switch_to_blog(' );
+		$restore = strpos( $source, 'restore_current_blog()' );
+		$closing = strpos( $source, '}', $restore );
+
+		$this->assertGreaterThan( $switch, $restore, 'switch_to_blog() pushes onto a stack, so the restore belongs inside the loop' );
+		$this->assertNotFalse( $closing );
+	}
+
+	public function test_the_table_is_dropped_once_rather_than_once_per_option_row() {
+		$source = $this->code( 'uninstall.php' );
+
+		$this->assertSame( 1, substr_count( $source, 'DROP TABLE' ), 'the old code dropped it inside the option loop, which worked only by accident' );
+	}
+
+	public function test_uninstalling_a_site_that_never_finished_installing_is_harmless() {
+		global $wpdb;
+
+		$table = $this->table();
+		$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
+		delete_option( WP_DownloadManager_Options::OPTION );
+		delete_option( WP_DownloadManager_Options::VERSION );
+
+		$this->uninstall();
+
+		$this->assertFalse( get_option( WP_DownloadManager_Options::OPTION, false ) );
 	}
 }

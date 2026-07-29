@@ -313,8 +313,17 @@ theme to override it, that copy is now `wp-downloadmanager.css` and the class
 `download-search-highlight` is `wp-downloadmanager-highlight`. The plugin no
 longer sets fonts or colours at all, so your theme's own styling comes through.
 
-**WP-Stats settings moved.** The toggle for the downloads section and the number
-of rows it lists used to live in WP-Stats and were shared with several other
-plugins. They are on this plugin's own Settings page now, under WP-Stats
-Options. Set them once after upgrading. If you use WP-Stats, upgrade it at the
-same time.
+**WP-Stats settings moved — update all seven plugins together.** The toggle for
+the downloads section and the number of rows it lists used to live in two
+WP-Stats database rows that seven of my plugins shared. Each plugin keeps its own
+copy now, and each one deletes the shared rows once it has read them. That means
+whichever of the seven you update first takes those rows away from the others,
+so update WP-Stats, WP-DownloadManager, WP-EMail, WP-Polls, WP-PostRatings,
+WP-PostViews and WP-UserOnline in one go.
+
+If you do update them one at a time, nothing breaks and nothing is lost: a
+plugin that finds the shared rows already gone assumes its block should be shown,
+because a block you have to switch off again is a far better outcome than a block
+that disappears with no explanation. Switch it off under
+`WP-Admin -> Downloads -> Settings`, in the WP-Stats Options section of the
+General tab, which is also where the row count now lives.

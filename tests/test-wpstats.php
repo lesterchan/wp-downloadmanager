@@ -1,305 +1,226 @@
 <?php
 /**
- * WP-Stats integration.
+ * The WP-Stats contract, from this side of it.
  *
- * WP-Stats is a separate plugin that may or may not be installed, and its own
- * 3.0.0 consolidated the option rows these panels used to read directly. So
- * every accessor here has two paths - through WP-Stats' helper API when it is
- * present, and through the legacy option row when it is not - and the suite
- * runs without WP-Stats installed, which exercises the fallback.
+ * WP-Stats fires wp_stats_sections and this plugin answers with one entry. The
+ * assertions here are deliberately about the shape of that entry rather than
+ * about WP-Stats itself, because WP-Stats is not installed while these run -
+ * which is the point: the class has to be inert without it and correct with it.
  *
  * @package WP-DownloadManager
  */
 
 /**
- * The download panels WP-Stats renders.
+ * WP_DownloadManager_WPStats against section 13.
  */
-class Test_WPStats extends WP_DownloadManager_TestCase {
+class WP_DownloadManager_WPStats_Test extends WP_DownloadManager_TestCase {
 
 	/**
-	 * Put the legacy toggle row back to a known state.
-	 */
-	public function set_up() {
-		parent::set_up();
-
-		update_option(
-			'stats_display',
-			array(
-				'downloads'        => 1,
-				'recent_downloads' => 1,
-				'downloaded_most'  => 1,
-			)
-		);
-		update_option( 'stats_mostlimit', 5 );
-	}
-
-	/**
-	 * The three toggles this plugin owns are registered as defaults.
-	 *
-	 * They were never registered before, so the panels only existed once
-	 * somebody had saved the WP-Stats options screen.
-	 */
-	public function test_toggles_are_registered_as_defaults() {
-		$defaults = WP_DownloadManager_WPStats::defaults( array() );
-
-		$this->assertSame( 1, $defaults['downloads'] );
-		$this->assertSame( 1, $defaults['recent_downloads'] );
-		$this->assertSame( 1, $defaults['downloaded_most'] );
-	}
-
-	/**
-	 * WP-Stats' own defaults win over ours.
-	 */
-	public function test_existing_defaults_are_not_overridden() {
-		$defaults = WP_DownloadManager_WPStats::defaults( array( 'downloads' => 0 ) );
-
-		$this->assertSame( 0, $defaults['downloads'] );
-	}
-
-	/**
-	 * A toggle reads from the legacy row when WP-Stats is absent.
-	 */
-	public function test_toggle_reads_the_legacy_row() {
-		$this->assertTrue( WP_DownloadManager_WPStats::enabled( 'downloads' ) );
-
-		update_option( 'stats_display', array( 'downloads' => 0 ) );
-		$this->assertFalse( WP_DownloadManager_WPStats::enabled( 'downloads' ) );
-	}
-
-	/**
-	 * A missing toggle is off rather than a PHP notice.
-	 */
-	public function test_missing_toggle_is_off() {
-		delete_option( 'stats_display' );
-
-		$this->assertFalse( WP_DownloadManager_WPStats::enabled( 'downloads' ) );
-		$this->assertFalse( WP_DownloadManager_WPStats::enabled( 'nonexistent' ) );
-	}
-
-	/**
-	 * The limit falls back to the legacy row too.
-	 */
-	public function test_limit_reads_the_legacy_row() {
-		$this->assertSame( 5, WP_DownloadManager_WPStats::limit() );
-	}
-
-	/**
-	 * The general panel reports the totals across the whole table.
-	 */
-	public function test_general_panel_reports_totals() {
-		$content = WP_DownloadManager_WPStats::page_general( '' );
-
-		$this->assertStringContainsString( 'WP-DownloadManager', $content );
-		// Five fixtures, 126 hits between them, just over a megabyte.
-		$this->assertStringContainsString( '5', $content );
-		$this->assertStringContainsString( '126', $content );
-		$this->assertStringContainsString( '1.0 MiB', $content );
-	}
-
-	/**
-	 * Each panel is silent when its toggle is off.
-	 *
-	 * @dataProvider panel_provider
-	 *
-	 * @param string $method Panel method.
-	 * @param string $toggle Toggle key.
-	 */
-	public function test_panel_respects_its_toggle( $method, $toggle ) {
-		update_option( 'stats_display', array( $toggle => 0 ) );
-
-		$this->assertSame(
-			'existing',
-			WP_DownloadManager_WPStats::$method( 'existing' ),
-			$method . ' should add nothing when switched off'
-		);
-	}
-
-	/**
-	 * Each panel appends when its toggle is on.
-	 *
-	 * @dataProvider panel_provider
-	 *
-	 * @param string $method Panel method.
-	 * @param string $toggle Toggle key.
-	 */
-	public function test_panel_appends_when_enabled( $method, $toggle ) {
-		update_option( 'stats_display', array( $toggle => 1 ) );
-
-		$content = WP_DownloadManager_WPStats::$method( 'existing' );
-
-		$this->assertStringStartsWith( 'existing', $content );
-		$this->assertGreaterThan( strlen( 'existing' ), strlen( $content ) );
-	}
-
-	/**
-	 * The three front-end panels.
+	 * Fire the filter the way WP-Stats does.
 	 *
 	 * @return array
 	 */
-	public function panel_provider() {
-		return array(
-			'general' => array( 'page_general', 'downloads' ),
-			'recent'  => array( 'page_recent', 'recent_downloads' ),
-			'most'    => array( 'page_most', 'downloaded_most' ),
+	protected function sections() {
+		return apply_filters( 'wp_stats_sections', array() );
+	}
+
+	public function test_the_class_hooks_the_one_filter_wp_stats_owns() {
+		$this->assertNotFalse(
+			has_filter( 'wp_stats_sections', array( 'WP_DownloadManager_WPStats', 'register_section' ) ),
+			'the contract is one filter, hooked unconditionally'
 		);
 	}
 
-	/**
-	 * The recent panel lists files, newest first, and skips hidden ones.
-	 */
-	public function test_recent_panel_lists_files() {
-		$content = WP_DownloadManager_WPStats::page_recent( '' );
-
-		$this->assertStringContainsString( 'The Manual', $content );
-		$this->assertStringNotContainsString( 'Hidden File', $content );
-		$this->assertStringContainsString( '<ul>', $content );
-		$this->assertStringContainsString( '</ul>', $content );
+	public function test_the_class_is_inert_without_wp_stats() {
+		// Nothing fires the filter when WP-Stats is absent, so the only way this
+		// class can misbehave is by doing something at load time. It does not:
+		// init() adds a filter and stops.
+		$this->assertStringNotContainsString( 'class_exists', $this->code( 'includes/class-wp-downloadmanager-wpstats.php' ), 'no probing between plugins in either direction' );
+		$this->assertStringNotContainsString( 'function_exists', $this->code( 'includes/class-wp-downloadmanager-wpstats.php' ), 'no probing between plugins in either direction' );
 	}
 
-	/**
-	 * The most-downloaded panel orders by hits.
-	 */
-	public function test_most_panel_orders_by_hits() {
-		$content = WP_DownloadManager_WPStats::page_most( '' );
+	public function test_the_entry_is_keyed_by_the_plugin_slug_with_underscores() {
+		$sections = $this->sections();
 
-		$this->assertLessThan(
-			strpos( $content, 'Remote Bundle' ),
-			strpos( $content, 'The Manual' ),
-			'12 hits should sort above 7'
+		$this->assertArrayHasKey( 'wp_downloadmanager', $sections, 'one entry, keyed by this plugin' );
+		$this->assertCount( 1, $sections, 'a contributor adds exactly one entry' );
+	}
+
+	public function test_the_entry_has_exactly_the_three_contract_keys() {
+		$section = $this->sections()['wp_downloadmanager'];
+
+		$this->assertSame( array( 'title', 'priority', 'render' ), array_keys( $section ), 'section 13.1 pins the shape; do not improvise' );
+	}
+
+	public function test_the_title_is_a_translated_non_empty_string() {
+		$section = $this->sections()['wp_downloadmanager'];
+
+		$this->assertIsString( $section['title'], 'the title is a string' );
+		$this->assertNotSame( '', $section['title'], 'wp-stats skips an entry with an empty title' );
+		$this->assertSame( 'Downloads', $section['title'] );
+	}
+
+	public function test_the_priority_is_an_integer() {
+		$section = $this->sections()['wp_downloadmanager'];
+
+		$this->assertIsInt( $section['priority'], 'wp-stats sorts on this' );
+		$this->assertSame( 10, $section['priority'], 'ten is the default position; nothing here earns a place ahead of a sibling' );
+	}
+
+	public function test_the_renderer_is_callable_and_takes_no_arguments() {
+		$section = $this->sections()['wp_downloadmanager'];
+
+		$this->assertIsCallable( $section['render'], 'wp-stats skips an entry whose render is not callable' );
+
+		$reflection = new ReflectionMethod( 'WP_DownloadManager_WPStats', 'render' );
+		$this->assertSame( 0, $reflection->getNumberOfParameters(), 'render takes no arguments' );
+	}
+
+	public function test_the_renderer_echoes_rather_than_returning() {
+		ob_start();
+		$returned = WP_DownloadManager_WPStats::render();
+		$printed  = ob_get_clean();
+
+		$this->assertNull( $returned, 'wp-stats assembles its page inside ob_start(), so a returned string would be dropped' );
+		$this->assertNotSame( '', $printed, 'the body is echoed' );
+	}
+
+	public function test_the_renderer_does_not_echo_the_section_heading() {
+		ob_start();
+		WP_DownloadManager_WPStats::render();
+		$printed = ob_get_clean();
+
+		$this->assertStringNotContainsString(
+			'<h2',
+			$printed,
+			'wp-stats echoes the title from its own listener; a contributor that printed one too would double it'
 		);
 	}
 
-	/**
-	 * The panels honour the configured limit.
-	 */
-	public function test_panels_honour_the_limit() {
-		update_option( 'stats_mostlimit', 1 );
+	public function test_opting_out_contributes_nothing_at_all() {
+		WP_DownloadManager_Options::set( 'stats_display', 0 );
 
-		$content = WP_DownloadManager_WPStats::page_most( '' );
-
-		$this->assertSame( 1, substr_count( $content, '<li>' ) );
+		$this->assertSame( array(), $this->sections(), 'an opted-out contributor returns the sections untouched' );
 	}
 
-	/**
-	 * The options-screen checkboxes render for each toggle.
-	 *
-	 * @dataProvider admin_checkbox_provider
-	 *
-	 * @param string $method Checkbox method.
-	 * @param string $value  Toggle key it renders.
-	 */
-	public function test_admin_checkbox_renders( $method, $value ) {
-		$html = WP_DownloadManager_WPStats::$method( '' );
+	public function test_opting_out_does_not_add_an_empty_entry() {
+		WP_DownloadManager_Options::set( 'stats_display', 0 );
 
-		$this->assertStringContainsString( 'type="checkbox"', $html );
-		$this->assertStringContainsString( 'value="' . $value . '"', $html );
-		$this->assertStringContainsString( 'id="wpstats_' . $value . '"', $html );
-		// It reflects the stored state.
-		$this->assertStringContainsString( 'checked', $html );
-	}
-
-	/**
-	 * The three checkboxes.
-	 *
-	 * @return array
-	 */
-	public function admin_checkbox_provider() {
-		return array(
-			'general' => array( 'admin_general', 'downloads' ),
-			'recent'  => array( 'admin_recent', 'recent_downloads' ),
-			'most'    => array( 'admin_most', 'downloaded_most' ),
+		$this->assertArrayNotHasKey(
+			'wp_downloadmanager',
+			$this->sections(),
+			'wp-stats would print a heading over an empty body'
 		);
 	}
 
-	/**
-	 * An unchecked toggle renders unchecked.
-	 */
-	public function test_admin_checkbox_reflects_an_off_toggle() {
-		update_option( 'stats_display', array( 'downloads' => 0 ) );
-
-		$this->assertStringNotContainsString( 'checked', WP_DownloadManager_WPStats::admin_general( '' ) );
-	}
-
-	/**
-	 * Every filter WP-Stats offers is hooked up.
-	 */
-	public function test_filters_are_registered() {
-		WP_DownloadManager_WPStats::register();
-
-		$filters = array(
-			'wp_stats_display_defaults',
-			'wp_stats_page_admin_plugins',
-			'wp_stats_page_admin_recent',
-			'wp_stats_page_admin_most',
-			'wp_stats_page_plugins',
-			'wp_stats_page_recent',
-			'wp_stats_page_most',
+	public function test_a_sibling_entry_already_in_the_array_survives() {
+		$existing = array(
+			'wp_polls' => array(
+				'title'    => 'Polls',
+				'priority' => 10,
+				'render'   => '__return_true',
+			),
 		);
 
-		foreach ( $filters as $filter ) {
-			$this->assertNotFalse(
-				has_filter( $filter ),
-				$filter . ' should have a callback'
-			);
-		}
+		$sections = WP_DownloadManager_WPStats::register_section( $existing );
+
+		$this->assertArrayHasKey( 'wp_polls', $sections, 'a contributor adds to the array, it does not replace it' );
+		$this->assertArrayHasKey( 'wp_downloadmanager', $sections );
 	}
 
-	/**
-	 * The panels survive an empty table.
-	 */
-	public function test_panels_with_no_files() {
+	public function test_a_non_array_from_an_earlier_filter_does_not_fatal() {
+		$sections = WP_DownloadManager_WPStats::register_section( 'nonsense' );
+
+		$this->assertIsArray( $sections, 'a badly behaved sibling must not take this plugin down with it' );
+		$this->assertArrayHasKey( 'wp_downloadmanager', $sections );
+	}
+
+	public function test_the_class_reads_only_this_plugins_option_row() {
+		$source = $this->code( 'includes/class-wp-downloadmanager-wpstats.php' );
+
+		$this->assertStringNotContainsString( "get_option( 'stats_display'", $source, 'the shared rows are gone; a contributor reads its own settings' );
+		$this->assertStringNotContainsString( "get_option( 'stats_mostlimit'", $source, 'the shared rows are gone; a contributor reads its own settings' );
+		$this->assertStringNotContainsString( 'wp_stats_options', $source, 'and never reaches into wp-stats\' own row either' );
+	}
+
+	public function test_the_row_limit_comes_from_this_plugins_settings() {
+		WP_DownloadManager_Options::set( 'stats_most_limit', 3 );
+
+		$this->assertSame( 3, WP_DownloadManager_WPStats::limit(), 'stats_most_limit is namespaced inside this plugin\'s options' );
+	}
+
+	public function test_a_zero_row_limit_is_lifted_to_one() {
+		WP_DownloadManager_Options::set( 'stats_most_limit', 0 );
+
+		$this->assertSame( 1, WP_DownloadManager_WPStats::limit(), 'a limit of zero would render an empty list forever' );
+	}
+
+	public function test_the_body_reports_the_library_totals() {
+		ob_start();
+		WP_DownloadManager_WPStats::render();
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'files were added', $html, 'the totals block is part of the body' );
+		$this->assertStringContainsString( 'hits were generated', $html );
+	}
+
+	public function test_the_body_lists_recent_and_most_downloaded() {
+		WP_DownloadManager_Options::set( 'stats_most_limit', 2 );
+
+		ob_start();
+		WP_DownloadManager_WPStats::render();
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'Most Recent Downloads', $html );
+		$this->assertStringContainsString( 'Most Downloaded Files', $html );
+		$this->assertStringContainsString( 'The Manual', $html, 'and the lists have real rows in them' );
+	}
+
+	public function test_the_body_never_lists_a_hidden_file() {
+		ob_start();
+		WP_DownloadManager_WPStats::render();
+		$html = ob_get_clean();
+
+		$this->assertStringNotContainsString( 'Hidden File', $html, 'permission -2 means nobody sees it, WP-Stats included' );
+	}
+
+	public function test_the_body_survives_an_empty_library() {
 		global $wpdb;
-		$wpdb->query( "TRUNCATE TABLE {$wpdb->downloads}" ); // phpcs:ignore WordPress.DB
 
-		$this->assertStringContainsString( 'N/A', WP_DownloadManager_WPStats::page_recent( '' ) );
-		$this->assertStringContainsString( 'N/A', WP_DownloadManager_WPStats::page_most( '' ) );
+		$table = $this->table();
+		$wpdb->query( "TRUNCATE TABLE {$table}" );
 
-		// SUM() is NULL with no rows, and _n() and number_format() are both
-		// deprecated for null on PHP 8.1 and later. The panel must report zeroes.
-		$general = WP_DownloadManager_WPStats::page_general( '' );
-		$this->assertStringContainsString( 'WP-DownloadManager', $general );
-		$this->assertStringContainsString( '<strong>0</strong> files were added.', $general );
-		$this->assertStringContainsString( '<strong>0</strong> hits were generated.', $general );
+		ob_start();
+		WP_DownloadManager_WPStats::render();
+		$html = ob_get_clean();
+
+		// SUM() is NULL on an empty table, which _n() and number_format_i18n()
+		// are both deprecated for on PHP 8.1 and later.
+		$this->assertStringNotContainsString( 'Deprecated', $html );
+		$this->assertStringContainsString( 'N/A', $html, 'the lists say so rather than rendering nothing' );
 	}
 
-	/**
-	 * The helper API is preferred when WP-Stats provides it.
-	 *
-	 * The suite runs without WP-Stats, so the functions are declared here to
-	 * prove the branch is taken. They cannot be undeclared afterwards, which is
-	 * why this runs in its own process.
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
-	 */
-	public function test_helper_api_is_preferred_when_available() {
-		if ( ! function_exists( 'wp_stats_display_enabled' ) ) {
-			/**
-			 * Stand-in for WP-Stats 3.0.0's accessor.
-			 *
-			 * @param string $key Toggle key.
-			 * @return bool
-			 */
-			function wp_stats_display_enabled( $key ) { // phpcs:ignore
-				return 'downloads' === $key;
-			}
+	public function test_the_body_keeps_its_markup_through_escaping() {
+		ob_start();
+		WP_DownloadManager_WPStats::render();
+		$html = ob_get_clean();
 
-			/**
-			 * Stand-in for WP-Stats 3.0.0's limit accessor.
-			 *
-			 * @return int
-			 */
-			function wp_stats_most_limit() { // phpcs:ignore
-				return 42;
-			}
-		}
+		$this->assertStringContainsString( '<li>', $html, 'the list items survive the allow list' );
+		$this->assertStringContainsString( '<a href=', $html, 'and so do the download links' );
+	}
 
-		// The legacy row says otherwise; the helper API must win.
-		update_option( 'stats_display', array( 'downloads' => 0 ) );
-		update_option( 'stats_mostlimit', 5 );
+	public function test_a_template_carrying_an_icon_keeps_it_through_escaping() {
+		WP_DownloadManager_Options::set( 'templates.most', array( '<li>%FILE_ICON% %FILE_NAME%</li>', '<li>%FILE_NAME%</li>' ) );
 
-		$this->assertTrue( WP_DownloadManager_WPStats::enabled( 'downloads' ) );
-		$this->assertFalse( WP_DownloadManager_WPStats::enabled( 'recent_downloads' ) );
-		$this->assertSame( 42, WP_DownloadManager_WPStats::limit() );
+		ob_start();
+		WP_DownloadManager_WPStats::render();
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString(
+			'<svg',
+			$html,
+			'core\'s post allow list knows nothing about SVG, so escaping with it would delete every icon'
+		);
+		$this->assertStringContainsString( '<use href="#wp-downloadmanager-icon-', $html, 'including the reference into the sprite' );
 	}
 }

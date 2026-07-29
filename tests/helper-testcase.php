@@ -1,15 +1,16 @@
 <?php
 /**
- * Shared fixtures for the WP-DownloadManager suite.
+ * The base test case for the WP-DownloadManager suite.
  *
- * Every test starts from the same table contents and the same option values,
- * so the golden-master assertions in test-golden.php compare like with like.
+ * Every test starts from the same table contents and the same option values, so
+ * two tests never see each other's downloads and an assertion about rendered
+ * markup compares like with like.
  *
  * @package WP-DownloadManager
  */
 
 /**
- * Base class: a clean downloads table plus a known set of files.
+ * A clean downloads table, known settings, and the helpers the suite shares.
  */
 abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 
@@ -30,7 +31,7 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 	protected $ids = array();
 
 	/**
-	 * Reset the table and the options before each test.
+	 * Reset the table, the options and the sprite before each test.
 	 */
 	public function set_up() {
 		parent::set_up();
@@ -38,9 +39,10 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 		global $wpdb;
 
 		$table = $this->table();
-		$wpdb->query( "TRUNCATE TABLE {$table}" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "TRUNCATE TABLE {$table}" );
 
 		$this->reset_options();
+		WP_DownloadManager_Display::reset_sprite();
 		$this->seed_files();
 	}
 
@@ -67,6 +69,7 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 		$defaults['categories'] = array( '', 'General', 'Software' );
 
 		WP_DownloadManager_Options::save( $defaults );
+		WP_DownloadManager_Options::save_markers( WP_DOWNLOADMANAGER_VERSION, WP_DOWNLOADMANAGER_DB_VERSION );
 	}
 
 	/**
@@ -74,6 +77,8 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 	 *
 	 * One per permission level so the access-control branches are all reachable,
 	 * plus two in a second category so the grouping headers fire.
+	 *
+	 * @return array
 	 */
 	protected function seed_files() {
 		$this->ids = array();
@@ -162,9 +167,32 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 			$args
 		);
 
-		$wpdb->insert( $this->table(), $args ); // phpcs:ignore WordPress.DB
+		$wpdb->insert( $this->table(), $args );
 
 		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * One row back out of the table.
+	 *
+	 * @param int $file_id File ID.
+	 * @return object|null
+	 */
+	protected function fetch_file( $file_id ) {
+		global $wpdb;
+
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->downloads} WHERE file_id = %d", (int) $file_id ) );
+	}
+
+	/**
+	 * How many rows the table holds.
+	 *
+	 * @return int
+	 */
+	protected function count_files() {
+		global $wpdb;
+
+		return (int) $wpdb->get_var( "SELECT COUNT(file_id) FROM {$wpdb->downloads}" );
 	}
 
 	/**
@@ -178,16 +206,45 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 
 		if ( '' === $role ) {
 			wp_set_current_user( 0 );
-			$user_ID = 0; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+			$user_ID = 0;
 
 			return 0;
 		}
 
 		$uid = self::factory()->user->create( array( 'role' => $role ) );
 		wp_set_current_user( $uid );
-		$user_ID = $uid; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+		$user_ID = $uid;
 
 		return $uid;
+	}
+
+	/**
+	 * Stand in for wp-admin having routed to one of the plugin's screens.
+	 *
+	 * WP_List_Table's constructor reaches WP_Screen::get(), and its bulk-action
+	 * and column filters are named after the screen id, so a list-table test
+	 * that skips this is testing something wp-admin would never produce.
+	 *
+	 * @param string $screen Screen id.
+	 * @return void
+	 */
+	protected function on_admin_screen( $screen = 'toplevel_page_wp-downloadmanager' ) {
+		global $hook_suffix;
+
+		$hook_suffix = $screen;
+		set_current_screen( $screen );
+	}
+
+	/**
+	 * Become a user who may manage downloads.
+	 *
+	 * The screens call wp_die() when the capability check fails, which would
+	 * take the test runner with it, so every render test has to be one.
+	 *
+	 * @return int User ID.
+	 */
+	protected function become_download_admin() {
+		return $this->login_as( 'administrator' );
 	}
 
 	/**
@@ -201,42 +258,42 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 	}
 
 	/**
-	 * PHP diagnostics raised by the last render_admin_page() call.
+	 * PHP diagnostics raised by the last render() call.
 	 *
 	 * @var array
 	 */
-	protected $admin_page_notices = array();
+	protected $notices = array();
 
 	/**
-	 * Render one of the legacy admin pages and return its HTML.
+	 * Run a callable with $_GET and $_POST set, and capture what it prints.
 	 *
-	 * Both admin pages are procedural and run at global
-	 * scope under wp-admin, so they reach for $wpdb without owning it. Requiring
-	 * them from inside a method only works because this helper pulls the same
-	 * globals in first; without that they would silently render half a page.
+	 * Every notice, warning and deprecation raised while it runs is collected
+	 * into $notices, so a test can assert the screen is clean under current PHP
+	 * rather than only that it produced some output.
 	 *
-	 * Every notice, warning and deprecation raised while the page runs is
-	 * collected into $admin_page_notices, so a test can assert the page is clean
-	 * under PHP 8 rather than only that it produced some output.
-	 *
-	 * @param string $file File name relative to the plugin root.
-	 * @param array  $get  $_GET for the request.
-	 * @param array  $post $_POST for the request.
+	 * @param callable $callback Screen renderer.
+	 * @param array    $get      $_GET for the request.
+	 * @param array    $post     $_POST for the request.
 	 * @return string
 	 */
-	protected function render_admin_page( $file, $get = array(), $post = array() ) {
-		global $wpdb, $wp_locale, $hook_suffix;
+	protected function render( $callback, $get = array(), $post = array() ) {
+		global $hook_suffix;
 
-		$this->admin_page_notices = array();
+		if ( ! isset( $hook_suffix ) ) {
+			// wp-admin sets this before any page callback runs; WP_List_Table's
+			// constructor reaches WP_Screen::get(), which reads it.
+			$hook_suffix = '';
+		}
+
+		$this->notices = array();
 
 		$_GET     = $get;
 		$_POST    = $post;
 		$_REQUEST = array_merge( $get, $post );
 
-		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Collecting PHP diagnostics is the point of this helper.
 		set_error_handler(
 			function ( $errno, $errstr, $errfile, $errline ) {
-				$this->admin_page_notices[] = $errstr . ' in ' . basename( $errfile ) . ':' . $errline;
+				$this->notices[] = $errstr . ' in ' . basename( $errfile ) . ':' . $errline;
 				return true;
 			}
 		);
@@ -246,10 +303,10 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 
 		try {
 			ob_start();
-			require WP_DOWNLOADMANAGER_DIR . $file;
+			call_user_func( $callback );
 		} finally {
 			// check_admin_referer() calls wp_die(), which throws out of the
-			// require, so the buffer has to be closed here or it leaks into the
+			// callback, so the buffer has to be closed here or it leaks into the
 			// next test and PHPUnit reports the run as risky.
 			while ( ob_get_level() > $depth ) {
 				$html = ob_get_clean() . $html;
@@ -264,28 +321,48 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Become a user who may manage downloads.
+	 * Assert that the last render() raised nothing PHP would complain about.
 	 *
-	 * The admin pages call die() when the check fails, which would take the test
-	 * runner with it, so every render test has to be an administrator.
-	 *
-	 * @return int User ID.
+	 * @param string $html Markup the screen produced.
+	 * @return void
 	 */
-	protected function become_download_admin() {
-		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		wp_set_current_user( $user_id );
-
-		return $user_id;
+	protected function assertScreenIsClean( $html ) {
+		$this->assertSame( array(), $this->notices, 'the screen raised PHP diagnostics: ' . implode( '; ', $this->notices ) );
+		$this->assertStringNotContainsString( 'Warning', $html, 'the screen printed a warning' );
+		$this->assertStringNotContainsString( 'Undefined', $html, 'the screen printed an undefined-key notice' );
+		$this->assertStringNotContainsString( 'translators:', $html, 'a translator comment leaked into the markup' );
 	}
 
 	/**
-	 * A nonce field value for one of the admin forms.
+	 * A nonce value for one of the admin forms.
 	 *
 	 * @param string $action Nonce action.
 	 * @return string
 	 */
 	protected function nonce( $action ) {
 		return wp_create_nonce( $action );
+	}
+
+	/**
+	 * The WordPress filesystem abstraction, initialised for direct access.
+	 *
+	 * The tests write scratch files and then take the directories away again.
+	 * Going through WP_Filesystem rather than the raw PHP functions is not
+	 * ceremony here: it is the same API the plugin would have to use, and it
+	 * means the suite needs no coding-standard exemption that includes/ does not
+	 * also get.
+	 *
+	 * @return WP_Filesystem_Base
+	 */
+	protected function filesystem() {
+		global $wp_filesystem;
+
+		if ( ! $wp_filesystem ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			WP_Filesystem();
+		}
+
+		return $wp_filesystem;
 	}
 
 	/**
@@ -307,9 +384,23 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 
 		$path = trailingslashit( $dir ) . ltrim( $name, '/' );
 		wp_mkdir_p( dirname( $path ) );
-		file_put_contents( $path, $contents ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->filesystem()->put_contents( $path, $contents );
 
 		return $path;
+	}
+
+	/**
+	 * Remove a directory and everything under it.
+	 *
+	 * @param string $dir Absolute path.
+	 * @return void
+	 */
+	protected function remove_directory( $dir ) {
+		if ( ! is_dir( $dir ) ) {
+			return;
+		}
+
+		$this->filesystem()->rmdir( $dir, true );
 	}
 
 	/**
@@ -318,35 +409,16 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 	 * @return void
 	 */
 	protected function remove_download_files() {
-		$dir = WP_DownloadManager_Options::get( 'path.dir' );
-
-		if ( ! is_dir( $dir ) ) {
-			return;
-		}
-
-		$items = new RecursiveIteratorIterator(
-			new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ),
-			RecursiveIteratorIterator::CHILD_FIRST
-		);
-
-		foreach ( $items as $item ) {
-			if ( $item->isDir() ) {
-				rmdir( $item->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions
-			} else {
-				wp_delete_file( $item->getPathname() );
-			}
-		}
-
-		rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->remove_directory( WP_DownloadManager_Options::get( 'path.dir' ) );
 	}
 
 	/**
 	 * A plugin source file with its comments removed.
 	 *
-	 * The source-level guards below assert that a removed API is no longer
-	 * called. Grepping the raw file cannot tell a live call from a comment
-	 * explaining why the call is gone, and every one of those guards has a
-	 * comment beside it doing exactly that. Tokenising first means the
+	 * The source-level guards in this suite assert that a removed API is no
+	 * longer called. Grepping the raw file cannot tell a live call from a
+	 * comment explaining why the call is gone, and every one of those guards has
+	 * a comment beside it doing exactly that. Tokenising first means the
 	 * assertions look only at code.
 	 *
 	 * @param string $file File name relative to the plugin root.
@@ -368,5 +440,21 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * Every shipped PHP file, so a guard can sweep the whole plugin.
+	 *
+	 * @return array Paths relative to the plugin root.
+	 */
+	protected function plugin_php_files() {
+		$root  = dirname( __DIR__ );
+		$files = array( 'wp-downloadmanager.php', 'uninstall.php', 'index.php' );
+
+		foreach ( (array) glob( $root . '/includes/*.php' ) as $path ) {
+			$files[] = 'includes/' . basename( $path );
+		}
+
+		return $files;
 	}
 }

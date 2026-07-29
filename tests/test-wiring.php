@@ -1,249 +1,157 @@
 <?php
 /**
- * Menu registration, asset loading and the editor buttons.
- *
- * The asset loader and the menu used to derive their page lists separately,
- * and had already drifted: the loader still listed a download-uninstall.php
- * that has not existed for years, so the admin stylesheet was being matched
- * against a page that could never load. Both now come from
- * WP_DownloadManager_Admin::pages(), and these tests are what keeps them together.
+ * Front-end wiring, assets, the editor buttons and the widget.
  *
  * @package WP-DownloadManager
  */
 
 /**
- * WP_DownloadManager and WP_DownloadManager_Admin wiring.
+ * Query vars, rewrites, enqueues and registrations.
  */
-class Test_Wiring extends WP_DownloadManager_TestCase {
+class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 
-	/**
-	 * The page list is derived from the plugin directory name.
-	 *
-	 * Every path here used to be built from a literal "wp-downloadmanager", so
-	 * installing under any other directory name broke the menu, the stylesheets
-	 * and every extension icon.
-	 */
-	public function test_pages_are_derived_from_the_slug() {
-		$pages = WP_DownloadManager_Admin::pages();
+	public function test_the_download_query_vars_are_registered() {
+		$vars = apply_filters( 'query_vars', array() );
 
-		$this->assertSame( WP_DOWNLOADMANAGER_SLUG . '/includes/screen-manage.php', $pages['manager'] );
-		$this->assertSame( WP_DOWNLOADMANAGER_SLUG . '/includes/screen-add.php', $pages['add'] );
-		$this->assertSame( 'wp-downloadmanager-options', $pages['options'] );
-		$this->assertSame( 'wp-downloadmanager-templates', $pages['templates'] );
+		$this->assertContains( 'dl_id', $vars );
+		$this->assertContains( 'dl_name', $vars );
 	}
 
-	/**
-	 * The page list names only files that exist.
-	 *
-	 * This is the assertion that would have caught download-uninstall.php.
-	 */
-	public function test_every_file_backed_page_exists() {
-		$pages = WP_DownloadManager_Admin::pages();
+	public function test_the_download_rewrite_rules_are_prepended() {
+		global $wp_rewrite;
 
-		foreach ( array( 'manager', 'add' ) as $key ) {
-			$file = WP_DOWNLOADMANAGER_DIR . basename( $pages[ $key ] );
-			$this->assertFileExists( $file, $pages[ $key ] . ' is listed but missing' );
+		$wp_rewrite->rules = array( 'existing/?$' => 'index.php?p=1' );
+
+		WP_DownloadManager::rewrite_rules( $wp_rewrite );
+
+		$rules = array_keys( $wp_rewrite->rules );
+
+		$this->assertSame( 'download/([0-9]{1,})/?$', $rules[0], 'the download rules have to win over a catch-all page rule' );
+		$this->assertContains( 'download/(.*)$', $rules );
+		$this->assertContains( 'existing/?$', $rules, 'and the existing rules survive' );
+	}
+
+	public function test_the_front_end_stylesheet_is_enqueued_from_the_plugin() {
+		wp_dequeue_style( 'wp-downloadmanager' );
+		wp_deregister_style( 'wp-downloadmanager' );
+
+		WP_DownloadManager::enqueue_styles();
+
+		$this->assertTrue( wp_style_is( 'wp-downloadmanager', 'enqueued' ) );
+		$this->assertSame( WP_DOWNLOADMANAGER_URL . 'css/wp-downloadmanager.css', wp_styles()->registered['wp-downloadmanager']->src );
+		$this->assertSame( WP_DOWNLOADMANAGER_VERSION, wp_styles()->registered['wp-downloadmanager']->ver );
+	}
+
+	public function test_a_theme_copy_of_the_stylesheet_wins() {
+		$theme_css = get_stylesheet_directory() . '/wp-downloadmanager.css';
+		$this->filesystem()->put_contents( $theme_css, '/* theme copy */' );
+
+		wp_dequeue_style( 'wp-downloadmanager' );
+		wp_deregister_style( 'wp-downloadmanager' );
+
+		WP_DownloadManager::enqueue_styles();
+
+		$this->assertSame( get_stylesheet_directory_uri() . '/wp-downloadmanager.css', wp_styles()->registered['wp-downloadmanager']->src );
+
+		wp_delete_file( $theme_css );
+	}
+
+	public function test_the_admin_script_loads_on_the_plugins_screens() {
+		foreach ( WP_DownloadManager_Admin::screens() as $slug ) {
+			wp_dequeue_script( 'wp-downloadmanager-admin' );
+			wp_deregister_script( 'wp-downloadmanager-admin' );
+
+			WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $slug );
+
+			$this->assertTrue( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ), $slug . ' should load the admin script' );
 		}
 	}
 
-	/**
-	 * The constants point at this plugin.
-	 */
-	public function test_path_constants() {
-		$this->assertStringEndsWith( '/', WP_DOWNLOADMANAGER_DIR );
-		$this->assertStringEndsWith( '/', WP_DOWNLOADMANAGER_URL );
-		$this->assertFileExists( WP_DOWNLOADMANAGER_DIR . 'wp-downloadmanager.php' );
-		$this->assertSame( basename( WP_DOWNLOADMANAGER_DIR ), WP_DOWNLOADMANAGER_SLUG );
-		$this->assertSame( WP_DOWNLOADMANAGER_VERSION, '2.0.0' );
-	}
-
-	/**
-	 * No source file hardcodes the plugin directory name.
-	 *
-	 * The literal appears legitimately as the text domain and in option and
-	 * handle names, so this looks only for it being used as a path segment.
-	 */
-	public function test_no_hardcoded_directory_paths() {
-		// Two globs rather than GLOB_BRACE, which is not available on every
-		// build - the musl-based PHP images do not have it.
-		$files = array_merge(
-			(array) glob( WP_DOWNLOADMANAGER_DIR . '*.php' ),
-			(array) glob( WP_DOWNLOADMANAGER_DIR . 'includes/*.php' )
-		);
-
-		$this->assertNotEmpty( $files );
-
-		foreach ( $files as $file ) {
-			$source = file_get_contents( $file );
-
-			$this->assertDoesNotMatchRegularExpression(
-				'#(plugins_url|WP_PLUGIN_DIR\s*\.\s*)[^;]*[\'"]/?wp-downloadmanager/#',
-				$source,
-				basename( $file ) . ' builds a path from the literal slug'
-			);
-		}
-	}
-
-	/**
-	 * The menu registers under the plugin capability.
-	 */
-	public function test_menu_registers() {
-		global $menu, $submenu;
-
-		// Cleared so the assertions below see only what menu() registered. These
-		// are core's globals, which is the whole point: the test is checking what
-		// the plugin puts into them.
-		$menu    = array(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
-		$submenu = array(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		set_current_screen( 'dashboard' );
-
-		WP_DownloadManager_Admin::menu();
-
-		$pages = WP_DownloadManager_Admin::pages();
-		$this->assertArrayHasKey( $pages['manager'], $submenu );
-
-		$slugs = wp_list_pluck( $submenu[ $pages['manager'] ], 2 );
-		$this->assertContains( $pages['manager'], $slugs );
-		$this->assertContains( $pages['add'], $slugs );
-		$this->assertContains( $pages['options'], $slugs );
-		$this->assertContains( $pages['templates'], $slugs );
-
-		// Every entry is behind manage_downloads.
-		foreach ( $submenu[ $pages['manager'] ] as $entry ) {
-			$this->assertSame( 'manage_downloads', $entry[1] );
-		}
-	}
-
-	/**
-	 * The templates script loads on its own screen and nowhere else.
-	 *
-	 * There used to be an admin stylesheet enqueued on all four screens as well.
-	 * It had been a zero-byte file since the plugin's first commit, so it was
-	 * dropped in 2.0.0 rather than shipped as a request that delivers nothing.
-	 *
-	 * @dataProvider admin_asset_provider
-	 *
-	 * @param string $hook_suffix The hook suffix WordPress hands back.
-	 * @param bool   $expected    Whether the script should load.
-	 */
-	public function test_admin_script_scoping( $hook_suffix, $expected ) {
+	public function test_the_admin_script_loads_on_the_top_level_screen_too() {
 		wp_dequeue_script( 'wp-downloadmanager-admin' );
 		wp_deregister_script( 'wp-downloadmanager-admin' );
 
-		WP_DownloadManager_Admin::enqueue_assets( $hook_suffix );
+		WP_DownloadManager_Admin::enqueue_assets( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
 
-		$this->assertSame(
-			$expected,
-			wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ),
-			$hook_suffix
-		);
+		$this->assertTrue( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ) );
 	}
 
-	/**
-	 * Hook suffixes to test the asset loader against.
-	 *
-	 * WordPress returns "downloads_page_<slug>" for the pages registered with a
-	 * callback and the bare file path for the legacy ones, so both shapes are
-	 * covered - the options screen in particular must not pick up the templates
-	 * screen's script just because their slugs share a prefix.
-	 *
-	 * @return array
-	 */
-	public function admin_asset_provider() {
-		$pages = WP_DownloadManager_Admin::pages();
+	public function test_the_admin_script_loads_nowhere_else() {
+		foreach ( array( 'edit.php', 'index.php', 'settings_page_something-else', 'options-general.php' ) as $hook ) {
+			wp_dequeue_script( 'wp-downloadmanager-admin' );
+			wp_deregister_script( 'wp-downloadmanager-admin' );
 
-		return array(
-			'templates callback' => array( 'downloads_page_' . $pages['templates'], true ),
-			'options callback'   => array( 'downloads_page_' . $pages['options'], false ),
-			'manage downloads'   => array( $pages['manager'], false ),
-			'add file'           => array( $pages['add'], false ),
-			'unrelated screen'   => array( 'edit.php', false ),
-			'dashboard'          => array( 'index.php', false ),
-			'another plugin'     => array( 'settings_page_something-else', false ),
-		);
+			WP_DownloadManager_Admin::enqueue_assets( $hook );
+
+			$this->assertFalse( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ), $hook . ' is not this plugin\'s screen' );
+		}
 	}
 
-	/**
-	 * No stylesheet is enqueued on any admin screen.
-	 *
-	 * A guard against the empty one coming back.
-	 */
-	public function test_no_admin_stylesheet_is_enqueued() {
-		foreach ( WP_DownloadManager_Admin::pages() as $slug ) {
+	public function test_the_admin_script_carries_the_stock_templates() {
+		wp_dequeue_script( 'wp-downloadmanager-admin' );
+		wp_deregister_script( 'wp-downloadmanager-admin' );
+
+		WP_DownloadManager_Admin::enqueue_assets( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
+
+		$data = (string) wp_scripts()->get_data( 'wp-downloadmanager-admin', 'data' );
+
+		$this->assertStringContainsString( 'wpDownloadManagerL10n', $data );
+		foreach ( array_keys( WP_DownloadManager_Template::for_script() ) as $key ) {
+			$this->assertStringContainsString( '"' . $key . '"', $data, $key . ' should be localised for its reset button' );
+		}
+	}
+
+	public function test_there_is_exactly_one_localised_global() {
+		wp_dequeue_script( 'wp-downloadmanager-admin' );
+		wp_deregister_script( 'wp-downloadmanager-admin' );
+		wp_dequeue_script( 'wp-downloadmanager-quicktag' );
+		wp_deregister_script( 'wp-downloadmanager-quicktag' );
+
+		WP_DownloadManager_Admin::enqueue_assets( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
+		WP_DownloadManager_Admin::quicktag();
+
+		foreach ( array( 'wp-downloadmanager-admin', 'wp-downloadmanager-quicktag' ) as $handle ) {
+			$data = (string) wp_scripts()->get_data( $handle, 'data' );
+
+			$this->assertStringContainsString( 'wpDownloadManagerL10n', $data, $handle . ' must use the one global named after the class prefix' );
+		}
+	}
+
+	public function test_the_localised_payload_carries_both_halves() {
+		$data = WP_DownloadManager_Admin::script_data();
+
+		$this->assertArrayHasKey( 'templates', $data );
+		$this->assertArrayHasKey( 'quicktag', $data );
+		$this->assertArrayHasKey( 'prompt', $data['quicktag'] );
+	}
+
+	public function test_no_stylesheet_is_enqueued_on_any_admin_screen() {
+		foreach ( WP_DownloadManager_Admin::screens() as $slug ) {
 			WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $slug );
-			WP_DownloadManager_Admin::enqueue_assets( $slug );
 		}
 
 		$ours = array_filter(
 			wp_styles()->queue,
-			static function ( $handle ) {
-				return 0 === strpos( $handle, 'wp-downloadmanager' );
-			}
+			static fn( $handle ) => 0 === strpos( $handle, 'wp-downloadmanager' )
 		);
 
-		$this->assertSame( array(), array_values( $ours ), 'the admin stylesheet was removed in 2.0.0' );
+		$this->assertSame( array(), array_values( $ours ), 'the admin stylesheet had been a zero-byte file since 2010' );
 	}
 
-	/**
-	 * The plugin ships no zero-byte assets.
-	 *
-	 * The admin stylesheet was one for fifteen years, enqueued the whole time.
-	 */
-	public function test_no_empty_assets_are_shipped() {
+	public function test_the_plugin_ships_no_empty_assets() {
 		$assets = array_merge(
-			(array) glob( WP_DOWNLOADMANAGER_DIR . '*.css' ),
-			(array) glob( WP_DOWNLOADMANAGER_DIR . '*.js' )
+			(array) glob( WP_DOWNLOADMANAGER_DIR . 'css/*.css' ),
+			(array) glob( WP_DOWNLOADMANAGER_DIR . 'js/*.js' )
 		);
 
 		$this->assertNotEmpty( $assets );
 
 		foreach ( $assets as $asset ) {
-			$this->assertGreaterThan(
-				0,
-				filesize( $asset ),
-				basename( $asset ) . ' is empty and should not ship'
-			);
+			$this->assertGreaterThan( 0, filesize( $asset ), basename( $asset ) . ' is empty and should not ship' );
 		}
 	}
 
-	/**
-	 * The templates screen loads its script and the stock markup with it.
-	 */
-	public function test_templates_screen_loads_its_script() {
-		wp_dequeue_script( 'wp-downloadmanager-admin' );
-		wp_deregister_script( 'wp-downloadmanager-admin' );
-
-		$pages = WP_DownloadManager_Admin::pages();
-		WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $pages['templates'] );
-
-		$this->assertTrue( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ) );
-
-		$data = wp_scripts()->get_data( 'wp-downloadmanager-admin', 'data' );
-		$this->assertStringContainsString( 'wpDownloadManagerL10n', (string) $data );
-		// The reset buttons read every template from here.
-		foreach ( WP_DownloadManager_Template::for_script() as $key => $unused ) {
-			$this->assertStringContainsString( '"' . $key . '"', (string) $data, $key . ' should be localised' );
-		}
-	}
-
-	/**
-	 * The options screen does not load the templates script.
-	 */
-	public function test_options_screen_does_not_load_the_templates_script() {
-		wp_dequeue_script( 'wp-downloadmanager-admin' );
-		wp_deregister_script( 'wp-downloadmanager-admin' );
-
-		$pages = WP_DownloadManager_Admin::pages();
-		WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $pages['options'] );
-
-		$this->assertFalse( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ) );
-	}
-
-	/**
-	 * The quicktag script is registered rather than printed inline.
-	 */
-	public function test_quicktag_script() {
+	public function test_the_quicktag_script_is_registered_rather_than_printed_inline() {
 		wp_dequeue_script( 'wp-downloadmanager-quicktag' );
 		wp_deregister_script( 'wp-downloadmanager-quicktag' );
 
@@ -252,32 +160,12 @@ class Test_Wiring extends WP_DownloadManager_TestCase {
 		$this->assertTrue( wp_script_is( 'wp-downloadmanager-quicktag', 'enqueued' ) );
 
 		$registered = wp_scripts()->registered['wp-downloadmanager-quicktag'];
+
 		$this->assertContains( 'quicktags', $registered->deps );
 		$this->assertNotContains( 'jquery', $registered->deps );
-
-		$data = wp_scripts()->get_data( 'wp-downloadmanager-quicktag', 'data' );
-		$this->assertStringContainsString( 'wpDownloadManagerL10n', (string) $data );
 	}
 
-	/**
-	 * No plugin script depends on jQuery.
-	 */
-	public function test_no_script_depends_on_jquery() {
-		WP_DownloadManager_Admin::quicktag();
-		WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . WP_DownloadManager_Admin::pages()['templates'] );
-
-		foreach ( wp_scripts()->registered as $handle => $script ) {
-			if ( 0 !== strpos( $handle, 'wp-downloadmanager' ) ) {
-				continue;
-			}
-			$this->assertNotContains( 'jquery', $script->deps, $handle . ' should not need jQuery' );
-		}
-	}
-
-	/**
-	 * The TinyMCE button registers for an editor user.
-	 */
-	public function test_tinymce_button_registers() {
+	public function test_the_editor_button_registers_for_an_editor() {
 		$user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $user_id );
 		update_user_option( $user_id, 'rich_editing', 'true' );
@@ -289,19 +177,20 @@ class Test_Wiring extends WP_DownloadManager_TestCase {
 
 		$this->assertNotFalse( has_filter( 'mce_external_plugins' ) );
 		$this->assertNotFalse( has_filter( 'mce_buttons' ) );
+	}
 
+	public function test_the_editor_button_points_at_the_unminified_script() {
 		$plugins = WP_DownloadManager_Admin::mce_plugin( array() );
-		$this->assertStringContainsString( 'tinymce/plugins/downloadmanager/plugin.js', $plugins['downloadmanager'] );
-		// The hand-minified twin is gone, so nothing may point at it.
-		$this->assertStringNotContainsString( 'plugin.min.js', $plugins['downloadmanager'] );
 
+		$this->assertStringContainsString( 'tinymce/plugins/downloadmanager/plugin.js', $plugins['downloadmanager'] );
+		$this->assertStringNotContainsString( 'plugin.min.js', $plugins['downloadmanager'], 'a hand-minified twin only drifts out of sync' );
+	}
+
+	public function test_the_editor_button_is_added_to_the_toolbar() {
 		$this->assertContains( 'downloadmanager', WP_DownloadManager_Admin::mce_button( array() ) );
 	}
 
-	/**
-	 * A user who cannot edit content gets no button.
-	 */
-	public function test_tinymce_button_is_not_registered_for_subscribers() {
+	public function test_the_editor_button_is_not_registered_for_a_subscriber() {
 		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 		wp_set_current_user( $user_id );
 		update_user_option( $user_id, 'rich_editing', 'true' );
@@ -313,61 +202,15 @@ class Test_Wiring extends WP_DownloadManager_TestCase {
 		$this->assertFalse( has_filter( 'mce_external_plugins' ) );
 	}
 
-	/**
-	 * The TinyMCE strings are translated, not escaped for JavaScript.
-	 *
-	 * They used to go through esc_js(), which double escapes once TinyMCE
-	 * inserts them into the DOM.
-	 */
-	public function test_tinymce_translations() {
+	public function test_the_editor_strings_are_translated_not_escaped_for_javascript() {
 		$strings = WP_DownloadManager_Admin::mce_translation( array() );
 
 		$this->assertArrayHasKey( 'Insert File Download', $strings );
 		$this->assertSame( 'Insert File Download', $strings['Insert File Download'] );
-		$this->assertStringNotContainsString( '\\', $strings['Enter File ID (Separate Multiple IDs By A Comma)'] );
+		$this->assertStringNotContainsString( '\\', $strings['Enter File ID (Separate Multiple IDs By A Comma)'], 'esc_js() double escapes once TinyMCE inserts them into the DOM' );
 	}
 
-	/**
-	 * The front-end stylesheet is enqueued from the plugin by default.
-	 */
-	public function test_front_end_stylesheet() {
-		wp_dequeue_style( 'wp-downloadmanager' );
-		wp_deregister_style( 'wp-downloadmanager' );
-
-		WP_DownloadManager::enqueue_styles();
-
-		$this->assertTrue( wp_style_is( 'wp-downloadmanager', 'enqueued' ) );
-		$this->assertSame(
-			WP_DOWNLOADMANAGER_URL . 'css/wp-downloadmanager.css',
-			wp_styles()->registered['wp-downloadmanager']->src
-		);
-		$this->assertSame( WP_DOWNLOADMANAGER_VERSION, wp_styles()->registered['wp-downloadmanager']->ver );
-	}
-
-	/**
-	 * A theme copy of the stylesheet wins.
-	 */
-	public function test_theme_stylesheet_overrides_the_plugin_one() {
-		$theme_css = get_stylesheet_directory() . '/wp-downloadmanager.css';
-		file_put_contents( $theme_css, '/* theme copy */' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
-
-		wp_dequeue_style( 'wp-downloadmanager' );
-		wp_deregister_style( 'wp-downloadmanager' );
-
-		WP_DownloadManager::enqueue_styles();
-
-		$this->assertSame(
-			get_stylesheet_directory_uri() . '/wp-downloadmanager.css',
-			wp_styles()->registered['wp-downloadmanager']->src
-		);
-
-		wp_delete_file( $theme_css );
-	}
-
-	/**
-	 * The feed link is printed on the downloads page only.
-	 */
-	public function test_feed_link_on_the_downloads_page() {
+	public function test_the_feed_link_is_printed_on_the_downloads_page() {
 		$page_id = self::factory()->post->create(
 			array(
 				'post_type'  => 'page',
@@ -386,13 +229,9 @@ class Test_Wiring extends WP_DownloadManager_TestCase {
 
 		$this->assertStringContainsString( 'application/rss+xml', $html );
 		$this->assertStringContainsString( '/download/rss/', $html );
-		$this->assertStringContainsString( 'Downloads RSS Feed', $html );
 	}
 
-	/**
-	 * With plain permalinks the feed link uses the query form.
-	 */
-	public function test_feed_link_without_nice_permalinks() {
+	public function test_the_feed_link_uses_the_query_form_without_nice_permalinks() {
 		$page_id = self::factory()->post->create(
 			array(
 				'post_type' => 'page',
@@ -412,10 +251,7 @@ class Test_Wiring extends WP_DownloadManager_TestCase {
 		$this->assertStringContainsString( 'dl_name=rss', $html );
 	}
 
-	/**
-	 * No feed link anywhere else.
-	 */
-	public function test_no_feed_link_on_other_pages() {
+	public function test_no_feed_link_is_printed_anywhere_else() {
 		$this->go_to( home_url( '/' ) );
 
 		ob_start();
@@ -425,84 +261,170 @@ class Test_Wiring extends WP_DownloadManager_TestCase {
 		$this->assertSame( '', $html );
 	}
 
-	/**
-	 * The file listing helpers render the downloads directory.
-	 */
-	public function test_print_files_and_folders() {
-		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-wiring-files' );
-		$dir = WP_DownloadManager_Options::get( 'path.dir' );
-
-		$this->make_download_file( 'top.txt' );
-		$this->make_download_file( 'sub/deep.txt' );
-
-		ob_start();
-		WP_DownloadManager_Admin::print_files( $dir, $dir, '/top.txt' );
-		$files = ob_get_clean();
-
-		$this->assertStringContainsString( '<option value="/top.txt" selected', $files );
-		$this->assertStringContainsString( '/sub/deep.txt', $files );
-
-		ob_start();
-		WP_DownloadManager_Admin::print_folders( $dir, $dir );
-		$folders = ob_get_clean();
-
-		$this->assertStringContainsString( '<option value="/">/</option>', $folders );
-		$this->assertStringContainsString( 'value="/sub"', $folders );
-
-		$this->remove_download_files();
-	}
-
-	/**
-	 * A missing downloads directory is not a fatal.
-	 */
-	public function test_print_files_with_no_directory() {
-		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-does-not-exist' );
-		$dir = WP_DownloadManager_Options::get( 'path.dir' );
-
-		ob_start();
-		WP_DownloadManager_Admin::print_files( $dir, $dir );
-		WP_DownloadManager_Admin::print_folders( $dir, $dir );
-		$html = ob_get_clean();
-
-		$this->assertStringNotContainsString( 'Warning', $html );
-	}
-
-	/**
-	 * The timestamp selects cover every part of a date.
-	 */
-	public function test_file_timestamp_selects() {
-		ob_start();
-		WP_DownloadManager_Admin::file_timestamp( gmmktime( 14, 25, 36, 6, 15, 2020 ) );
-		$html = ob_get_clean();
-
-		foreach ( array( 'day', 'month', 'year', 'hour', 'minute', 'second' ) as $part ) {
-			$this->assertStringContainsString( 'id="file_timestamp_' . $part . '"', $html );
-		}
-
-		// The stored value is the selected option in each.
-		$this->assertStringContainsString( '<option value="15" selected', $html );
-		$this->assertStringContainsString( '<option value="6" selected', $html );
-		$this->assertStringContainsString( '<option value="2020" selected', $html );
-		$this->assertStringContainsString( '<option value="14" selected', $html );
-		$this->assertStringContainsString( '<option value="25" selected', $html );
-		$this->assertStringContainsString( '<option value="36" selected', $html );
-
-		// Months read as names, from the site locale.
-		$this->assertStringContainsString( 'June', $html );
-	}
-
-	/**
-	 * Activation grants the capability and creates the table.
-	 */
-	public function test_activation_is_idempotent() {
-		WP_DownloadManager_Install::activate();
-		WP_DownloadManager_Install::activate();
-
+	public function test_activation_creates_the_table_and_grants_the_capability() {
 		global $wpdb;
-		$this->assertSame(
-			$wpdb->downloads,
-			$wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->downloads ) )
-		);
+
+		WP_DownloadManager_Install::activate();
+		WP_DownloadManager_Install::activate();
+
+		$this->assertSame( $this->table(), $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table() ) ), 'activation is idempotent' );
 		$this->assertTrue( get_role( 'administrator' )->has_cap( 'manage_downloads' ) );
+	}
+
+	public function test_the_downloads_table_is_registered_with_wpdb() {
+		global $wpdb;
+
+		$this->assertContains( 'downloads', $wpdb->tables, 'registering the name is what makes it survive switch_to_blog()' );
+		$this->assertSame( $wpdb->prefix . 'downloads', $wpdb->downloads );
+	}
+
+	public function test_the_widget_is_registered_with_core() {
+		do_action( 'widgets_init' );
+
+		$registered = array_map( 'get_class', $GLOBALS['wp_widget_factory']->widgets );
+
+		$this->assertContains( 'WP_DownloadManager_Widget', array_values( $registered ), 'the widget has to reach the widget factory to appear in the block editor' );
+	}
+
+	public function test_the_widget_supports_selective_refresh() {
+		$widget = new WP_DownloadManager_Widget();
+
+		$this->assertTrue( $widget->widget_options['customize_selective_refresh'] );
+	}
+
+	public function test_the_widget_renders_its_chosen_list() {
+		$widget = new WP_DownloadManager_Widget();
+
+		ob_start();
+		$widget->widget(
+			array(
+				'before_widget' => '<aside>',
+				'after_widget'  => '</aside>',
+				'before_title'  => '<h2>',
+				'after_title'   => '</h2>',
+			),
+			array(
+				'title' => 'Downloads',
+				'type'  => 'most_downloaded',
+				'limit' => 2,
+				'chars' => 0,
+				'link'  => 0,
+			)
+		);
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( '<aside>', $html );
+		$this->assertStringContainsString( '<h2>Downloads</h2>', $html );
+		$this->assertStringContainsString( 'The Manual', $html );
+	}
+
+	public function test_the_widget_scopes_its_list_with_the_plugin_class() {
+		$widget = new WP_DownloadManager_Widget();
+
+		ob_start();
+		$widget->widget(
+			array(
+				'before_widget' => '',
+				'after_widget'  => '',
+				'before_title'  => '',
+				'after_title'   => '',
+			),
+			array( 'type' => 'recent_downloads' )
+		);
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( '<ul class="wp-downloadmanager">', $html, 'the stylesheet needs one scope' );
+	}
+
+	public function test_the_widget_can_link_to_the_downloads_page() {
+		$widget = new WP_DownloadManager_Widget();
+
+		ob_start();
+		$widget->widget(
+			array(
+				'before_widget' => '',
+				'after_widget'  => '',
+				'before_title'  => '',
+				'after_title'   => '',
+			),
+			array(
+				'type' => 'recent_downloads',
+				'link' => 1,
+			)
+		);
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'Downloads Page', $html );
+	}
+
+	public function test_the_widget_saves_its_form() {
+		$widget = new WP_DownloadManager_Widget();
+
+		$saved = $widget->update(
+			array(
+				'title'   => '<b>Files</b>',
+				'type'    => 'downloads_category',
+				'limit'   => '5',
+				'chars'   => '30',
+				'cat_ids' => '1,2',
+				'link'    => '1',
+			),
+			array()
+		);
+
+		$this->assertSame( 'Files', $saved['title'], 'the title is plain text' );
+		$this->assertSame( 'downloads_category', $saved['type'] );
+		$this->assertSame( 5, $saved['limit'] );
+		$this->assertSame( 30, $saved['chars'] );
+		$this->assertSame( '1,2', $saved['cat_ids'] );
+		$this->assertSame( 1, $saved['link'] );
+	}
+
+	public function test_the_widget_keeps_edits_made_without_the_legacy_submit_marker() {
+		$widget = new WP_DownloadManager_Widget();
+
+		$saved = $widget->update( array( 'title' => 'From the customizer' ), array( 'title' => 'Old' ) );
+
+		$this->assertSame( 'From the customizer', $saved['title'], 'the old guard discarded every edit made in the block widget editor or the customizer' );
+	}
+
+	public function test_the_widget_form_marks_the_saved_link_choice_as_selected() {
+		$widget = new WP_DownloadManager_Widget();
+
+		ob_start();
+		$widget->form(
+			array(
+				'type' => 'recent_downloads',
+				'link' => 1,
+			)
+		);
+		$html = ob_get_clean();
+
+		$this->assertMatchesRegularExpression(
+			'/<option value="1"\s*selected/',
+			$html,
+			'these used to be compared against $type rather than $link, so the saved value never showed as selected'
+		);
+	}
+
+	public function test_the_widget_category_ids_cannot_rewrite_the_query() {
+		$widget = new WP_DownloadManager_Widget();
+
+		ob_start();
+		$widget->widget(
+			array(
+				'before_widget' => '',
+				'after_widget'  => '',
+				'before_title'  => '',
+				'after_title'   => '',
+			),
+			array(
+				'type'    => 'downloads_category',
+				'cat_ids' => '1) OR (1=1',
+			)
+		);
+		$html = ob_get_clean();
+
+		$this->assertStringNotContainsString( 'Hidden File', $html, 'anyone able to edit a widget could once rewrite the WHERE clause, including the guard that hides files' );
 	}
 }

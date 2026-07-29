@@ -63,6 +63,13 @@ class WP_DownloadManager_WPStats {
 	/**
 	 * Echo the section body. Takes no arguments and returns nothing.
 	 *
+	 * Echoes rather than returns because WP-Stats assembles its page inside
+	 * ob_start(), where a returned string would be dropped without a word. The
+	 * section heading is not printed here either: WP-Stats has its own listener
+	 * on wp_stats_section_wp_downloadmanager that echoes the title and then
+	 * calls this, which is what lets a theme replace one plugin's block by
+	 * hooking that action earlier without touching the other six.
+	 *
 	 * @return void
 	 */
 	public static function render() {

@@ -12,37 +12,41 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 require_once __DIR__ . '/includes/class-wp-downloadmanager-template.php';
 require_once __DIR__ . '/includes/class-wp-downloadmanager-options.php';
 
-/**
- * Remove every option row and the downloads table for the current site.
- *
- * @return void
- */
-function wp_downloadmanager_uninstall_site() {
-	global $wpdb;
+// Guarded because the test suite runs this file more than once in a process;
+// WordPress itself only ever includes it the once.
+if ( ! function_exists( 'wp_downloadmanager_uninstall_site' ) ) {
+	/**
+	 * Remove every option row and the downloads table for the current site.
+	 *
+	 * @return void
+	 */
+	function wp_downloadmanager_uninstall_site() {
+		global $wpdb;
 
-	// The legacy rows are listed by the options class, so this and the migration
-	// can never disagree about which rows belong to the plugin. 2.0.0
-	// consolidated them into wp_downloadmanager_options, but an install that
-	// never reached the migration may still have them.
-	$option_names = array_merge(
-		array_keys( WP_DownloadManager_Options::legacy_map() ),
-		array_values( WP_DownloadManager_Options::legacy_structured_rows() ),
-		WP_DownloadManager_Options::legacy_extra_rows(),
-		array(
-			WP_DownloadManager_Options::OPTION,
-			WP_DownloadManager_Options::VERSION,
-			'widget_downloads',
-		)
-	);
+		// The legacy rows are listed by the options class, so this and the
+		// migration can never disagree about which rows belong to the plugin.
+		// 2.0.0 consolidated them into wp_downloadmanager_options, but an
+		// install that never reached the migration may still have them.
+		$option_names = array_merge(
+			array_keys( WP_DownloadManager_Options::legacy_map() ),
+			array_values( WP_DownloadManager_Options::legacy_structured_rows() ),
+			WP_DownloadManager_Options::legacy_extra_rows(),
+			array(
+				WP_DownloadManager_Options::OPTION,
+				WP_DownloadManager_Options::VERSION,
+				'widget_downloads',
+			)
+		);
 
-	foreach ( $option_names as $option_name ) {
-		delete_option( $option_name );
+		foreach ( $option_names as $option_name ) {
+			delete_option( $option_name );
+		}
+
+		// Dropping the plugin's own table is the entire job here. The table was
+		// dropped once per option row before, which worked only by accident.
+		$table = $wpdb->prefix . 'downloads';
+		$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
 	}
-
-	// Dropping the plugin's own table is the entire job here. The table was
-	// dropped once per option row before, which worked only by accident.
-	$table = $wpdb->prefix . 'downloads';
-	$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
 }
 
 if ( is_multisite() ) {

@@ -368,17 +368,29 @@ class WP_DownloadManager_Options {
 			}
 		}
 
-		// WP-Stats' shared toggle row carried one flag per panel; this plugin
+		// WP-Stats' shared toggle row carried one flag per panel, and this plugin
 		// contributes one section now, so it is on if any of its three panels
 		// was.
-		$stats_display = get_option( $structured['stats'], null );
-		if ( is_array( $stats_display ) ) {
-			$panels = array_intersect_key(
-				$stats_display,
-				array_flip( array( 'downloads', 'recent_downloads', 'downloaded_most' ) )
-			);
+		//
+		// The default for a MISSING row is on, not off, and that is the whole
+		// point of the null here. Seven plugins read this row and every one of
+		// their migrations deletes it, so whichever one a site upgrades first
+		// takes it away from the other six. Reading its absence as a deliberate
+		// opt-out would make a site that updated WP-Stats before this plugin
+		// lose the downloads block with nothing to explain why. The worst the
+		// rule below can do is leave a block switched on that someone has to
+		// switch off again.
+		$legacy = get_option( $structured['stats'], null );
 
-			$values['stats_display'] = (int) (bool) array_filter( $panels );
+		if ( null !== $legacy ) {
+			$values['stats_display'] = is_array( $legacy )
+				? (int) (bool) array_filter(
+					array_intersect_key(
+						$legacy,
+						array_flip( array( 'downloads', 'recent_downloads', 'downloaded_most' ) )
+					)
+				)
+				: (int) (bool) $legacy;
 		}
 
 		$values['stats_most_limit'] = max( 1, (int) $values['stats_most_limit'] );

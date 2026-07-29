@@ -29,19 +29,13 @@ function _wp_downloadmanager_manually_load_plugin() {
 	require dirname( __DIR__ ) . '/wp-downloadmanager.php';
 
 	// register_activation_hook() never fires in the test environment, so the
-	// table and the option rows have to be created by hand.
-	if ( class_exists( 'WP_DownloadManager_Install' ) ) {
-		WP_DownloadManager_Install::activate();
-	} else {
-		// Pre-2.0.0 layout, still used while the golden master runs against the
-		// baseline.
-		wp_downloadmanager_activate();
-	}
+	// table, the capability and the option rows have to be created by hand.
+	WP_DownloadManager_Install::activate();
 }
 tests_add_filter( 'muplugins_loaded', '_wp_downloadmanager_manually_load_plugin' );
 
 require $_tests_dir . '/includes/bootstrap.php';
 
 // After the WordPress bootstrap, which is what declares WP_UnitTestCase - the
-// fixture base class extends it, so it cannot be loaded any earlier.
-require_once __DIR__ . '/helper-fixtures.php';
+// base test case extends it, so it cannot be loaded any earlier.
+require_once __DIR__ . '/helper-testcase.php';

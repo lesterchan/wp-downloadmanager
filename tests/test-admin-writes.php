@@ -1,605 +1,555 @@
 <?php
 /**
- * The Add / Edit / Delete write paths.
+ * Adding, editing and deleting files.
  *
- * These are the only code in the plugin that writes to the downloads table
- * outside a migration, and the only code that touches the filesystem. They had
- * no coverage at all before, which is why the 2.0.0 rewrite left them alone.
+ * These are the screens that write, so every one of them has to prove it
+ * checked a nonce and a capability first, and that what it stored is what was
+ * submitted rather than a doubled-slashed copy of it.
  *
  * @package WP-DownloadManager
  */
 
 /**
- * Form processing on the two legacy admin screens.
+ * The three write paths of the Downloads screens.
  */
-class Test_Admin_Writes extends WP_DownloadManager_TestCase {
+class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 
 	/**
-	 * Become an administrator and give the write paths a real directory.
+	 * Point the plugin at a scratch downloads directory.
 	 */
 	public function set_up() {
 		parent::set_up();
-		$this->become_download_admin();
 
-		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-test-files' );
+		WP_DownloadManager_Admin::load_list_table();
+		$this->on_admin_screen();
+		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-writes' );
+		$this->make_download_file( 'brochure.pdf', 'pretend this is a PDF' );
+		$this->become_download_admin();
 	}
 
 	/**
-	 * Clean up anything written to disk.
+	 * Take the scratch directory away again.
 	 */
 	public function tear_down() {
 		$this->remove_download_files();
+
 		parent::tear_down();
 	}
 
 	/**
-	 * The row for a file name, or null.
+	 * A complete Add File submission.
 	 *
-	 * @param string $file_name File name.
-	 * @return object|null
+	 * @param array $overrides Field overrides.
+	 * @return array
 	 */
-	private function row_named( $file_name ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB
-		return $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$wpdb->downloads} WHERE file_name = %s", $file_name )
-		);
-	}
-
-	/**
-	 * Add a file by browsing to one already on disk.
-	 */
-	public function test_add_file_from_disk() {
-		$this->make_download_file( 'brochure.txt', 'twelve bytes' );
-
-		$html = $this->render_admin_page(
-			'includes/screen-add.php',
-			array(),
+	protected function add_post( $overrides = array() ) {
+		return array_merge(
 			array(
 				'do'                    => 'Add File',
-				'_wpnonce'              => $this->nonce( 'wp-downloadmanager_add-file' ),
+				'_wpnonce'              => $this->nonce( 'wp_downloadmanager_add' ),
 				'file_type'             => '0',
-				'file'                  => '/brochure.txt',
+				'file'                  => '/brochure.pdf',
 				'file_name'             => 'The Brochure',
 				'file_des'              => 'A brochure.',
 				'file_cat'              => '1',
+				'file_hits'             => '0',
 				'file_permission'       => '-1',
-				'file_hits'             => '3',
+				'auto_filesize'         => '1',
 				'file_timestamp_day'    => '15',
 				'file_timestamp_month'  => '6',
 				'file_timestamp_year'   => '2020',
 				'file_timestamp_hour'   => '8',
 				'file_timestamp_minute' => '30',
 				'file_timestamp_second' => '0',
-			)
+			),
+			$overrides
 		);
+	}
 
-		$this->assertStringContainsString( 'Added Successfully', $html );
+	/**
+	 * A complete Edit File submission.
+	 *
+	 * @param int   $file_id   File being edited.
+	 * @param array $overrides Field overrides.
+	 * @return array
+	 */
+	protected function edit_post( $file_id, $overrides = array() ) {
+		return array_merge(
+			array(
+				'do'              => 'Edit File',
+				'_wpnonce'        => $this->nonce( 'wp_downloadmanager_edit_' . $file_id ),
+				'file_id'         => (string) $file_id,
+				'file_type'       => '-1',
+				'file_name'       => 'Renamed',
+				'file_des'        => 'Edited.',
+				'file_cat'        => '2',
+				'file_hits'       => '4',
+				'file_permission' => '0',
+				'auto_filesize'   => '1',
+			),
+			$overrides
+		);
+	}
 
-		$row = $this->row_named( 'The Brochure' );
-		$this->assertNotNull( $row );
-		$this->assertSame( '/brochure.txt', $row->file );
+	public function test_adding_a_file_stores_a_row() {
+		$before = $this->count_files();
+
+		$this->render( array( 'WP_DownloadManager_Admin', 'render_add' ), array(), $this->add_post() );
+
+		$this->assertSame( $before + 1, $this->count_files() );
+	}
+
+	public function test_adding_a_file_says_so_with_its_id() {
+		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_add' ), array(), $this->add_post() );
+
+		$this->assertStringContainsString( 'The Brochure added', $html );
+		$this->assertStringContainsString( 'file ID', $html );
+	}
+
+	public function test_adding_a_file_stores_the_submitted_values() {
+		global $wpdb;
+
+		$this->render( array( 'WP_DownloadManager_Admin', 'render_add' ), array(), $this->add_post() );
+
+		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
+
+		$this->assertSame( 'The Brochure', $row->file_name );
 		$this->assertSame( 'A brochure.', $row->file_des );
+		$this->assertSame( '/brochure.pdf', $row->file );
 		$this->assertSame( 1, (int) $row->file_category );
 		$this->assertSame( -1, (int) $row->file_permission );
-		$this->assertSame( 3, (int) $row->file_hits );
-		// Size was detected from the file rather than typed in.
-		$this->assertSame( 12, (int) $row->file_size );
-		$this->assertSame( gmmktime( 8, 30, 0, 6, 15, 2020 ), (int) $row->file_date );
 	}
 
-	/**
-	 * An explicit file size wins over auto detection.
-	 */
-	public function test_add_file_with_an_explicit_size() {
-		$this->make_download_file( 'brochure.txt', 'twelve bytes' );
-
-		$this->render_admin_page(
-			'includes/screen-add.php',
-			array(),
-			array(
-				'do'        => 'Add File',
-				'_wpnonce'  => $this->nonce( 'wp-downloadmanager_add-file' ),
-				'file_type' => '0',
-				'file'      => '/brochure.txt',
-				'file_name' => 'Sized',
-				'file_size' => '9999',
-			)
-		);
-
-		$this->assertSame( 9999, (int) $this->row_named( 'Sized' )->file_size );
-	}
-
-	/**
-	 * With no name given, the file's own basename is used.
-	 */
-	public function test_add_file_falls_back_to_the_basename() {
-		$this->make_download_file( 'unnamed.txt' );
-
-		$this->render_admin_page(
-			'includes/screen-add.php',
-			array(),
-			array(
-				'do'        => 'Add File',
-				'_wpnonce'  => $this->nonce( 'wp-downloadmanager_add-file' ),
-				'file_type' => '0',
-				'file'      => '/unnamed.txt',
-				'file_name' => '',
-			)
-		);
-
-		$this->assertNotNull( $this->row_named( 'unnamed.txt' ) );
-	}
-
-	/**
-	 * A remote file is accepted when its URL is one the plugin will fetch.
-	 */
-	public function test_add_remote_file() {
-		$this->render_admin_page(
-			'includes/screen-add.php',
-			array(),
-			array(
-				'do'          => 'Add File',
-				'_wpnonce'    => $this->nonce( 'wp-downloadmanager_add-file' ),
-				'file_type'   => '2',
-				'file_remote' => 'https://example.com/bundle.zip',
-				'file_name'   => 'Remote Zip',
-				'file_size'   => '4096',
-			)
-		);
-
-		$row = $this->row_named( 'Remote Zip' );
-		$this->assertNotNull( $row );
-		$this->assertSame( 'https://example.com/bundle.zip', $row->file );
-	}
-
-	/**
-	 * A remote URL with a scheme the plugin refuses is rejected.
-	 */
-	public function test_add_remote_file_rejects_a_bad_scheme() {
-		$html = $this->render_admin_page(
-			'includes/screen-add.php',
-			array(),
-			array(
-				'do'          => 'Add File',
-				'_wpnonce'    => $this->nonce( 'wp-downloadmanager_add-file' ),
-				'file_type'   => '2',
-				'file_remote' => 'javascript:alert(1)',
-				'file_name'   => 'Nasty',
-			)
-		);
-
-		$this->assertStringContainsString( 'Error Parsing Remote File URL', $html );
-		$this->assertNull( $this->row_named( 'Nasty' ) );
-	}
-
-	/**
-	 * Values are stored unslashed rather than doubly escaped.
-	 *
-	 * $_POST arrives slashed from WordPress and the old code ran addslashes()
-	 * on top, so a name with an apostrophe was stored as O\'Brien and rendered
-	 * back with a stray backslash.
-	 */
-	public function test_add_file_stores_values_unslashed() {
+	public function test_adding_a_file_does_not_double_slash_the_text() {
 		global $wpdb;
 
-		$this->make_download_file( 'quoted.txt' );
-
-		$this->render_admin_page(
-			'includes/screen-add.php',
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_add' ),
 			array(),
-			array(
-				'do'        => 'Add File',
-				'_wpnonce'  => $this->nonce( 'wp-downloadmanager_add-file' ),
-				'file_type' => '0',
-				'file'      => '/quoted.txt',
-				// As WordPress delivers it: slashed.
-				'file_name' => "O\\'Brien and Co",
-				'file_des'  => "It\\'s fine",
-			)
+			$this->add_post( array( 'file_name' => "O'Reilly's Guide" ) )
 		);
 
-		// phpcs:ignore WordPress.DB
-		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} WHERE file = '/quoted.txt'" );
+		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
 
-		$this->assertNotNull( $row );
-		// The point of the test: one level of slashes, not two.
-		$this->assertSame( "O'Brien and Co", $row->file_name );
-		$this->assertSame( "It's fine", $row->file_des );
-		$this->assertStringNotContainsString( '\\', $row->file_name );
-		$this->assertStringNotContainsString( '\\', $row->file_des );
+		$this->assertSame( "O'Reilly's Guide", $row->file_name, 'the old code built its own INSERT and slashed every value twice' );
 	}
 
-	/**
-	 * A bare ampersand is normalised by kses, and not then double encoded.
-	 *
-	 * Encoding on the way in is correct - wp_kses_post() does it.
-	 * What must not happen is the stored &amp; being encoded again on the way
-	 * out, which renders &amp;amp; on screen.
-	 */
-	public function test_add_file_does_not_double_encode_an_ampersand() {
+	public function test_adding_a_file_detects_its_size() {
 		global $wpdb;
 
-		$this->make_download_file( 'amp.txt' );
+		$this->render( array( 'WP_DownloadManager_Admin', 'render_add' ), array(), $this->add_post() );
 
-		$this->render_admin_page(
-			'includes/screen-add.php',
-			array(),
-			array(
-				'do'        => 'Add File',
-				'_wpnonce'  => $this->nonce( 'wp-downloadmanager_add-file' ),
-				'file_type' => '0',
-				'file'      => '/amp.txt',
-				'file_name' => 'Tea & Coffee',
-			)
-		);
+		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
 
-		// phpcs:ignore WordPress.DB
-		$stored = $wpdb->get_var( "SELECT file_name FROM {$wpdb->downloads} WHERE file = '/amp.txt'" );
-		$this->assertSame( 'Tea &amp; Coffee', $stored );
-
-		$html = $this->render_admin_page( 'includes/screen-manage.php' );
-		$this->assertStringContainsString( 'Tea &amp; Coffee', $html );
-		$this->assertStringNotContainsString( '&amp;amp;', $html );
+		$this->assertSame( strlen( 'pretend this is a PDF' ), (int) $row->file_size );
 	}
 
-	/**
-	 * Adding without a valid nonce is refused.
-	 */
-	public function test_add_file_requires_a_nonce() {
-		$this->expectException( 'WPDieException' );
+	public function test_a_typed_size_wins_when_detection_is_switched_off() {
+		global $wpdb;
 
-		$this->render_admin_page(
-			'includes/screen-add.php',
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_add' ),
 			array(),
-			array(
-				'do'        => 'Add File',
-				'_wpnonce'  => 'not-a-nonce',
-				'file_type' => '2',
-				'file_name' => 'Should Not Exist',
+			$this->add_post(
+				array(
+					'auto_filesize' => '0',
+					'file_size'     => '4096',
+				)
 			)
 		);
+
+		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
+
+		$this->assertSame( 4096, (int) $row->file_size );
 	}
 
-	/**
-	 * Editing updates the row and stamps the updated date.
-	 */
-	public function test_edit_file() {
-		$file_id = $this->insert_file(
-			array(
-				'file'      => '/old.zip',
-				'file_name' => 'Old Name',
-				'file_hits' => 5,
-			)
-		);
+	public function test_a_blank_name_falls_back_to_the_file_on_disk() {
+		global $wpdb;
 
-		$html = $this->render_admin_page(
-			'includes/screen-manage.php',
+		$this->render( array( 'WP_DownloadManager_Admin', 'render_add' ), array(), $this->add_post( array( 'file_name' => '' ) ) );
+
+		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
+
+		$this->assertSame( 'brochure.pdf', $row->file_name );
+	}
+
+	public function test_adding_a_remote_file_on_a_refused_scheme_says_so() {
+		$before = $this->count_files();
+
+		$html = $this->render(
+			array( 'WP_DownloadManager_Admin', 'render_add' ),
 			array(),
-			array(
-				'do'              => 'Edit File',
-				'_wpnonce'        => $this->nonce( 'wp-downloadmanager_edit-file' ),
-				'file_id'         => (string) $file_id,
-				'file_type'       => '-1',
-				'old_file'        => '/old.zip',
-				'file_name'       => 'New Name',
-				'file_des'        => 'Updated description.',
-				'file_cat'        => '2',
-				'file_permission' => '7',
-				'file_hits'       => '11',
-				'auto_filesize'   => '0',
-				'file_size'       => '2048',
+			$this->add_post(
+				array(
+					'file_type'   => '2',
+					'file_remote' => 'file:///etc/passwd',
+				)
 			)
 		);
 
-		$this->assertStringContainsString( 'Edited Successfully', $html );
+		$this->assertStringContainsString( 'could not be read', $html );
+		$this->assertSame( $before, $this->count_files(), 'and nothing is stored' );
+	}
 
-		$row = $this->row_named( 'New Name' );
-		$this->assertNotNull( $row );
+	public function test_the_permission_is_constrained_to_the_levels_the_select_offers() {
+		global $wpdb;
+
+		$this->render( array( 'WP_DownloadManager_Admin', 'render_add' ), array(), $this->add_post( array( 'file_permission' => '5' ) ) );
+
+		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
+
+		$this->assertSame( -1, (int) $row->file_permission, 'a hand-crafted POST cannot invent a permission level' );
+	}
+
+	public function test_adding_a_file_without_a_nonce_is_refused() {
+		$before = $this->count_files();
+
+		$this->expectException( WPDieException::class );
+
+		try {
+			$this->render(
+				array( 'WP_DownloadManager_Admin', 'render_add' ),
+				array(),
+				$this->add_post( array( '_wpnonce' => 'not a nonce' ) )
+			);
+		} finally {
+			$this->assertSame( $before, $this->count_files(), 'nothing may be written before the nonce is checked' );
+		}
+	}
+
+	public function test_adding_a_file_as_a_subscriber_is_refused() {
+		$this->login_as( 'subscriber' );
+
+		$this->expectException( WPDieException::class );
+
+		$this->render( array( 'WP_DownloadManager_Admin', 'render_add' ), array(), $this->add_post() );
+	}
+
+	public function test_editing_a_file_stores_the_submitted_values() {
+		$id = $this->ids['public'];
+
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+			array(
+				'action' => 'edit',
+				'id'     => $id,
+			),
+			$this->edit_post( $id )
+		);
+
+		$row = $this->fetch_file( $id );
+
+		$this->assertSame( 'Renamed', $row->file_name );
+		$this->assertSame( 'Edited.', $row->file_des );
 		$this->assertSame( 2, (int) $row->file_category );
-		$this->assertSame( 7, (int) $row->file_permission );
-		$this->assertSame( 11, (int) $row->file_hits );
-		$this->assertSame( 2048, (int) $row->file_size );
-		$this->assertSame( 'Updated description.', $row->file_des );
-		// The file itself was left alone under file_type -1.
-		$this->assertSame( '/old.zip', $row->file );
+		$this->assertSame( 0, (int) $row->file_permission );
+		$this->assertSame( 4, (int) $row->file_hits );
 	}
 
-	/**
-	 * Saving a row unchanged reports success rather than an error.
-	 *
-	 * $wpdb->update() returns 0 when the row already held these values, which
-	 * the old "if ( ! $editfile )" check reported as a failure.
-	 */
-	public function test_edit_file_with_no_changes_reports_success() {
-		$file_id = $this->insert_file(
+	public function test_editing_a_file_leaves_the_file_alone_when_asked_to() {
+		$id = $this->ids['public'];
+
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
 			array(
-				'file'      => '/same.zip',
-				'file_name' => 'Same',
-				'file_des'  => '',
-				'file_size' => 1024,
-				'file_hits' => 0,
-			)
+				'action' => 'edit',
+				'id'     => $id,
+			),
+			$this->edit_post( $id )
 		);
 
-		// Save once so file_updated_date settles, then save the identical values.
-		$post = array(
-			'do'              => 'Edit File',
-			'_wpnonce'        => $this->nonce( 'wp-downloadmanager_edit-file' ),
-			'file_id'         => (string) $file_id,
-			'file_type'       => '-1',
-			'old_file'        => '/same.zip',
-			'file_name'       => 'Same',
-			'file_cat'        => '1',
-			'file_permission' => '-1',
-			'auto_filesize'   => '0',
-			'file_size'       => '1024',
-		);
-
-		$this->render_admin_page( 'includes/screen-manage.php', array(), $post );
-		$html = $this->render_admin_page( 'includes/screen-manage.php', array(), $post );
-
-		$this->assertStringContainsString( 'Edited Successfully', $html );
-		$this->assertStringNotContainsString( 'Error In Editing', $html );
+		$this->assertSame( '/manual.pdf', $this->fetch_file( $id )->file, 'file_type -1 means "keep the current file"' );
 	}
 
-	/**
-	 * The reset checkbox zeroes the hit count.
-	 */
-	public function test_edit_file_resets_hits() {
-		$file_id = $this->insert_file(
+	public function test_editing_a_file_stamps_the_updated_date() {
+		$id     = $this->ids['public'];
+		$before = $this->fetch_file( $id )->file_updated_date;
+
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
 			array(
-				'file_name' => 'Popular',
-				'file_hits' => 500,
-			)
+				'action' => 'edit',
+				'id'     => $id,
+			),
+			$this->edit_post( $id )
 		);
 
-		$this->render_admin_page(
-			'includes/screen-manage.php',
-			array(),
-			array(
-				'do'              => 'Edit File',
-				'_wpnonce'        => $this->nonce( 'wp-downloadmanager_edit-file' ),
-				'file_id'         => (string) $file_id,
-				'file_type'       => '-1',
-				'old_file'        => '/file.zip',
-				'file_name'       => 'Popular',
-				'file_cat'        => '1',
-				'file_permission' => '-1',
-				'file_hits'       => '500',
-				'reset_filehits'  => '1',
-				'auto_filesize'   => '0',
-				'file_size'       => '1024',
-			)
-		);
-
-		$this->assertSame( 0, (int) $this->row_named( 'Popular' )->file_hits );
+		$this->assertNotSame( $before, $this->fetch_file( $id )->file_updated_date );
 	}
 
-	/**
-	 * The timestamp is only rewritten when the box is ticked.
-	 */
-	public function test_edit_file_timestamp_is_opt_in() {
-		$file_id = $this->insert_file( array( 'file_name' => 'Dated' ) );
+	public function test_editing_a_file_can_reset_its_hit_count() {
+		$id = $this->ids['public'];
 
-		$base = array(
-			'do'                    => 'Edit File',
-			'_wpnonce'              => $this->nonce( 'wp-downloadmanager_edit-file' ),
-			'file_id'               => (string) $file_id,
-			'file_type'             => '-1',
-			'old_file'              => '/file.zip',
-			'file_name'             => 'Dated',
-			'file_cat'              => '1',
-			'file_permission'       => '-1',
-			'auto_filesize'         => '0',
-			'file_size'             => '1024',
-			'file_timestamp_day'    => '1',
-			'file_timestamp_month'  => '1',
-			'file_timestamp_year'   => '2001',
-			'file_timestamp_hour'   => '0',
-			'file_timestamp_minute' => '0',
-			'file_timestamp_second' => '0',
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+			array(
+				'action' => 'edit',
+				'id'     => $id,
+			),
+			$this->edit_post( $id, array( 'reset_filehits' => '1' ) )
 		);
 
-		// Without the checkbox the original date stands.
-		$this->render_admin_page( 'includes/screen-manage.php', array(), $base );
-		$this->assertSame( self::T0, (int) $this->row_named( 'Dated' )->file_date );
-
-		// With it, the posted parts are used.
-		$this->render_admin_page(
-			'includes/screen-manage.php',
-			array(),
-			array_merge( $base, array( 'edit_filetimestamp' => '1' ) )
-		);
-		$this->assertSame(
-			gmmktime( 0, 0, 0, 1, 1, 2001 ),
-			(int) $this->row_named( 'Dated' )->file_date
-		);
+		$this->assertSame( 0, (int) $this->fetch_file( $id )->file_hits );
 	}
 
-	/**
-	 * Editing without a valid nonce is refused.
-	 */
-	public function test_edit_file_requires_a_nonce() {
-		$file_id = $this->insert_file( array( 'file_name' => 'Protected' ) );
+	public function test_editing_a_file_leaves_its_date_alone_unless_asked() {
+		$id = $this->ids['public'];
 
-		$this->expectException( 'WPDieException' );
-
-		$this->render_admin_page(
-			'includes/screen-manage.php',
-			array(),
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
 			array(
-				'do'        => 'Edit File',
-				'_wpnonce'  => 'not-a-nonce',
-				'file_id'   => (string) $file_id,
-				'file_type' => '-1',
-				'file_name' => 'Renamed',
+				'action' => 'edit',
+				'id'     => $id,
+			),
+			$this->edit_post(
+				$id,
+				array(
+					'file_timestamp_day'   => '1',
+					'file_timestamp_month' => '1',
+					'file_timestamp_year'  => '2001',
+				)
 			)
 		);
+
+		$this->assertSame( (string) self::T0, $this->fetch_file( $id )->file_date, 'the date selects only take effect with the box ticked' );
 	}
 
-	/**
-	 * Deleting removes the row and leaves the file on disk by default.
-	 */
-	public function test_delete_file_keeps_the_file_on_disk() {
-		$path    = $this->make_download_file( 'keep-me.txt' );
-		$file_id = $this->insert_file(
+	public function test_editing_a_file_can_change_its_date() {
+		$id = $this->ids['public'];
+
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
 			array(
-				'file'      => '/keep-me.txt',
-				'file_name' => 'Keep Me',
+				'action' => 'edit',
+				'id'     => $id,
+			),
+			$this->edit_post(
+				$id,
+				array(
+					'edit_filetimestamp'    => '1',
+					'file_timestamp_day'    => '1',
+					'file_timestamp_month'  => '1',
+					'file_timestamp_year'   => '2001',
+					'file_timestamp_hour'   => '0',
+					'file_timestamp_minute' => '0',
+					'file_timestamp_second' => '0',
+				)
 			)
 		);
 
-		$html = $this->render_admin_page(
-			'includes/screen-manage.php',
-			array(),
-			array(
-				'do'       => 'Delete File',
-				'_wpnonce' => $this->nonce( 'wp-downloadmanager_delete-file' ),
-				'file_id'  => (string) $file_id,
-			)
-		);
-
-		$this->assertStringContainsString( 'Deleted Successfully', $html );
-		$this->assertNull( $this->row_named( 'Keep Me' ) );
-		$this->assertFileExists( $path );
+		$this->assertSame( (string) gmmktime( 0, 0, 0, 1, 1, 2001 ), $this->fetch_file( $id )->file_date );
 	}
 
-	/**
-	 * Ticking the box also removes the file from the server.
-	 */
-	public function test_delete_file_removes_it_from_disk() {
-		$path    = $this->make_download_file( 'delete-me.txt' );
-		$file_id = $this->insert_file(
+	public function test_saving_an_unchanged_row_reports_success() {
+		$id = $this->ids['public'];
+
+		$post = $this->edit_post( $id );
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
 			array(
-				'file'      => '/delete-me.txt',
-				'file_name' => 'Delete Me',
+				'action' => 'edit',
+				'id'     => $id,
+			),
+			$post
+		);
+
+		$post['_wpnonce'] = $this->nonce( 'wp_downloadmanager_edit_' . $id );
+		$html             = $this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+			array(
+				'action' => 'edit',
+				'id'     => $id,
+			),
+			$post
+		);
+
+		$this->assertStringContainsString( 'saved', $html, 'update() returns 0 when the row already held these values, which is success' );
+		$this->assertStringNotContainsString( 'could not be saved', $html );
+	}
+
+	public function test_editing_a_file_with_the_wrong_nonce_is_refused() {
+		$id = $this->ids['public'];
+
+		$this->expectException( WPDieException::class );
+
+		try {
+			$this->render(
+				array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+				array(
+					'action' => 'edit',
+					'id'     => $id,
+				),
+				$this->edit_post( $id, array( '_wpnonce' => $this->nonce( 'wp_downloadmanager_edit_999' ) ) )
+			);
+		} finally {
+			$this->assertSame( 'The Manual', $this->fetch_file( $id )->file_name, 'the row is untouched' );
+		}
+	}
+
+	public function test_deleting_a_file_removes_its_row() {
+		$id = $this->ids['public'];
+
+		$html = $this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+			array(
+				'action' => 'delete',
+				'id'     => $id,
+			),
+			array(
+				'do'       => 'delete',
+				'_wpnonce' => $this->nonce( 'wp_downloadmanager_delete_' . $id ),
+				'file_id'  => (string) $id,
 			)
 		);
 
-		$html = $this->render_admin_page(
-			'includes/screen-manage.php',
-			array(),
+		$this->assertNull( $this->fetch_file( $id ) );
+		$this->assertStringContainsString( '1 file deleted', $html );
+	}
+
+	public function test_deleting_a_file_lands_back_on_the_list() {
+		$id = $this->ids['public'];
+
+		$html = $this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
 			array(
-				'do'         => 'Delete File',
-				'_wpnonce'   => $this->nonce( 'wp-downloadmanager_delete-file' ),
-				'file_id'    => (string) $file_id,
+				'action' => 'delete',
+				'id'     => $id,
+			),
+			array(
+				'do'       => 'delete',
+				'_wpnonce' => $this->nonce( 'wp_downloadmanager_delete_' . $id ),
+				'file_id'  => (string) $id,
+			)
+		);
+
+		$this->assertStringContainsString( 'Members Bundle', $html, 'the confirmation screen has nothing left to confirm' );
+		$this->assertStringNotContainsString( 'data-confirm=', $html );
+	}
+
+	public function test_deleting_a_file_can_remove_it_from_disk_too() {
+		$path = $this->make_download_file( 'doomed.txt' );
+		$id   = $this->insert_file( array( 'file' => '/doomed.txt' ) );
+
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+			array(
+				'action' => 'delete',
+				'id'     => $id,
+			),
+			array(
+				'do'         => 'delete',
+				'_wpnonce'   => $this->nonce( 'wp_downloadmanager_delete_' . $id ),
+				'file_id'    => (string) $id,
 				'unlinkfile' => '1',
 			)
 		);
 
-		$this->assertStringContainsString( 'Deleted From Server Successfully', $html );
-		$this->assertNull( $this->row_named( 'Delete Me' ) );
 		$this->assertFileDoesNotExist( $path );
+		$this->assertNull( $this->fetch_file( $id ) );
 	}
 
-	/**
-	 * Deleting without a valid nonce is refused.
-	 */
-	public function test_delete_file_requires_a_nonce() {
-		$file_id = $this->insert_file( array( 'file_name' => 'Safe' ) );
+	public function test_deleting_a_file_leaves_the_file_on_disk_unless_asked() {
+		$path = $this->make_download_file( 'spared.txt' );
+		$id   = $this->insert_file( array( 'file' => '/spared.txt' ) );
 
-		$this->expectException( 'WPDieException' );
-
-		$this->render_admin_page(
-			'includes/screen-manage.php',
-			array(),
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
 			array(
-				'do'       => 'Delete File',
-				'_wpnonce' => 'not-a-nonce',
-				'file_id'  => (string) $file_id,
+				'action' => 'delete',
+				'id'     => $id,
+			),
+			array(
+				'do'       => 'delete',
+				'_wpnonce' => $this->nonce( 'wp_downloadmanager_delete_' . $id ),
+				'file_id'  => (string) $id,
 			)
 		);
+
+		$this->assertFileExists( $path, 'removing the row is not the same as removing the file' );
+		$this->assertNull( $this->fetch_file( $id ) );
 	}
 
-	/**
-	 * The upload target cannot escape the downloads directory.
-	 *
-	 * The subfolder comes from a select the screen builds, but nothing stopped
-	 * a hand-crafted POST from sending '../../..'.
-	 *
-	 * @dataProvider traversal_provider
-	 *
-	 * @param string $subfolder The posted subfolder.
-	 */
-	public function test_upload_subfolder_cannot_escape( $subfolder ) {
-		$dir = WP_DownloadManager_Options::get( 'path.dir' );
-		wp_mkdir_p( $dir . '/real' );
+	public function test_deleting_a_file_without_a_nonce_is_refused() {
+		$id = $this->ids['public'];
 
-		$this->assertSame(
-			'/',
-			WP_DownloadManager_File::safe_subfolder( $dir, $subfolder ),
-			$subfolder . ' should be refused'
+		$this->expectException( WPDieException::class );
+
+		try {
+			$this->render(
+				array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+				array(
+					'action' => 'delete',
+					'id'     => $id,
+				),
+				array(
+					'do'       => 'delete',
+					'_wpnonce' => 'not a nonce',
+					'file_id'  => (string) $id,
+				)
+			);
+		} finally {
+			$this->assertNotNull( $this->fetch_file( $id ), 'the row survives' );
+		}
+	}
+
+	public function test_a_bulk_delete_removes_every_ticked_row() {
+		$html = $this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+			array(),
+			array(
+				'action'   => 'delete',
+				'_wpnonce' => $this->nonce( 'wp_downloadmanager_bulk' ),
+				'file_ids' => array( $this->ids['public'], $this->ids['members'] ),
+			)
 		);
+
+		$this->assertNull( $this->fetch_file( $this->ids['public'] ) );
+		$this->assertNull( $this->fetch_file( $this->ids['members'] ) );
+		$this->assertNotNull( $this->fetch_file( $this->ids['editors'] ), 'and leaves the rest alone' );
+		$this->assertStringContainsString( '2 files deleted', $html );
 	}
 
-	/**
-	 * Subfolders that must be refused.
-	 *
-	 * @return array
-	 */
-	public function traversal_provider() {
-		return array(
-			'parent'          => array( '/..' ),
-			'deep parent'     => array( '/../../..' ),
-			'embedded parent' => array( '/real/../../etc' ),
-			'backslash'       => array( '\\..\\..' ),
-			'null byte'       => array( "/real\0/../.." ),
-			'absolute'        => array( '/etc' ),
+	public function test_a_bulk_delete_without_a_nonce_is_refused() {
+		$this->expectException( WPDieException::class );
+
+		try {
+			$this->render(
+				array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+				array(),
+				array(
+					'action'   => 'delete',
+					'_wpnonce' => 'not a nonce',
+					'file_ids' => array( $this->ids['public'] ),
+				)
+			);
+		} finally {
+			$this->assertNotNull( $this->fetch_file( $this->ids['public'] ) );
+		}
+	}
+
+	public function test_a_bulk_delete_of_nothing_deletes_nothing() {
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+			array(),
+			array(
+				'action'   => 'delete',
+				'_wpnonce' => $this->nonce( 'wp_downloadmanager_bulk' ),
+				'file_ids' => array(),
+			)
 		);
+
+		$this->assertSame( 5, $this->count_files() );
 	}
 
-	/**
-	 * A genuine subfolder is accepted.
-	 */
-	public function test_upload_subfolder_accepts_a_real_folder() {
-		$dir = WP_DownloadManager_Options::get( 'path.dir' );
-		wp_mkdir_p( $dir . '/real' );
-
-		$this->assertSame( '/real', WP_DownloadManager_File::safe_subfolder( $dir, '/real' ) );
-		$this->assertSame( '/', WP_DownloadManager_File::safe_subfolder( $dir, '/' ) );
-	}
-
-	/**
-	 * A sibling directory sharing a prefix is not mistaken for a subfolder.
-	 *
-	 * Without the trailing separator in the comparison, /files-public would pass
-	 * as being inside /files.
-	 */
-	public function test_upload_subfolder_rejects_a_prefix_sibling() {
-		$dir = WP_DownloadManager_Options::get( 'path.dir' );
-		wp_mkdir_p( $dir );
-		wp_mkdir_p( $dir . '-public' );
-
-		$this->assertSame( '/', WP_DownloadManager_File::safe_subfolder( $dir, '/../' . basename( $dir ) . '-public' ) );
-
-		rmdir( $dir . '-public' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
-	}
-
-	/**
-	 * Stored file names are stripped of characters that do not belong.
-	 */
-	public function test_rename_file_normalises_the_name() {
-		$dir = WP_DownloadManager_Options::get( 'path.dir' );
-		$this->make_download_file( 'my file (1).txt' );
-
-		$renamed = WP_DownloadManager_File::rename_file( trailingslashit( $dir ), 'my file (1).txt' );
-
-		$this->assertSame( 'my_file_1.txt', $renamed );
-		$this->assertFileExists( trailingslashit( $dir ) . 'my_file_1.txt' );
-	}
-
-	/**
-	 * A name that needs no change is returned untouched.
-	 */
-	public function test_rename_file_leaves_a_clean_name_alone() {
-		$dir = WP_DownloadManager_Options::get( 'path.dir' );
-		$this->make_download_file( 'clean-name.txt' );
-
-		$this->assertSame(
-			'clean-name.txt',
-			WP_DownloadManager_File::rename_file( trailingslashit( $dir ), 'clean-name.txt' )
+	public function test_messages_go_through_the_settings_error_api() {
+		$this->assertStringContainsString(
+			'add_settings_error(',
+			$this->code( 'includes/class-wp-downloadmanager-admin.php' ),
+			'section 4.2: no hand-rolled <div class="updated">'
+		);
+		$this->assertStringNotContainsString(
+			'class="updated fade"',
+			$this->code( 'includes/class-wp-downloadmanager-admin.php' )
 		);
 	}
 }

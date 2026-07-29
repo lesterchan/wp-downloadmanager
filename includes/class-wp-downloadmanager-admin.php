@@ -369,7 +369,13 @@ class WP_DownloadManager_Admin {
 	 * @return void
 	 */
 	public static function render_delete( $file_id ) {
-		self::handle_delete( $file_id );
+		if ( self::handle_delete( $file_id ) ) {
+			// Deleted, so there is nothing left to confirm. Falling through to
+			// the list rather than redirecting keeps the notice, and keeps this
+			// screen reachable from a test without an exit() in the middle of it.
+			self::render_list();
+			return;
+		}
 
 		$file = self::get_file( $file_id );
 
@@ -751,22 +757,34 @@ class WP_DownloadManager_Admin {
 	 * Delete one file from the confirmation screen.
 	 *
 	 * @param int $file_id File being deleted.
-	 * @return void
+	 * @return bool Whether the row was deleted.
 	 */
 	protected static function handle_delete( $file_id ) {
 		if ( ! isset( $_POST['do'], $_POST['_wpnonce'] ) ) {
-			return;
+			return false;
 		}
 
 		check_admin_referer( 'wp_downloadmanager_delete_' . (int) $file_id );
 		self::require_capability();
 
-		$post = wp_unslash( $_POST );
+		$post    = wp_unslash( $_POST );
+		$deleted = self::delete_files( array( $file_id ), (bool) self::posted_int( $post, 'unlinkfile' ) );
 
-		self::delete_files( array( $file_id ), (bool) self::posted_int( $post, 'unlinkfile' ) );
+		if ( ! $deleted ) {
+			self::notice( __( 'That file no longer exists.', 'wp-downloadmanager' ), 'error' );
 
-		wp_safe_redirect( self::screen_url() );
-		exit;
+			return false;
+		}
+
+		self::notice(
+			sprintf(
+				/* translators: %s: number of files. */
+				_n( '%s file deleted.', '%s files deleted.', $deleted, 'wp-downloadmanager' ),
+				number_format_i18n( $deleted )
+			)
+		);
+
+		return true;
 	}
 
 	/**
