@@ -284,7 +284,7 @@ class WP_DownloadManager_Display_Test extends WP_DownloadManager_TestCase {
 		global $wpdb;
 
 		$table = $this->table();
-		$wpdb->query( "TRUNCATE TABLE {$table}" );
+		$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) );
 
 		$this->assertStringContainsString( 'N/A', WP_DownloadManager_Display::most_downloaded( 5, 0, false ) );
 	}
@@ -297,7 +297,7 @@ class WP_DownloadManager_Display_Test extends WP_DownloadManager_TestCase {
 		global $wpdb;
 
 		$table = $this->table();
-		$wpdb->query( "TRUNCATE TABLE {$table}" );
+		$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) );
 
 		$this->assertSame( '0', WP_DownloadManager_Display::total_hits( false ), 'SUM() is NULL on an empty table' );
 		$this->assertSame( 'unknown', WP_DownloadManager_Display::total_size( false ) );

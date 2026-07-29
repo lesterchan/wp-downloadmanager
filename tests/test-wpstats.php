@@ -188,7 +188,7 @@ class WP_DownloadManager_WPStats_Test extends WP_DownloadManager_TestCase {
 		global $wpdb;
 
 		$table = $this->table();
-		$wpdb->query( "TRUNCATE TABLE {$table}" );
+		$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) );
 
 		ob_start();
 		WP_DownloadManager_WPStats::render();

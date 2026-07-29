@@ -203,7 +203,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 
 		$this->become_download_admin();
 		$table = $this->table();
-		$wpdb->query( "TRUNCATE TABLE {$table}" );
+		$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) );
 
 		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_downloads' ) );
 

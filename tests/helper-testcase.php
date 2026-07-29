@@ -39,7 +39,7 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 		global $wpdb;
 
 		$table = $this->table();
-		$wpdb->query( "TRUNCATE TABLE {$table}" );
+		$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) );
 
 		$this->reset_options();
 		WP_DownloadManager_Display::reset_sprite();

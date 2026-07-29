@@ -11,6 +11,10 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 require_once __DIR__ . '/includes/class-wp-downloadmanager-template.php';
 require_once __DIR__ . '/includes/class-wp-downloadmanager-options.php';
+// The table drop lives in the install class so the schema change stays in
+// includes/ with the rest of the plugin's table work; this file declares
+// nothing but a class, so requiring it here runs no code.
+require_once __DIR__ . '/includes/class-wp-downloadmanager-install.php';
 
 // Guarded because the test suite runs this file more than once in a process;
 // WordPress itself only ever includes it the once.
@@ -21,8 +25,6 @@ if ( ! function_exists( 'wp_downloadmanager_uninstall_site' ) ) {
 	 * @return void
 	 */
 	function wp_downloadmanager_uninstall_site() {
-		global $wpdb;
-
 		// The legacy rows are listed by the options class, so this and the
 		// migration can never disagree about which rows belong to the plugin.
 		// 2.0.0 consolidated them into wp_downloadmanager_options, but an
@@ -44,8 +46,7 @@ if ( ! function_exists( 'wp_downloadmanager_uninstall_site' ) ) {
 
 		// Dropping the plugin's own table is the entire job here. The table was
 		// dropped once per option row before, which worked only by accident.
-		$table = $wpdb->prefix . 'downloads';
-		$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
+		WP_DownloadManager_Install::drop_table();
 	}
 }
 

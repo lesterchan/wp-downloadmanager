@@ -167,6 +167,30 @@ class WP_DownloadManager_Install {
 	}
 
 	/**
+	 * Drop the downloads table for the current site.
+	 *
+	 * Lives here rather than in uninstall.php so the schema change happens in
+	 * includes/, which is where the shared phpcs.xml accepts a direct database
+	 * call from a plugin that owns a table. %i binds the identifier, which is
+	 * what makes a DROP statement preparable at all.
+	 *
+	 * uninstall.php reaches this with the plugin inactive, so the registered
+	 * $wpdb->downloads may not exist yet and the prefix has to stand in. Both
+	 * spellings follow switch_to_blog(): the registered name because
+	 * wpdb::set_blog_id() rebuilds it, the prefix because it is what gets
+	 * rebuilt.
+	 *
+	 * @return void
+	 */
+	public static function drop_table() {
+		global $wpdb;
+
+		$table = isset( $wpdb->downloads ) ? $wpdb->downloads : $wpdb->prefix . 'downloads';
+
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
+	}
+
+	/**
 	 * Columns added in 1.30.
 	 *
 	 * @return void

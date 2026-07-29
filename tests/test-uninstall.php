@@ -142,14 +142,15 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 	public function test_the_table_is_dropped_once_rather_than_once_per_option_row() {
 		$source = $this->code( 'uninstall.php' );
 
-		$this->assertSame( 1, substr_count( $source, 'DROP TABLE' ), 'the old code dropped it inside the option loop, which worked only by accident' );
+		$this->assertSame( 1, substr_count( $source, 'Install::drop_table()' ), 'the old code dropped it inside the option loop, which worked only by accident' );
+		$this->assertStringNotContainsString( 'DROP TABLE', $source, 'the statement itself belongs in includes/, where the plugin does the rest of its table work' );
 	}
 
 	public function test_uninstalling_a_site_that_never_finished_installing_is_harmless() {
 		global $wpdb;
 
 		$table = $this->table();
-		$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
 		delete_option( WP_DownloadManager_Options::OPTION );
 		delete_option( WP_DownloadManager_Options::VERSION );
 
