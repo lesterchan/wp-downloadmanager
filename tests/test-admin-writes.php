@@ -534,12 +534,15 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_a_bulk_delete_removes_every_ticked_row() {
+		// Driven through $_GET, because the form around the table is method="get".
+		// Sending this as POST is what hid two bugs at once: the handler read
+		// $_POST, which a browser never fills here, and it verified a nonce the
+		// form did not emit.
 		$html = $this->render(
 			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
-			array(),
 			array(
 				'action'   => 'delete',
-				'_wpnonce' => $this->nonce( 'wp_downloadmanager_bulk' ),
+				'_wpnonce' => $this->nonce( 'bulk-downloads' ),
 				'file_ids' => array( $this->ids['public'], $this->ids['members'] ),
 			)
 		);
@@ -556,7 +559,6 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 		try {
 			$this->render(
 				array( 'WP_DownloadManager_Admin', 'render_downloads' ),
-				array(),
 				array(
 					'action'   => 'delete',
 					'_wpnonce' => 'not a nonce',
@@ -571,15 +573,40 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 	public function test_a_bulk_delete_of_nothing_deletes_nothing() {
 		$this->render(
 			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
-			array(),
 			array(
 				'action'   => 'delete',
-				'_wpnonce' => $this->nonce( 'wp_downloadmanager_bulk' ),
+				'_wpnonce' => $this->nonce( 'bulk-downloads' ),
 				'file_ids' => array(),
 			)
 		);
 
 		$this->assertSame( 5, $this->count_files() );
+	}
+
+	/**
+	 * The form emits one nonce, and it is the one the handler checks.
+	 *
+	 * The regression test for a bulk delete that never ran in a browser.
+	 * WP_List_Table::display_tablenav() prints wp_nonce_field() for bulk-downloads
+	 * itself, in a field named _wpnonce; the screen printed a second one beside it
+	 * under the same name, and PHP keeps only the last. Every unit test passed
+	 * throughout, because they built the nonce themselves instead of reading the
+	 * one the form actually emits.
+	 */
+	public function test_the_bulk_form_emits_one_nonce_and_it_verifies() {
+		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_downloads' ) );
+
+		preg_match_all( '/name="_wpnonce" value="([^"]+)"/', $html, $matches );
+
+		$this->assertCount( 1, $matches[1], 'The form carries more than one _wpnonce field, so only the last survives the submit.' );
+
+		$table = new WP_DownloadManager_List_Table();
+
+		$this->assertSame(
+			1,
+			wp_verify_nonce( $matches[1][0], $table->bulk_nonce_action() ),
+			'The nonce the form emits does not verify against the action the bulk handler checks.'
+		);
 	}
 
 	public function test_messages_go_through_the_settings_error_api() {

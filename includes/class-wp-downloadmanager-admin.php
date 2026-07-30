@@ -259,7 +259,9 @@ class WP_DownloadManager_Admin {
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE ); ?>" />
 				<?php
 				$table->search_box( __( 'Search Files', 'wp-downloadmanager' ), 'wp-downloadmanager-search' );
-				wp_nonce_field( 'wp_downloadmanager_bulk' );
+				// No wp_nonce_field() here: $table->display() emits the bulk nonce
+				// this form is checked against, and a second _wpnonce input would
+				// override it. See WP_DownloadManager_List_Table::bulk_nonce_action().
 				$table->display();
 				?>
 			</form>
@@ -813,7 +815,20 @@ class WP_DownloadManager_Admin {
 	 * @return void
 	 */
 	protected static function handle_bulk_delete() {
-		if ( ! isset( $_POST['file_ids'], $_POST['_wpnonce'] ) ) {
+		/*
+		 * $_REQUEST, not $_POST.
+		 *
+		 * The form around this table is method="get" -- it carries the search box
+		 * and the pagination links, both of which have to stay shareable, and it
+		 * is what core's own posts list does. So a browser submits the bulk action
+		 * as GET and $_POST is empty, which meant this returned at the guard below
+		 * and the bulk delete quietly did nothing at all. The tests never caught
+		 * it because they drove the screen with a POST array.
+		 *
+		 * The nonce is what makes this safe to accept over GET, and it is checked
+		 * below before anything is read.
+		 */
+		if ( ! isset( $_REQUEST['file_ids'], $_REQUEST['_wpnonce'] ) ) {
 			return;
 		}
 
@@ -824,11 +839,11 @@ class WP_DownloadManager_Admin {
 			return;
 		}
 
-		check_admin_referer( 'wp_downloadmanager_bulk' );
+		check_admin_referer( $table->bulk_nonce_action() );
 		self::require_capability();
 
-		$post = wp_unslash( $_POST );
-		$ids  = isset( $post['file_ids'] ) ? array_map( 'intval', (array) $post['file_ids'] ) : array();
+		$request = wp_unslash( $_REQUEST );
+		$ids     = isset( $request['file_ids'] ) ? array_map( 'intval', (array) $request['file_ids'] ) : array();
 
 		if ( ! $ids ) {
 			return;

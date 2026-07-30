@@ -75,6 +75,22 @@ class WP_DownloadManager_List_Table extends WP_List_Table {
 	}
 
 	/**
+	 * The nonce action guarding the bulk form.
+	 *
+	 * WP_List_Table::display_tablenav() prints wp_nonce_field() for this action
+	 * itself, in a field named _wpnonce. Printing a second _wpnonce beside it --
+	 * which this screen used to do -- does not add a check, it replaces one: PHP
+	 * keeps the last field of a repeated name, so the plugin's own nonce was
+	 * discarded and check_admin_referer() was handed one for an action it was not
+	 * checking. Verify the one core actually emits.
+	 *
+	 * @return string
+	 */
+	public function bulk_nonce_action() {
+		return 'bulk-' . $this->_args['plural'];
+	}
+
+	/**
 	 * Destructive operations available on a selection.
 	 *
 	 * @return array
