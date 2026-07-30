@@ -102,8 +102,15 @@ class WP_DownloadManager_Display_Test extends WP_DownloadManager_TestCase {
 
 		$_GET = array();
 
-		$this->assertStringContainsString( 'The Manual', $html );
-		$this->assertStringNotContainsString( 'Members Bundle', $html );
+		// The tags come out first. A matched term is wrapped in the plugin's own
+		// highlight span, so the title of the file that matched is never a
+		// contiguous string in the markup -- "The Manual" renders as
+		// "The <span …>Manual</span>". That the highlight is applied is the next
+		// test's business; this one is about which files the search left in.
+		$text = wp_strip_all_tags( $html );
+
+		$this->assertStringContainsString( 'The Manual', $text );
+		$this->assertStringNotContainsString( 'Members Bundle', $text );
 	}
 
 	public function test_a_search_term_is_highlighted_under_the_plugins_own_class() {

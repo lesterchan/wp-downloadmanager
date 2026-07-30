@@ -112,7 +112,17 @@ class WP_DownloadManager_Widget extends WP_Widget {
 	 * @return array
 	 */
 	public function update( $new_instance, $old_instance ) {
-		$new_instance = wp_parse_args( (array) $new_instance, (array) $old_instance );
+		/*
+		 * The defaults are the last resort, as they are in form().
+		 *
+		 * Falling back to $old_instance alone is not enough. Neither the block
+		 * widget editor nor the customizer posts the whole form -- that is the
+		 * same reason the old submit-marker guard had to go -- and a widget being
+		 * saved for the first time has no old instance to fall back to either. So
+		 * every key below could be absent, and reading them unguarded raised
+		 * "Undefined array key", which the shared config turns into a fatal.
+		 */
+		$new_instance = wp_parse_args( (array) $new_instance, wp_parse_args( (array) $old_instance, self::defaults() ) );
 		$instance     = (array) $old_instance;
 
 		$instance['title']   = wp_strip_all_tags( $new_instance['title'] );

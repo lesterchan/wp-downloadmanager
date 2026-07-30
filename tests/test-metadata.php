@@ -297,15 +297,27 @@ class WP_DownloadManager_Metadata_Test extends WP_DownloadManager_TestCase {
 		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 			define( 'WP_UNINSTALL_PLUGIN', 'wp-downloadmanager/wp-downloadmanager.php' );
 		}
+
+		// The DROP is watched for rather than looked for afterwards; see
+		// WP_DownloadManager_Uninstall_Test::test_the_downloads_table_is_dropped()
+		// for why a temporary-table harness cannot answer "is the table gone".
+		$dropped = false;
+		$watch   = static function ( $query ) use ( &$dropped ) {
+			if ( false !== stripos( $query, 'DROP' ) && false !== stripos( $query, 'downloads' ) ) {
+				$dropped = true;
+			}
+
+			return $query;
+		};
+
+		add_filter( 'query', $watch );
 		require dirname( __DIR__ ) . '/uninstall.php';
+		remove_filter( 'query', $watch );
 
 		$left = $wpdb->get_col( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE 'wp\\_downloadmanager\\_%'" );
 
 		$this->assertSame( array(), $left, 'no wp_downloadmanager_% row may survive uninstall: ' . implode( ', ', $left ) );
-		$this->assertNull(
-			$wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table() ) ),
-			'the downloads table is dropped by uninstall'
-		);
+		$this->assertTrue( $dropped, 'the downloads table is dropped by uninstall' );
 
 		// Put it back, or every test that runs after this one truncates a table
 		// that is no longer there.
@@ -432,7 +444,12 @@ class WP_DownloadManager_Metadata_Test extends WP_DownloadManager_TestCase {
 				continue;
 			}
 
-			$this->assertStringStartsWith( 'class-wp-downloadmanager-', $name, $name . ' is not a class file' );
+			// No trailing hyphen. §2.4 names the bootstrap class plain
+			// WP_DownloadManager, so its file is class-wp-downloadmanager.php with
+			// no component suffix -- which the hyphenated prefix rejected. The
+			// class-to-filename check below is the exact one anyway, and it holds
+			// the bootstrap file to the same rule as every other.
+			$this->assertStringStartsWith( 'class-wp-downloadmanager', $name, $name . ' is not a class file' );
 
 			preg_match_all( '/^\s*(?:final\s+|abstract\s+)?class\s+(\w+)/m', file_get_contents( $path ), $matches );
 
@@ -469,20 +486,36 @@ class WP_DownloadManager_Metadata_Test extends WP_DownloadManager_TestCase {
 	public function test_no_source_file_reads_an_unprefixed_option_row() {
 		$core = array( 'home', 'blog_charset', 'date_format', 'time_format', 'gmt_offset' );
 
+		/*
+		 * Collected first, asserted once.
+		 *
+		 * Written as an assertion inside two loops, this test performed no
+		 * assertion at all and was reported risky, which the shared config makes
+		 * fatal. Not because it had nothing to say -- because it had nothing to
+		 * find: every live read in the plugin goes through a class constant, so
+		 * there is no literal option name in the source for the pattern to match.
+		 * That is the desired state, and it now says so out loud instead of
+		 * quietly passing over an empty set.
+		 */
+		$offenders = array();
+
 		foreach ( $this->plugin_php_files() as $file ) {
 			preg_match_all( "/(?:get_option|update_option|add_option)\(\s*'([a-z0-9_]+)'/", $this->code( $file ), $matches );
 
 			foreach ( $matches[1] as $option ) {
-				if ( in_array( $option, $core, true ) ) {
+				if ( in_array( $option, $core, true ) || 0 === strpos( $option, 'wp_downloadmanager_' ) ) {
 					continue;
 				}
-				$this->assertStringStartsWith(
-					'wp_downloadmanager_',
-					$option,
-					$option . ' in ' . $file . ' is an unprefixed option row; only the migration may name one, and only to delete it'
-				);
+
+				$offenders[] = $option . ' in ' . $file;
 			}
 		}
+
+		$this->assertSame(
+			array(),
+			$offenders,
+			'unprefixed option rows are named in the source; only the migration may name one, and only to delete it: ' . implode( ', ', $offenders )
+		);
 	}
 
 	/**

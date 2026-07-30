@@ -88,11 +88,32 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_the_downloads_table_is_dropped() {
-		global $wpdb;
+		/*
+		 * Watch for the DROP rather than looking for the table afterwards.
+		 *
+		 * WP_UnitTestCase filters every query through _create_temporary_tables()
+		 * and _drop_temporary_tables(), which rewrite CREATE/DROP TABLE into the
+		 * TEMPORARY forms so that a test cannot alter real schema. SHOW TABLES
+		 * never lists a temporary table and a DROP TEMPORARY TABLE cannot remove
+		 * a real one, so "is the table gone" is a question this environment
+		 * cannot answer: it reports whatever real wp_downloads the bootstrap left
+		 * behind, whatever uninstall did. That the uninstaller issued the drop is
+		 * the part that is actually about this plugin, and it is answerable.
+		 */
+		$dropped = false;
+		$watch   = static function ( $query ) use ( &$dropped ) {
+			if ( false !== stripos( $query, 'DROP' ) && false !== stripos( $query, 'downloads' ) ) {
+				$dropped = true;
+			}
 
+			return $query;
+		};
+
+		add_filter( 'query', $watch );
 		$this->uninstall();
+		remove_filter( 'query', $watch );
 
-		$this->assertNull( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table() ) ) );
+		$this->assertTrue( $dropped, 'uninstall issued no DROP for the downloads table' );
 	}
 
 	public function test_the_uninstaller_reads_its_row_list_from_the_options_class() {

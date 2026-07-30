@@ -320,6 +320,14 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 
 		set_query_var( 'dl_id', $this->ids['public'] );
 
+		// Method 1 hands the visitor to the download URL, and wp_redirect() calls
+		// header() -- which cannot succeed here, because PHPUnit has been printing
+		// its progress dots since the bootstrap. Returning false from the filter
+		// makes wp_redirect() give up before the header() call, exactly as the WP
+		// test suite does for every other redirect it has to survive. Nothing about
+		// the plugin is different in a real request, where nothing has been sent.
+		add_filter( 'wp_redirect', '__return_false' );
+
 		// finish() fires this action and then exits; hooking it is how the suite
 		// observes the endpoint instead of being killed by it.
 		add_action( 'wp_downloadmanager_served', fn() => throw new WPDieException( 'served' ) );

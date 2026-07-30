@@ -126,6 +126,13 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_no_stylesheet_is_enqueued_on_any_admin_screen() {
+		// From an empty registry. WP_Styles is process-wide and nothing rolls it
+		// back, so the front-end sheet enqueued by whichever display test ran
+		// earlier was still in the queue and got read as this screen's doing. The
+		// question is what these three screens enqueue, so they have to be asked
+		// on their own.
+		$GLOBALS['wp_styles'] = new WP_Styles();
+
 		foreach ( WP_DownloadManager_Admin::screens() as $slug ) {
 			WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $slug );
 		}
@@ -279,11 +286,34 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_the_widget_is_registered_with_core() {
-		do_action( 'widgets_init' );
+		/*
+		 * widgets_init is not re-fired, and the factory is not what gets read.
+		 *
+		 * WP_Widget_Factory::widgets is a pending list, not a registry: core hooks
+		 * _register_widgets() onto widgets_init at priority 100, and that method
+		 * removes from the list every widget whose id_base is already in
+		 * $wp_registered_widgets. The plugin registers on widgets_init during
+		 * boot, so firing the action a second time from a test emptied the factory
+		 * completely -- of core's seventeen widgets as well as this one -- and the
+		 * assertion then read the wreckage. Where the widget has to end up for the
+		 * block editor and the customizer to offer it is $wp_registered_widgets,
+		 * which is what boot already left behind.
+		 */
+		$this->assertNotFalse(
+			has_action( 'widgets_init' ),
+			'nothing is hooked to widgets_init, so the widget can never be registered'
+		);
 
-		$registered = array_map( 'get_class', $GLOBALS['wp_widget_factory']->widgets );
+		$ours = array();
 
-		$this->assertContains( 'WP_DownloadManager_Widget', array_values( $registered ), 'the widget has to reach the widget factory to appear in the block editor' );
+		foreach ( (array) $GLOBALS['wp_registered_widgets'] as $id => $widget ) {
+			if ( isset( $widget['callback'][0] ) && is_object( $widget['callback'][0] ) && $widget['callback'][0] instanceof WP_DownloadManager_Widget ) {
+				$ours[] = $id;
+			}
+		}
+
+		$this->assertNotEmpty( $ours, 'the widget never reached $wp_registered_widgets, so neither the block editor nor the customizer offers it' );
+		$this->assertStringStartsWith( 'downloads-', $ours[0], 'the widget registered under an id base other than its own' );
 	}
 
 	public function test_the_widget_supports_selective_refresh() {

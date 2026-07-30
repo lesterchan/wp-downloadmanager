@@ -287,6 +287,12 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 
 		$this->notices = array();
 
+		// add_settings_error() writes into a global no transaction rolls back, so
+		// without this every screen renders the notices of every screen rendered
+		// before it, and an assertion about what this one said is answered by an
+		// earlier one.
+		$GLOBALS['wp_settings_errors'] = array();
+
 		$_GET     = $get;
 		$_POST    = $post;
 		$_REQUEST = array_merge( $get, $post );

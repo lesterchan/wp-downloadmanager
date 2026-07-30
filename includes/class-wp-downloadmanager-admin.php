@@ -638,7 +638,27 @@ class WP_DownloadManager_Admin {
 			'tmp_name' => isset( $_FILES['file_upload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['file_upload']['tmp_name'] ) ) : '',
 			'name'     => isset( $_FILES['file_upload']['name'] ) ? sanitize_file_name( basename( sanitize_text_field( wp_unslash( $_FILES['file_upload']['name'] ) ) ) ) : '',
 		);
-		$source = self::resolve_source( $post, $upload, 0 );
+
+		/*
+		 * The posted source, not a hardcoded one.
+		 *
+		 * This passed a literal 0, so the Add File screen ignored the four-way
+		 * radio entirely and always took the "browse the downloads directory"
+		 * branch: an uploaded file and a remote URL were both accepted by the form
+		 * and then silently dropped, and the row was written from whatever the
+		 * Browse select happened to hold. handle_edit() has always read the field.
+		 *
+		 * -1 means "keep the current file", which the Add screen has no current
+		 * file for and does not offer, so it and anything else unrecognised fall
+		 * back to 0 -- the radio the form checks when there is no file yet.
+		 */
+		$file_type = self::posted_int( $post, 'file_type', 0 );
+
+		if ( ! in_array( $file_type, array( 0, 1, 2 ), true ) ) {
+			$file_type = 0;
+		}
+
+		$source = self::resolve_source( $post, $upload, $file_type );
 		if ( is_wp_error( $source ) ) {
 			self::notice( $source->get_error_message(), 'error' );
 			return;
