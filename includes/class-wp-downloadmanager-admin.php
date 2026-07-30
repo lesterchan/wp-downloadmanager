@@ -145,7 +145,7 @@ class WP_DownloadManager_Admin {
 
 		add_menu_page(
 			__( 'Downloads', 'wp-downloadmanager' ),
-			__( 'Downloads', 'wp-downloadmanager' ),
+			__( 'WP-DownloadManager', 'wp-downloadmanager' ),
 			$capability,
 			self::PAGE,
 			array( __CLASS__, 'render_downloads' ),
