@@ -173,6 +173,47 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 		$this->assertSame( 'brochure.pdf', $row->file_name );
 	}
 
+	/**
+	 * A remote URL is stored as the file, not quietly replaced by the Browse
+	 * select's value.
+	 *
+	 * Until this release handle_add() passed a hardcoded 0 as the source instead
+	 * of the posted file_type, so the Add File screen ignored its own four-way
+	 * radio: an upload and a remote URL were both accepted by the form and then
+	 * discarded, and the row was written from whatever Browse happened to hold.
+	 * handle_edit() always read the field, which is why editing looked fine.
+	 *
+	 * The refusal test below covers the same field from the other side -- with
+	 * the source hardcoded, a rejected scheme never reaches the check and no
+	 * error appears -- but this is the assertion the bug actually needed: that
+	 * choosing "Enter URL" puts that URL in the row.
+	 *
+	 * @return void
+	 */
+	public function test_adding_a_remote_file_stores_the_url_it_was_given() {
+		global $wpdb;
+
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_add' ),
+			array(),
+			$this->add_post(
+				array(
+					'file_type'   => '2',
+					'file_remote' => 'https://example.com/remote-brochure.pdf',
+					'file'        => '/brochure.pdf',
+				)
+			)
+		);
+
+		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
+
+		$this->assertSame(
+			'https://example.com/remote-brochure.pdf',
+			$row->file,
+			'the remote URL was discarded and the Browse value stored instead'
+		);
+	}
+
 	public function test_adding_a_remote_file_on_a_refused_scheme_says_so() {
 		$before = $this->count_files();
 
