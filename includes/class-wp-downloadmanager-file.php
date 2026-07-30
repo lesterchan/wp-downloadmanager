@@ -387,7 +387,12 @@ class WP_DownloadManager_File {
 	 * @return int
 	 */
 	public static function user_level() {
-		if ( current_user_can( 'activate_plugins' ) ) {
+		// manage_options, not activate_plugins: both belong to an administrator on
+		// a single site, but under multisite core's map_meta_cap() adds
+		// manage_network_plugins to activate_plugins, so every site administrator
+		// on a network dropped to level 7 and lost the level 8-10 downloads on
+		// their own site. manage_options means "administers this site" in both.
+		if ( current_user_can( 'manage_options' ) ) {
 			return 10;
 		}
 		if ( current_user_can( 'delete_others_posts' ) ) {
