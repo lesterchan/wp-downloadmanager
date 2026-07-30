@@ -132,10 +132,10 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 		$this->assertStringContainsString( 'restore_current_blog()', $source );
 	}
 
-	public function test_the_uninstaller_does_not_use_the_function_core_removed() {
+	public function test_the_uninstaller_does_not_use_the_function_core_deprecated() {
 		$source = $this->code( 'uninstall.php' );
 
-		$this->assertStringNotContainsString( 'wp_get_sites(', $source, 'removed in WordPress 5.1, so this used to fatal on a network' );
+		$this->assertStringNotContainsString( 'wp_get_sites(', $source, 'deprecated in WordPress 4.6 and capped at 100 sites, so a larger network uninstalls in part' );
 		$this->assertStringContainsString( 'get_sites(', $source );
 	}
 
