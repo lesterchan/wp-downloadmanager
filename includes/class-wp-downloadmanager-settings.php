@@ -82,7 +82,7 @@ class WP_DownloadManager_Settings {
 	 */
 	public static function tabs() {
 		return array(
-			'general'   => __( 'General', 'wp-downloadmanager' ),
+			'general'   => __( 'Settings', 'wp-downloadmanager' ),
 			'templates' => __( 'Templates', 'wp-downloadmanager' ),
 		);
 	}
@@ -169,7 +169,7 @@ class WP_DownloadManager_Settings {
 
 		// An unticked checkbox posts nothing at all, so "off" is indistinguishable
 		// from "this tab was not submitted" unless something else on the tab
-		// identifies it. page_url is on the General tab and always posts, so its
+		// identifies it. page_url is on the Settings tab and always posts, so its
 		// presence is what says the toggle beside it is authoritative.
 		if ( isset( $input['page_url'] ) ) {
 			$values['stats_display'] = empty( $input['stats_display'] ) ? 0 : 1;
@@ -415,7 +415,7 @@ class WP_DownloadManager_Settings {
 
 		return array(
 			self::SECTION_GENERAL => array(
-				'title'  => __( 'Download Options', 'wp-downloadmanager' ),
+				'title'  => __( 'General', 'wp-downloadmanager' ),
 				'fields' => array(
 					array(
 						'id'    => 'download_path',
@@ -488,7 +488,7 @@ class WP_DownloadManager_Settings {
 				),
 			),
 			self::SECTION_LISTING => array(
-				'title'  => __( 'Download Listing Options', 'wp-downloadmanager' ),
+				'title'  => __( 'Listing', 'wp-downloadmanager' ),
 				'fields' => array(
 					array(
 						'id'      => 'download_sort_by',
@@ -526,7 +526,7 @@ class WP_DownloadManager_Settings {
 				),
 			),
 			self::SECTION_RSS     => array(
-				'title'  => __( 'Download RSS Options', 'wp-downloadmanager' ),
+				'title'  => __( 'RSS', 'wp-downloadmanager' ),
 				'fields' => array(
 					array(
 						'id'      => 'download_rss_sortby',
@@ -545,7 +545,7 @@ class WP_DownloadManager_Settings {
 				),
 			),
 			self::SECTION_STATS   => array(
-				'title'  => __( 'WP-Stats Options', 'wp-downloadmanager' ),
+				'title'  => __( 'WP-Stats', 'wp-downloadmanager' ),
 				'fields' => array(
 					array(
 						'id'    => 'download_stats_display',

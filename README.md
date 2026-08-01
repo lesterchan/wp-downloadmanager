@@ -50,7 +50,7 @@ obligations.
 1. If you are using Default Permalinks, the file direct download link will be `http://yoursite.com/index.php?dl_id=2`. If you are using Nice Permalinks, the file direct download link will be `http://yoursite.com/download/2/`, where yoursite.com is your WordPress URL and 2 is your file id.
 1. The direct download category link will be `http://yoursite.com/downloads/?dl_cat=3`, where yoursite.com is your WordPress URL, downloads is your Downloads Page name and 3 is your download category id.
 1. In order to upload the files straight to the downloads folder, the folder must be writable by the web server. You can specify which folder to be the downloads folder in `WP-Admin -> Downloads -> Settings`.
-1. You can configure everything else in `WP-Admin -> Downloads -> Settings`, on the General and Templates tabs.
+1. You can configure everything else in `WP-Admin -> Downloads -> Settings`, on the Settings and Templates tabs.
 
 ### Downloads Page
 1. Go to `WP-Admin -> Pages -> Add New`
@@ -68,7 +68,7 @@ obligations.
 ## Frequently Asked Questions
 
 ### Where did Download Options and Download Templates go?
-They are one page now: `WP-Admin -> Downloads -> Settings`, with a General tab
+They are one page now: `WP-Admin -> Downloads -> Settings`, with a Settings tab
 and a Templates tab. WordPress only allows a plugin one settings page, and two
 menu entries for one set of settings was one too many. Your settings are carried
 over automatically; nothing needs re-entering. Update any bookmark you have.
@@ -175,7 +175,7 @@ Requires WordPress 6.8 and PHP 8.2.
 
 Files, hit counts and settings all survive; the plugin migrates them on the first dashboard load after updating.
 
-**Download Options and Download Templates are one page**, at `WP-Admin -> Downloads -> Settings`, as the General and Templates tabs. Bookmarks to `admin.php?page=wp-downloadmanager-options` and `...-templates` no longer resolve, and Manage Downloads and Add File have new addresses too.
+**Download Options and Download Templates are one page**, at `WP-Admin -> Downloads -> Settings`, as the Settings and Templates tabs. Bookmarks to `admin.php?page=wp-downloadmanager-options` and `...-templates` no longer resolve, and Manage Downloads and Add File have new addresses too.
 
 **Two filters were renamed, and the old names are gone.** Code hooking either stops applying, silently:
 
@@ -190,4 +190,4 @@ Files, hit counts and settings all survive; the plugin migrates them on the firs
 
 **The stylesheet was rewritten.** A theme copy of `download-css.css` becomes `wp-downloadmanager.css`, and the class `download-search-highlight` is now `wp-downloadmanager-highlight`. The plugin no longer sets fonts or colours at all.
 
-**Update all seven WP-Stats plugins together.** The downloads-section toggle and its row count lived in two shared, unprefixed WP-Stats rows. Each plugin keeps its own copy now and deletes the shared rows once it has read them, so whichever you update first takes them from the rest. A missing row means "show", so a block you had switched off may reappear — switch it off again under `WP-Admin -> Downloads -> Settings`, in the WP-Stats Options section of the General tab, where the row count also lives.
+**Update all seven WP-Stats plugins together.** The downloads-section toggle and its row count lived in two shared, unprefixed WP-Stats rows. Each plugin keeps its own copy now and deletes the shared rows once it has read them, so whichever you update first takes them from the rest. A missing row means "show", so a block you had switched off may reappear — switch it off again under `WP-Admin -> Downloads -> Settings`, in the WP-Stats Options section of the Settings tab, where the row count also lives.

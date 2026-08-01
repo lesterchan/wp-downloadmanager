@@ -109,7 +109,7 @@ test.describe( 'Download settings', () => {
 		// every other test in this file waits for.
 		await openSettings( page );
 		await expect( page.locator( '.nav-tab' ) ).toHaveCount( 2 );
-		await expect( page.locator( '.nav-tab-active' ) ).toHaveText( 'General' );
+		await expect( page.locator( '.nav-tab-active' ) ).toHaveText( 'Settings' );
 		await expect( page.locator( '#download_path' ) ).toBeVisible();
 
 		await openSettings( page, 'templates' );
