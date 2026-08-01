@@ -482,18 +482,30 @@ test.describe( 'Download settings', () => {
 		await page.locator( '#screen-options-apply' ).click();
 
 		await expect( page.locator( '.wp-list-table tbody tr' ) ).toHaveCount( 1 );
-		await expect( page.locator( '.tablenav-pages .total-pages' ) ).toHaveText( '3' );
+		// .first(), because WP_List_Table draws its tablenav twice -- once above
+		// the table and once below -- so .total-pages matches two elements and
+		// the bare locator dies of strict mode. Both carry the same number; the
+		// top one is the one a person sees first.
+		await expect( page.locator( '.tablenav-pages .total-pages' ).first() ).toHaveText( '3' );
 
 		// Per user, not per site, which is what the set-screen-option filter is
 		// for -- and what makes it worth restoring rather than leaving behind.
+		// The admin looked up by login, not get_current_user_id(). wpEval() is
+		// `wp eval` in the CLI container, which has no logged-in user at all --
+		// get_current_user_id() is 0 there, so this read was always
+		// get_user_meta( 0, ... ) and always the empty string. It reported the
+		// screen option as unsaved while the assertions above proved it had
+		// taken effect.
 		expect(
 			wpEval(
-				`echo '<<<' . get_user_meta( get_current_user_id(), 'wp_downloadmanager_per_page', true ) . '>>>';`,
+				`$admin = get_user_by( 'login', 'admin' );
+				echo '<<<' . get_user_meta( $admin->ID, 'wp_downloadmanager_per_page', true ) . '>>>';`,
 			),
 		).toBe( '1' );
 
 		wpEval(
-			`delete_user_meta( get_current_user_id(), 'wp_downloadmanager_per_page' );
+			`$admin = get_user_by( 'login', 'admin' );
+			delete_user_meta( $admin->ID, 'wp_downloadmanager_per_page' );
 			echo '<<<done>>>';`,
 		);
 	} );
