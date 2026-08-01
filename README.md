@@ -171,70 +171,23 @@ wrapper and leave `%FILE_ICON%` on its own.
 
 ### 2.0.0
 
-This is a large update. Everything below is something you would notice coming
-from 1.69.2. Your files, hit counts and settings all survive the upgrade — the
-plugin migrates them the first time you load the dashboard — but a handful of
-things move, and custom code may need a small edit.
+Requires WordPress 6.8 and PHP 8.2.
 
-**Your site has to be on WordPress 6.8 and PHP 8.2 or newer.** This is the one
-most likely to affect you: an older site simply will not be offered the update.
-Check `Tools -> Site Health` before you upgrade. If you are behind, ask your host
-to move you to a current PHP version — every version below 8.2 stopped receiving
-security fixes some time ago.
+Files, hit counts and settings all survive; the plugin migrates them on the first dashboard load after updating.
 
-**Download Options and Download Templates are one page.** Look under
-`WP-Admin -> Downloads -> Settings`, where they are the General and Templates
-tabs. Old bookmarks to `admin.php?page=wp-downloadmanager-options` and
-`...-templates` will not work. Manage Downloads and Add File are unchanged in
-spirit but have new addresses too, so re-bookmark from the menu.
+**Download Options and Download Templates are one page**, at `WP-Admin -> Downloads -> Settings`, as the General and Templates tabs. Bookmarks to `admin.php?page=wp-downloadmanager-options` and `...-templates` no longer resolve, and Manage Downloads and Add File have new addresses too.
 
-**Two filters were renamed and the old names no longer exist.** If your theme or
-a snippet in `functions.php` hooks either of these, update it before you upgrade
-or the customisation will simply stop applying — nothing errors, the filter just
-never fires:
+**Two filters were renamed, and the old names are gone.** Code hooking either stops applying, silently:
 
 * `downloads_page` is now `wp_downloadmanager_page`
 * `download_embedded` is now `wp_downloadmanager_embedded`
 
-**Every class was renamed.** `DownloadManager_Options` is now
-`WP_DownloadManager_Options`, `DownloadManager_Templates` is now
-`WP_DownloadManager_Template`, and so on for the rest. The template tags —
-`downloads_page()`, `download_embedded()`, `get_most_downloaded()`,
-`get_recent_downloads()`, `get_downloads_category()`, `get_download_files()`,
-`get_download_size()`, `get_download_hits()`, `download_file_url()` — keep their
-names, so a theme that only calls those needs no edits.
+**Every class was renamed**: `DownloadManager_Options` is `WP_DownloadManager_Options`, `DownloadManager_Templates` is `WP_DownloadManager_Template`, and so on. The template tags — `downloads_page()`, `download_embedded()`, `get_most_downloaded()`, `get_recent_downloads()`, `get_downloads_category()`, `get_download_files()`, `get_download_size()`, `get_download_hits()` and `download_file_url()` — keep their names.
 
-**Your settings moved to one database row.** The nineteen `download_*` rows are
-folded into `wp_downloadmanager_options` and deleted, and `download_db_version`
-becomes `wp_downloadmanager_version`. Anything reading those rows with
-`get_option()` needs to go through `WP_DownloadManager_Options::get()` instead.
+**Settings moved to one row.** The nineteen `download_*` rows are folded into `wp_downloadmanager_options` and deleted, and `download_db_version` becomes `wp_downloadmanager_version`. Read them through `WP_DownloadManager_Options::get()` rather than `get_option()`.
 
-**The file icons are drawn, not shipped.** The `images/` folder is gone, and
-`%FILE_ICON%` now produces the complete icon rather than the name of a GIF. Your
-saved templates are rewritten for you where they use the stock
-`<img src="...%FILE_ICON%" />`; if you wrapped it in markup of your own, remove
-the wrapper and leave `%FILE_ICON%` by itself. Icons take your theme's text
-colour now, so they may look different — that is deliberate. The two filters
-`wp_downloadmanager_file_extension_images_path` and
-`wp_downloadmanager_file_extension_image` are affected: the first is gone, and
-the second is passed a family name such as `archive` rather than `zip.gif`.
+**File icons are drawn, not shipped.** The `images/` folder is gone and `%FILE_ICON%` produces the complete icon rather than the name of a GIF. Saved templates using the stock `<img src="...%FILE_ICON%" />` are rewritten for you; if you wrapped it in markup of your own, remove the wrapper and leave `%FILE_ICON%` by itself. Icons take your theme's text colour. `wp_downloadmanager_file_extension_images_path` is gone, and `wp_downloadmanager_file_extension_image` is passed a family name such as `archive` rather than `zip.gif`.
 
-**The stylesheet was rewritten.** If you copied `download-css.css` into your
-theme to override it, that copy is now `wp-downloadmanager.css` and the class
-`download-search-highlight` is `wp-downloadmanager-highlight`. The plugin no
-longer sets fonts or colours at all, so your theme's own styling comes through.
+**The stylesheet was rewritten.** A theme copy of `download-css.css` becomes `wp-downloadmanager.css`, and the class `download-search-highlight` is now `wp-downloadmanager-highlight`. The plugin no longer sets fonts or colours at all.
 
-**WP-Stats settings moved — update all seven plugins together.** The toggle for
-the downloads section and the number of rows it lists used to live in two
-WP-Stats database rows that seven of my plugins shared. Each plugin keeps its own
-copy now, and each one deletes the shared rows once it has read them. That means
-whichever of the seven you update first takes those rows away from the others,
-so update WP-Stats, WP-DownloadManager, WP-EMail, WP-Polls, WP-PostRatings,
-WP-PostViews and WP-UserOnline in one go.
-
-If you do update them one at a time, nothing breaks and nothing is lost: a
-plugin that finds the shared rows already gone assumes its block should be shown,
-because a block you have to switch off again is a far better outcome than a block
-that disappears with no explanation. Switch it off under
-`WP-Admin -> Downloads -> Settings`, in the WP-Stats Options section of the
-General tab, which is also where the row count now lives.
+**Update all seven WP-Stats plugins together.** The downloads-section toggle and its row count lived in two shared, unprefixed WP-Stats rows. Each plugin keeps its own copy now and deletes the shared rows once it has read them, so whichever you update first takes them from the rest. A missing row means "show", so a block you had switched off may reappear — switch it off again under `WP-Admin -> Downloads -> Settings`, in the WP-Stats Options section of the General tab, where the row count also lives.
