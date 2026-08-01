@@ -248,7 +248,7 @@ class WP_DownloadManager_Metadata_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_every_directory_has_an_index_php() {
-		$skip    = array( 'node_modules', 'vendor', '.git' );
+		$skip    = array( 'node_modules', 'vendor', '.git', 'artifacts' );
 		$checked = 0;
 
 		foreach ( (array) glob( $this->root . '/*', GLOB_ONLYDIR ) as $top ) {
@@ -412,7 +412,7 @@ class WP_DownloadManager_Metadata_Test extends WP_DownloadManager_TestCase {
 	public function test_the_plugin_ships_no_images_at_all() {
 		$this->assertDirectoryDoesNotExist( $this->root . '/images', 'images/ was replaced by the inline SVG sprite' );
 
-		$skip = array( 'node_modules', 'vendor', '.git' );
+		$skip = array( 'node_modules', 'vendor', '.git', 'artifacts' );
 
 		foreach ( $this->directories_under( $this->root, $skip ) as $dir ) {
 			foreach ( array( 'gif', 'png', 'jpg', 'jpeg', 'bmp', 'ico' ) as $extension ) {
