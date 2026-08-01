@@ -1,476 +1,306 @@
 <?php
 /**
- * The checks every one of the nineteen plugins carries.
+ * What is true of WP-DownloadManager and of no other plugin.
  *
- * These assert on the things that are supposed to be identical everywhere:
- * the README header, the canonical section list, the changelog prefixes, the
- * shape of the version row, the absence of jQuery and of an RTL stylesheet.
- * They are deliberately about metadata rather than behaviour - the point is
- * that the plugin cannot drift away from its siblings without a test failing.
+ * The twenty-three assertions §7.2 asks of all nineteen live in
+ * Plugin_Metadata_TestCase, a byte-identical copy of
+ * _standards/templates/helper-metadata-testcase.php. This file holds the four
+ * declarations that class cannot derive - the shipped version, the class
+ * prefix, the Upgrade Notice subjects and the handful of hooks - plus the
+ * assertions that are genuinely about this plugin: the TinyMCE plugin it
+ * ships, the stylesheet it writes, the images it no longer ships, and the
+ * hooks and option rows its own source names.
  *
  * @package WP-DownloadManager
  */
 
 /**
- * Plugin, README and layout metadata.
+ * WP-DownloadManager against §7.2.
  */
-class WP_DownloadManager_Metadata_Test extends WP_DownloadManager_TestCase {
+class WP_DownloadManager_Metadata_Test extends Plugin_Metadata_TestCase {
 
 	/**
-	 * The plugin root.
+	 * The version this release ships.
 	 *
-	 * @var string
+	 * @return string
 	 */
-	protected $root;
-
-	/**
-	 * The README, whole.
-	 *
-	 * @var string
-	 */
-	protected $readme;
-
-	/**
-	 * The plugin file, whole.
-	 *
-	 * @var string
-	 */
-	protected $plugin;
-
-	/**
-	 * Read the two files the assertions compare.
-	 */
-	public function set_up() {
-		parent::set_up();
-
-		$this->root   = dirname( __DIR__ );
-		$this->readme = file_get_contents( $this->root . '/README.md' );
-		$this->plugin = file_get_contents( $this->root . '/wp-downloadmanager.php' );
+	protected function expected_version() {
+		return '2.0.0';
 	}
 
 	/**
-	 * The nine README header fields, in order.
+	 * The prefix every class the plugin declares carries.
+	 *
+	 * @return string
+	 */
+	protected function class_prefix() {
+		return 'WP_DownloadManager';
+	}
+
+	/**
+	 * Every break a site owner updating from the released 1.68.7 would notice.
+	 *
+	 * Two screens merged and moved, two public filters renamed with no shim,
+	 * every class renamed, nineteen option rows folded into one, the icon
+	 * template variable changed meaning, and the stylesheet and its one public
+	 * class name both renamed.
+	 *
+	 * @return string[]
+	 */
+	protected function upgrade_notice_subjects() {
+		return array(
+			'6.8',
+			'8.2',
+			// The screens that moved.
+			'wp-downloadmanager-options',
+			// The two renamed filters, old name and new.
+			'downloads_page',
+			'wp_downloadmanager_page',
+			'download_embedded',
+			'wp_downloadmanager_embedded',
+			// The class rename.
+			'DownloadManager_Options',
+			// The option rows that moved.
+			'wp_downloadmanager_options',
+			'download_db_version',
+			'wp_downloadmanager_version',
+			// The icon work: a template variable that changed meaning, a
+			// filter that is gone and one whose argument changed.
+			'%FILE_ICON%',
+			'images/',
+			'wp_downloadmanager_file_extension_images_path',
+			'wp_downloadmanager_file_extension_image',
+			// The stylesheet, and the one class name a theme could have used.
+			'download-css.css',
+			'wp-downloadmanager.css',
+			'download-search-highlight',
+			'wp-downloadmanager-highlight',
+		);
+	}
+
+	/**
+	 * The settings row, the marker row and every legacy row uninstall clears.
+	 *
+	 * @return void
+	 */
+	protected function seed_option_rows() {
+		WP_DownloadManager_Options::save( WP_DownloadManager_Options::defaults() );
+		$this->write_version_row();
+	}
+
+	/**
+	 * Write the marker row through the plugin's own writer.
+	 *
+	 * @return void
+	 */
+	protected function write_version_row() {
+		WP_DownloadManager_Options::save_markers( $this->expected_version(), WP_DOWNLOADMANAGER_DB_VERSION );
+	}
+
+	/**
+	 * Round-trip the settings sanitiser.
+	 *
+	 * @param array $input What the settings form is pretending to have posted.
+	 * @return array
+	 */
+	protected function sanitize_settings( array $input ) {
+		return (array) WP_DownloadManager_Settings::sanitize( $input );
+	}
+
+	/**
+	 * A real settings key, so the sanitiser has something of its own to do.
 	 *
 	 * @return array
 	 */
-	protected function readme_header() {
-		$lines  = explode( "\n", $this->readme );
-		$header = array();
-
-		foreach ( array_slice( $lines, 1 ) as $line ) {
-			if ( '' === trim( $line ) ) {
-				break;
-			}
-			$header[] = $line;
-		}
-
-		return $header;
+	protected function settings_fixture() {
+		return array( 'page_url' => 'https://example.com/downloads' );
 	}
 
 	/**
-	 * One field out of the plugin file header.
+	 * Register everything the plugin registers.
 	 *
-	 * @param string $field Field name including its colon.
-	 * @return string|null
-	 */
-	protected function plugin_header( $field ) {
-		if ( preg_match( '/^\s*\*\s*' . preg_quote( $field, '/' ) . '\s*(.+?)\s*$/m', $this->plugin, $match ) ) {
-			return $match[1];
-		}
-
-		return null;
-	}
-
-	/**
-	 * One field out of the README header.
+	 * The quicktag is registered on its own hook and the admin bundle needs a
+	 * screen id, so neither appears without being asked for.
 	 *
-	 * @param string $field Field name including its colon.
-	 * @return string|null
+	 * @return void
 	 */
-	protected function readme_field( $field ) {
-		if ( preg_match( '/^' . preg_quote( $field, '/' ) . '\s*(.+?)\s*$/m', $this->readme, $match ) ) {
-			return $match[1];
-		}
-
-		return null;
-	}
-
-	public function test_every_readme_header_line_keeps_its_line_break() {
-		$header = $this->readme_header();
-
-		$this->assertCount( 9, $header, 'the README header must be exactly nine fields' );
-
-		foreach ( array_slice( $header, 0, 8 ) as $index => $line ) {
-			$this->assertStringEndsWith(
-				'  ',
-				$line,
-				'README header line ' . ( $index + 2 ) . ' needs two trailing spaces or Markdown swallows the break: ' . trim( $line )
-			);
-		}
-
-		$last = $header[8];
-		$this->assertSame( rtrim( $last ), $last, 'the last README header line must not have trailing spaces' );
-	}
-
-	public function test_canonical_lesterchan_urls() {
-		$this->assertSame(
-			'https://lesterchan.net/portfolio/programming/php/',
-			$this->plugin_header( 'Plugin URI:' ),
-			'Plugin URI is the same in all nineteen plugins'
-		);
-		$this->assertSame(
-			'https://lesterchan.net',
-			$this->plugin_header( 'Author URI:' ),
-			'Author URI is the same in all nineteen plugins'
-		);
-		$this->assertSame(
-			'https://lesterchan.net/site/donation/',
-			$this->readme_field( 'Donate link:' ),
-			'Donate link is the same in all nineteen plugins'
-		);
-		$this->assertSame(
-			'https://www.gnu.org/licenses/gpl-2.0.html',
-			$this->readme_field( 'License URI:' ),
-			'License URI is the same in all nineteen plugins'
-		);
-		$this->assertSame(
-			'https://www.gnu.org/licenses/gpl-2.0.html',
-			$this->plugin_header( 'License URI:' ),
-			'the plugin header License URI must match the README'
-		);
-	}
-
-	public function test_contributors_is_gamerz_only() {
-		$this->assertSame(
-			'GamerZ',
-			$this->readme_field( 'Contributors:' ),
-			'Contributors is GamerZ and nothing else, in every plugin'
-		);
-	}
-
-	public function test_text_domain_is_the_plugin_slug() {
-		$this->assertSame( 'wp-downloadmanager', $this->plugin_header( 'Text Domain:' ), 'the text domain is the plugin slug' );
-		$this->assertSame( '/languages', $this->plugin_header( 'Domain Path:' ), 'translations live in /languages' );
-		$this->assertSame( 'wp-downloadmanager', WP_DOWNLOADMANAGER_SLUG, 'WP_DOWNLOADMANAGER_SLUG is the plugin slug' );
-	}
-
-	public function test_version_matches_everywhere() {
-		$this->assertSame( '2.0.0', WP_DOWNLOADMANAGER_VERSION, 'the shipped version is 2.0.0' );
-		$this->assertSame( WP_DOWNLOADMANAGER_VERSION, $this->plugin_header( 'Version:' ), 'the plugin header Version must match the constant' );
-		$this->assertSame( WP_DOWNLOADMANAGER_VERSION, $this->readme_field( 'Stable tag:' ), 'the README Stable tag must match the constant' );
-		$this->assertStringContainsString( '### ' . WP_DOWNLOADMANAGER_VERSION, $this->readme, 'the changelog needs an entry for the shipped version' );
-	}
-
-	public function test_requires_headers_match_readme() {
-		$this->assertSame( '6.8', $this->plugin_header( 'Requires at least:' ), 'the WordPress floor is 6.8' );
-		$this->assertSame( '8.2', $this->plugin_header( 'Requires PHP:' ), 'the PHP floor is 8.2' );
-		$this->assertSame( $this->plugin_header( 'Requires at least:' ), $this->readme_field( 'Requires at least:' ), 'the two WordPress floors must agree' );
-		$this->assertSame( $this->plugin_header( 'Requires PHP:' ), $this->readme_field( 'Requires PHP:' ), 'the two PHP floors must agree' );
-
-		$composer = json_decode( file_get_contents( $this->root . '/composer.json' ), true );
-		$this->assertSame( '>=8.2', $composer['require']['php'], 'composer.json must carry the same PHP floor' );
-
-		$env = json_decode( file_get_contents( $this->root . '/.wp-env.json' ), true );
-		$this->assertSame( '8.2', $env['phpVersion'], 'wp-env must run the floor PHP version' );
-	}
-
-	public function test_readme_sections_are_the_canonical_set() {
-		preg_match_all( '/^## (.+?)\s*$/m', $this->readme, $matches );
-
-		$this->assertSame(
-			array( 'Description', 'Usage', 'Frequently Asked Questions', 'Screenshots', 'Changelog', 'Upgrade Notice' ),
-			$matches[1],
-			'the level-2 headings are a closed, ordered set'
-		);
-	}
-
-	public function test_changelog_prefixes_are_canonical() {
-		$allowed = array( 'BREAKING:', 'NEW:', 'CHANGED:', 'FIXED:', 'NOTE:' );
-		$in_log  = false;
-		$checked = 0;
-
-		foreach ( explode( "\n", $this->readme ) as $line ) {
-			if ( 0 === strpos( $line, '## Changelog' ) ) {
-				$in_log = true;
-				continue;
-			}
-			if ( $in_log && 0 === strpos( $line, '## ' ) ) {
-				break;
-			}
-			if ( ! $in_log || 0 !== strpos( $line, '* ' ) ) {
-				continue;
-			}
-
-			$body    = substr( $line, 2 );
-			$matched = false;
-			foreach ( $allowed as $prefix ) {
-				if ( 0 === strpos( $body, $prefix ) ) {
-					$matched = true;
-					break;
-				}
-			}
-
-			++$checked;
-			$this->assertTrue( $matched, 'changelog bullet must start with one of the five allowed prefixes: ' . substr( $body, 0, 60 ) );
-		}
-
-		$this->assertGreaterThan( 0, $checked, 'the changelog should have bullets to check' );
-	}
-
-	public function test_no_jquery_is_enqueued() {
+	protected function register_plugin_assets() {
 		WP_DownloadManager_Admin::quicktag();
 		WP_DownloadManager_Admin::enqueue_assets( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
 		WP_DownloadManager::enqueue_styles();
-
-		foreach ( wp_scripts()->registered as $handle => $script ) {
-			if ( 0 !== strpos( $handle, 'wp-downloadmanager' ) ) {
-				continue;
-			}
-			$this->assertNotContains( 'jquery', $script->deps, $handle . ' must not depend on jQuery' );
-		}
-	}
-
-	public function test_no_shipped_script_references_the_old_dom_library() {
-		$scripts = array_merge(
-			(array) glob( $this->root . '/js/*.js' ),
-			(array) glob( $this->root . '/tinymce/plugins/downloadmanager/*.js' )
-		);
-
-		$this->assertNotEmpty( $scripts, 'the plugin ships scripts to check' );
-
-		foreach ( $scripts as $script ) {
-			$this->assertDoesNotMatchRegularExpression(
-				'/\bjQuery\b|\$\(/',
-				file_get_contents( $script ),
-				basename( $script ) . ' still reaches for jQuery'
-			);
-		}
-	}
-
-	public function test_every_directory_has_an_index_php() {
-		$skip    = array( 'node_modules', 'vendor', '.git', 'artifacts' );
-		$checked = 0;
-
-		foreach ( (array) glob( $this->root . '/*', GLOB_ONLYDIR ) as $top ) {
-			if ( in_array( basename( $top ), $skip, true ) ) {
-				continue;
-			}
-
-			foreach ( $this->directories_under( $top, $skip ) as $dir ) {
-				++$checked;
-				$this->assertFileExists( $dir . '/index.php', $dir . ' needs a silence-is-golden index.php' );
-			}
-		}
-
-		$this->assertFileExists( $this->root . '/index.php', 'the plugin root needs one too' );
-		$this->assertGreaterThan( 4, $checked, 'bin, css, includes, js and tests are all shipped directories' );
 	}
 
 	/**
-	 * Every directory at or below a path, skipping dependency trees.
+	 * The one dependency in the collection §6 allows.
 	 *
-	 * @param string $path Directory to start from.
-	 * @param array  $skip Directory names never descended into.
-	 * @return array
+	 * The wp-downloadmanager-quicktag script extends the Text editor's quicktag
+	 * bar, which is core's `quicktags`. The dependency is not incidental - the
+	 * script has nothing to add itself to without it.
+	 *
+	 * @return string[]
 	 */
-	protected function directories_under( $path, $skip ) {
-		$found = array( $path );
+	protected function allowed_script_dependencies() {
+		return array( 'quicktags' );
+	}
 
-		foreach ( (array) glob( $path . '/*', GLOB_ONLYDIR ) as $child ) {
-			if ( in_array( basename( $child ), $skip, true ) ) {
-				continue;
-			}
-			$found = array_merge( $found, $this->directories_under( $child, $skip ) );
+	/**
+	 * One of the seven.
+	 *
+	 * @return bool
+	 */
+	protected function wp_stats_family() {
+		return true;
+	}
+
+	/**
+	 * Both shared rows: the migration folds the section toggle and the row
+	 * count into this plugin's own settings.
+	 *
+	 * @return string[]
+	 */
+	protected function shared_wp_stats_rows() {
+		return array( 'stats_display', 'stats_mostlimit' );
+	}
+
+	/**
+	 * The TinyMCE plugin reaches for no DOM library either.
+	 *
+	 * The shared jQuery test walks js/, which is where eighteen plugins keep
+	 * every script they ship. This one also ships a Classic Editor button under
+	 * tinymce/plugins/, and that script was the last jQuery in the plugin.
+	 */
+	public function test_the_tinymce_plugin_uses_no_dom_library() {
+		$scripts = (array) glob( $this->metadata_root() . '/tinymce/plugins/downloadmanager/*.js' );
+
+		$this->assertNotEmpty( $scripts, 'The Classic Editor button ships a script.' );
+
+		foreach ( $scripts as $script ) {
+			$code = $this->without_js_comments( $script );
+
+			$this->assertStringNotContainsStringIgnoringCase( 'jquery', $code, basename( $script ) . ' still references jQuery.' );
+			$this->assertStringNotContainsString( '$(', $code, basename( $script ) . ' still uses the jQuery alias.' );
 		}
-
-		return $found;
 	}
 
-	public function test_uninstall_removes_every_option_row() {
-		global $wpdb;
-
-		WP_DownloadManager_Options::save( WP_DownloadManager_Options::defaults() );
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
-
-		$this->assertNotEmpty( get_option( WP_DownloadManager_Options::OPTION ), 'the settings row should exist before uninstall' );
-
-		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-			define( 'WP_UNINSTALL_PLUGIN', 'wp-downloadmanager/wp-downloadmanager.php' );
-		}
-
-		// The DROP is watched for rather than looked for afterwards; see
-		// WP_DownloadManager_Uninstall_Test::test_the_downloads_table_is_dropped()
-		// for why a temporary-table harness cannot answer "is the table gone".
-		$dropped = false;
-		$watch   = static function ( $query ) use ( &$dropped ) {
-			if ( false !== stripos( $query, 'DROP' ) && false !== stripos( $query, 'downloads' ) ) {
-				$dropped = true;
-			}
-
-			return $query;
-		};
-
-		add_filter( 'query', $watch );
-		require dirname( __DIR__ ) . '/uninstall.php';
-		remove_filter( 'query', $watch );
-
-		$left = $wpdb->get_col( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE 'wp\\_downloadmanager\\_%'" );
-
-		$this->assertSame( array(), $left, 'no wp_downloadmanager_% row may survive uninstall: ' . implode( ', ', $left ) );
-		$this->assertTrue( $dropped, 'the downloads table is dropped by uninstall' );
-
-		// Put it back, or every test that runs after this one truncates a table
-		// that is no longer there.
-		WP_DownloadManager_Install::activate();
-	}
-
-	public function test_version_row_holds_exactly_plugin_and_db() {
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
-
-		$stored = get_option( WP_DownloadManager_Options::VERSION );
-
-		$this->assertIsArray( $stored, 'the version row is an array' );
-		$this->assertSame( array( 'plugin', 'db' ), array_keys( $stored ), 'the version row holds exactly plugin and db, in that order' );
-		$this->assertSame( '2.0.0', $stored['plugin'], 'the plugin marker is the version last run' );
-		$this->assertSame( '3', $stored['db'], 'the db marker is the schema counter' );
-	}
-
-	public function test_settings_sanitizer_never_stores_version_markers() {
-		$saved = WP_DownloadManager_Settings::sanitize(
-			array(
-				'page_url' => 'https://example.com/downloads',
-				'version'  => '9.9.9',
-				'db'       => '99',
-			)
-		);
-
-		foreach ( array( 'version', 'db_version', 'versions' ) as $forbidden ) {
-			$this->assertArrayNotHasKey(
-				$forbidden,
-				$saved,
-				'the settings array must never carry a version marker; that is what the separate row is for'
-			);
-		}
-
-		$this->assertSame(
-			array( 'plugin', 'db' ),
-			array_keys( WP_DownloadManager_Options::markers() ),
-			'the markers live in their own row and stay there'
-		);
-	}
-
-	public function test_no_rtl_stylesheet_is_registered() {
-		$this->assertSame(
-			array(),
-			(array) glob( $this->root . '/css/*-rtl.css' ),
-			'there is no separate RTL stylesheet; the one sheet is direction-neutral'
-		);
-
-		WP_DownloadManager::enqueue_styles();
-
-		$this->assertFalse(
-			wp_styles()->get_data( 'wp-downloadmanager', 'rtl' ),
-			'no rtl style data may be registered'
-		);
-	}
-
+	/**
+	 * The one stylesheet serves both directions and sets nothing it need not.
+	 *
+	 * §5.1: no physical properties, so no mirrored sheet is needed, and no
+	 * `!important`, which a theme cannot get out from under.
+	 */
 	public function test_the_stylesheet_uses_logical_properties_only() {
-		$css = file_get_contents( $this->root . '/css/wp-downloadmanager.css' );
+		$css = (string) file_get_contents( $this->metadata_root() . '/css/wp-downloadmanager.css' );
 
-		foreach ( array( 'margin-left', 'margin-right', 'padding-left', 'padding-right', 'border-left', 'border-right', 'text-align: left', 'text-align: right', 'float: left', 'float: right' ) as $physical ) {
+		$physical = array(
+			'margin-left',
+			'margin-right',
+			'padding-left',
+			'padding-right',
+			'border-left',
+			'border-right',
+			'text-align: left',
+			'text-align: right',
+			'float: left',
+			'float: right',
+		);
+
+		foreach ( $physical as $property ) {
 			$this->assertStringNotContainsString(
-				$physical,
+				$property,
 				$css,
-				$physical . ' is a physical property; use the logical one so one sheet serves both directions'
+				$property . ' is a physical property; use the logical one so one sheet serves both directions.'
 			);
 		}
 
-		$this->assertStringNotContainsString( '!important', $css, 'no rule may use !important' );
+		$this->assertStringNotContainsString( '!important', $css, 'No rule may use !important.' );
 	}
 
-	public function test_the_gpl_block_is_the_or_later_variant() {
-		$this->assertSame( 'GPLv2 or later', $this->plugin_header( 'License:' ), 'the header licence is GPLv2 or later' );
-		$this->assertStringContainsString(
-			'either version 2 of the License, or',
-			$this->plugin,
-			'the copyright block must be the "or later" variant, matching the header'
-		);
-		$this->assertStringContainsString( '(at your option) any later version.', $this->plugin, 'the "or later" clause is part of the block' );
-		$this->assertStringContainsString( 'Copyright 2026  Lester Chan  (email : lesterchan@gmail.com)', $this->plugin, 'two spaces after the year and around "email :"' );
-	}
-
-	public function test_the_plugin_defines_all_six_constants() {
-		foreach ( array( 'VERSION', 'DB_VERSION', 'SLUG', 'MAIN_FILE', 'DIR', 'URL' ) as $suffix ) {
-			$this->assertTrue( defined( 'WP_DOWNLOADMANAGER_' . $suffix ), 'WP_DOWNLOADMANAGER_' . $suffix . ' must be defined' );
-		}
-
-		$this->assertStringEndsWith( '/', WP_DOWNLOADMANAGER_DIR, 'the directory constant is trailing-slashed' );
-		$this->assertStringEndsWith( '/', WP_DOWNLOADMANAGER_URL, 'the URL constant is trailing-slashed' );
-		$this->assertSame( WP_DOWNLOADMANAGER_DIR . 'wp-downloadmanager.php', WP_DOWNLOADMANAGER_MAIN_FILE, 'the main-file constant points at the plugin file' );
-	}
-
+	/**
+	 * Not one raster image ships.
+	 *
+	 * 2.0.0 replaced the forty-odd file-type GIFs with an inline SVG sprite, so
+	 * images/ is gone entirely and no directory may quietly grow another one.
+	 */
 	public function test_the_plugin_ships_no_images_at_all() {
-		$this->assertDirectoryDoesNotExist( $this->root . '/images', 'images/ was replaced by the inline SVG sprite' );
+		$this->assertDirectoryDoesNotExist( $this->metadata_root() . '/images', 'images/ was replaced by the inline SVG sprite.' );
 
-		$skip = array( 'node_modules', 'vendor', '.git', 'artifacts' );
-
-		foreach ( $this->directories_under( $this->root, $skip ) as $dir ) {
+		foreach ( $this->shipped_directories() as $directory ) {
 			foreach ( array( 'gif', 'png', 'jpg', 'jpeg', 'bmp', 'ico' ) as $extension ) {
 				$this->assertSame(
 					array(),
-					(array) glob( $dir . '/*.' . $extension ),
-					'no raster image may ship with the plugin, and ' . $dir . ' has one'
+					(array) glob( $directory . '/*.' . $extension ),
+					'No raster image may ship with the plugin, and ' . $directory . ' has one.'
 				);
 			}
 		}
 	}
 
-	public function test_nothing_loose_sits_at_the_plugin_root() {
-		$allowed = array( 'wp-downloadmanager.php', 'index.php', 'uninstall.php' );
-
-		foreach ( (array) glob( $this->root . '/*.php' ) as $path ) {
-			$this->assertContains( basename( $path ), $allowed, basename( $path ) . ' must move into includes/' );
-		}
-
-		$this->assertSame( array(), (array) glob( $this->root . '/*.css' ), 'stylesheets belong in css/' );
-
-		// playwright.config.js is the one exception, and it is not a script the
-		// plugin ships: section 7.5 puts it at the plugin root because that is
-		// where Playwright looks for it, and the SVN deploy excludes it along with
-		// the rest of the dev tooling.
-		foreach ( (array) glob( $this->root . '/*.js' ) as $path ) {
-			$this->assertSame( 'playwright.config.js', basename( $path ), basename( $path ) . ' belongs in js/' );
-		}
-	}
-
-	public function test_includes_holds_only_prefixed_classes_and_template_tags() {
-		foreach ( (array) glob( $this->root . '/includes/*.php' ) as $path ) {
+	/**
+	 * Nothing but class files, the template tags and the silence guard.
+	 *
+	 * The shared test holds every class-*.php file to §2.4. This one is about
+	 * the inventory: template-tags.php is the single non-class file this plugin
+	 * is allowed, because the nine template tags are functions a theme calls.
+	 */
+	public function test_includes_holds_only_class_files_and_the_template_tags() {
+		foreach ( (array) glob( $this->metadata_root() . '/includes/*.php' ) as $path ) {
 			$name = basename( $path );
 
 			if ( in_array( $name, array( 'index.php', 'template-tags.php' ), true ) ) {
 				continue;
 			}
 
-			// No trailing hyphen. §2.4 names the bootstrap class plain
-			// WP_DownloadManager, so its file is class-wp-downloadmanager.php with
-			// no component suffix -- which the hyphenated prefix rejected. The
-			// class-to-filename check below is the exact one anyway, and it holds
-			// the bootstrap file to the same rule as every other.
-			$this->assertStringStartsWith( 'class-wp-downloadmanager', $name, $name . ' is not a class file' );
+			$this->assertStringStartsWith( 'class-wp-downloadmanager', $name, $name . ' is neither a class file nor the template tags.' );
+		}
+	}
 
-			preg_match_all( '/^\s*(?:final\s+|abstract\s+)?class\s+(\w+)/m', file_get_contents( $path ), $matches );
+	/**
+	 * The copyright block agrees with the header two lines above it.
+	 *
+	 * The shared test asserts the GPL text ships and bin/verify.py asserts the
+	 * License header field reads "GPLv2 or later". Neither reads the block in
+	 * the plugin file, and a version-2-only block there contradicts both.
+	 */
+	public function test_the_gpl_block_is_the_or_later_variant() {
+		$plugin = $this->plugin_file();
 
-			foreach ( $matches[1] as $class ) {
-				$this->assertStringStartsWith( 'WP_DownloadManager', $class, $class . ' needs the plugin class prefix' );
-				$this->assertSame(
-					'class-' . strtolower( str_replace( '_', '-', $class ) ) . '.php',
-					$name,
-					$class . ' must live in the file named after it'
-				);
+		$this->assertSame( 'GPLv2 or later', $this->header_field( 'License' ), 'The header licence is GPLv2 or later.' );
+		$this->assertStringContainsString( 'either version 2 of the License, or', $plugin, 'The copyright block must be the "or later" variant, matching the header.' );
+		$this->assertStringContainsString( '(at your option) any later version.', $plugin, 'The "or later" clause is part of the block.' );
+		$this->assertStringContainsString( 'Copyright 2026  Lester Chan  (email : lesterchan@gmail.com)', $plugin, 'Two spaces after the year and around "email :".' );
+	}
+
+	/**
+	 * A silenced sniff sits inside includes/ and says why.
+	 *
+	 * §9: phpcs.xml is the shared template and nothing else, so a sniff that is
+	 * wrong for one plugin cannot quietly be turned off for all of them. The
+	 * residue is an inline suppression, allowed only inside includes/ and only
+	 * when it carries a -- reason on the same line saying why the sniff is
+	 * wrong. A bare suppression is the failure, not the suppression itself.
+	 */
+	public function test_every_inline_sniff_suppression_is_inside_includes_and_carries_a_reason() {
+		foreach ( $this->plugin_php_files() as $file ) {
+			$lines = explode( "\n", (string) file_get_contents( $this->metadata_root() . '/' . $file ) );
+
+			foreach ( $lines as $number => $line ) {
+				if ( ! preg_match( '/phpcs:(disable|ignore)\b(.*)$/', $line, $matches ) ) {
+					continue;
+				}
+
+				$where = $file . ':' . ( $number + 1 );
+
+				$this->assertStringStartsWith( 'includes/', $file, $where . ' silences a sniff outside includes/; fix the code instead.' );
+				$this->assertStringContainsString( '--', $matches[2], $where . ' silences a sniff with no reason on the same line.' );
 			}
 		}
 	}
 
+	/**
+	 * Every hook the plugin fires carries the plugin prefix.
+	 *
+	 * The four exceptions are core's own, fired by the widget and the feed.
+	 */
 	public function test_every_hook_the_plugin_fires_is_prefixed() {
 		$core = array( 'rss_update_period', 'rss_update_frequency', 'rss2_head', 'widget_title' );
 
@@ -485,25 +315,24 @@ class WP_DownloadManager_Metadata_Test extends WP_DownloadManager_TestCase {
 				if ( in_array( $hook, $core, true ) ) {
 					continue;
 				}
-				$this->assertStringStartsWith( 'wp_downloadmanager_', $hook, $hook . ' in ' . $file . ' needs the plugin prefix' );
+
+				$this->assertStringStartsWith( 'wp_downloadmanager_', $hook, $hook . ' in ' . $file . ' needs the plugin prefix.' );
 			}
 		}
 	}
 
+	/**
+	 * No source file reads an unprefixed option row.
+	 *
+	 * Collected first and asserted once. Written as an assertion inside two
+	 * loops this performed no assertion at all and was reported risky - not
+	 * because it had nothing to say, but because it had nothing to find: every
+	 * live read goes through a class constant, so no literal option name is
+	 * left in the source. That is the desired state, and it now says so out
+	 * loud rather than quietly passing over an empty set.
+	 */
 	public function test_no_source_file_reads_an_unprefixed_option_row() {
-		$core = array( 'home', 'blog_charset', 'date_format', 'time_format', 'gmt_offset' );
-
-		/*
-		 * Collected first, asserted once.
-		 *
-		 * Written as an assertion inside two loops, this test performed no
-		 * assertion at all and was reported risky, which the shared config makes
-		 * fatal. Not because it had nothing to say -- because it had nothing to
-		 * find: every live read in the plugin goes through a class constant, so
-		 * there is no literal option name in the source for the pattern to match.
-		 * That is the desired state, and it now says so out loud instead of
-		 * quietly passing over an empty set.
-		 */
+		$core      = array( 'home', 'blog_charset', 'date_format', 'time_format', 'gmt_offset' );
 		$offenders = array();
 
 		foreach ( $this->plugin_php_files() as $file ) {
@@ -521,180 +350,7 @@ class WP_DownloadManager_Metadata_Test extends WP_DownloadManager_TestCase {
 		$this->assertSame(
 			array(),
 			$offenders,
-			'unprefixed option rows are named in the source; only the migration may name one, and only to delete it: ' . implode( ', ', $offenders )
+			'Unprefixed option rows are named in the source; only the migration may name one, and only to delete it: ' . implode( ', ', $offenders )
 		);
-	}
-
-	/**
-	 * Section 9: phpcs.xml is the shared template and nothing else, so a sniff
-	 * that is wrong for one plugin cannot quietly be turned off for all of them.
-	 * The residue is an inline suppression, allowed only inside includes/ and
-	 * only when it carries a -- reason on the same line saying why the sniff is
-	 * wrong. A bare suppression is the failure, not the suppression itself.
-	 */
-	public function test_every_inline_sniff_suppression_is_inside_includes_and_carries_a_reason() {
-		foreach ( $this->plugin_php_files() as $file ) {
-			$lines = explode( "\n", (string) file_get_contents( dirname( __DIR__ ) . '/' . $file ) );
-
-			foreach ( $lines as $number => $line ) {
-				if ( ! preg_match( '/phpcs:(disable|ignore)\b(.*)$/', $line, $matches ) ) {
-					continue;
-				}
-
-				$where = $file . ':' . ( $number + 1 );
-
-				$this->assertStringStartsWith(
-					'includes/',
-					$file,
-					$where . ' silences a sniff outside includes/; fix the code instead'
-				);
-				$this->assertStringContainsString(
-					'--',
-					$matches[2],
-					$where . ' silences a sniff with no reason on the same line'
-				);
-			}
-		}
-	}
-	/**
-	 * The plugin root, whatever the checkout is called.
-	 *
-	 * @return string
-	 */
-	protected function metadata_root() {
-		return dirname( __DIR__ );
-	}
-
-	/**
-	 * Every PHP file the plugin ships, concatenated.
-	 *
-	 * @return string
-	 */
-	protected function metadata_source() {
-		$source = '';
-
-		foreach ( (array) glob( $this->metadata_root() . '/*.php' ) as $file ) {
-			$source .= (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading the plugin's own source in a test.
-		}
-
-		foreach ( (array) glob( $this->metadata_root() . '/includes/*.php' ) as $file ) {
-			$source .= (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading the plugin's own source in a test.
-		}
-
-		return $this->without_comments( $source );
-	}
-
-	/**
-	 * The same source with every comment removed.
-	 *
-	 * A test that greps the source for a call it does not want finds the comment
-	 * explaining why the call is absent, and fails the plugin for documenting
-	 * itself. wp-sweep says "There is no load_plugin_textdomain() call" and was
-	 * failed for saying so. Tokenising is the only honest way to tell code from
-	 * prose about code.
-	 *
-	 * @param string $source PHP source.
-	 * @return string
-	 */
-	protected function without_comments( $source ) {
-		$code = '';
-
-		foreach ( token_get_all( $source ) as $token ) {
-			if ( is_array( $token ) ) {
-				if ( T_COMMENT === $token[0] || T_DOC_COMMENT === $token[0] ) {
-					continue;
-				}
-				$code .= $token[1];
-				continue;
-			}
-
-			$code .= $token;
-		}
-
-		return $code;
-	}
-
-	/**
-	 * The GPL text ships with the plugin.
-	 *
-	 * @return void
-	 */
-	public function test_the_gpl_licence_is_shipped() {
-		$licence = (string) file_get_contents( $this->metadata_root() . '/LICENSE' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading the plugin's own licence in a test.
-
-		$this->assertStringContainsString( 'GNU GENERAL PUBLIC LICENSE', $licence, 'The GPL text must ship with the plugin.' );
-		$this->assertStringContainsString( 'Version 2, June 1991', $licence, 'The licence must be GPLv2, matching the plugin header.' );
-	}
-
-	/**
-	 * The plugin header fields appear in the canonical order.
-	 *
-	 * @return void
-	 */
-	public function test_the_plugin_header_fields_are_in_the_canonical_order() {
-		$expected = array(
-			'Plugin Name',
-			'Plugin URI',
-			'Description',
-			'Version',
-			'Requires at least',
-			'Requires PHP',
-			'Author',
-			'Author URI',
-			'License',
-			'License URI',
-			'Text Domain',
-			'Domain Path',
-		);
-
-		// The main file is named for the directory, which is what wordpress.org
-		// installs it as.
-		$main = $this->metadata_root() . '/' . basename( $this->metadata_root() ) . '.php';
-		$this->assertFileExists( $main, 'The main plugin file is named after the plugin directory.' );
-
-		preg_match( '#^<\?php\s*/\*\*(.+?)\*/#s', (string) file_get_contents( $main ), $matches ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading the plugin's own source in a test.
-		$this->assertNotEmpty( $matches, 'The plugin file must open with a docblock header.' );
-
-		preg_match_all( '/^\s*\*\s*([A-Z][A-Za-z ]*?):\s/m', $matches[1], $fields );
-
-		$this->assertSame( $expected, $fields[1], 'Plugin header fields must appear in the canonical order.' );
-	}
-
-	/**
-	 * The plugin leaves loading its translations to WordPress.
-	 *
-	 * @return void
-	 */
-	public function test_the_plugin_does_not_load_its_own_textdomain() {
-		// WordPress has loaded translations for wordpress.org plugins itself
-		// since 4.6, so a load_plugin_textdomain() call is dead weight that
-		// also fires before the plugin is on the translation server.
-		$this->assertStringNotContainsString(
-			'load_plugin_textdomain',
-			$this->metadata_source(),
-			'WordPress loads the textdomain itself since 4.6.'
-		);
-	}
-
-	/**
-	 * No build, editor or translation artefacts ship.
-	 *
-	 * @return void
-	 */
-	public function test_no_abandoned_build_or_translation_artefacts_ship() {
-		$root = $this->metadata_root();
-
-		$this->assertFileDoesNotExist( $root . '/.travis.yml', 'CI is GitHub Actions.' );
-		$this->assertFileDoesNotExist( $root . '/.wp-env.override.json', 'A personal wp-env override must not ship.' );
-		$this->assertDirectoryDoesNotExist( $root . '/languages', 'translate.wordpress.org builds the catalogue.' );
-		$this->assertDirectoryDoesNotExist( $root . '/.idea', 'Editor settings must not ship.' );
-
-		foreach ( array( 'pot', 'po', 'mo' ) as $extension ) {
-			$this->assertSame(
-				array(),
-				(array) glob( $root . '/*.' . $extension ),
-				"No .{$extension} files: translate.wordpress.org builds the catalogue."
-			);
-		}
 	}
 }

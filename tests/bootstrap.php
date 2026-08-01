@@ -39,3 +39,10 @@ require $_tests_dir . '/includes/bootstrap.php';
 // After the WordPress bootstrap, which is what declares WP_UnitTestCase - the
 // base test case extends it, so it cannot be loaded any earlier.
 require_once __DIR__ . '/helper-testcase.php';
+
+// The shared metadata contract, a byte-identical copy of
+// _standards/templates/helper-metadata-testcase.php. It extends Plugin_TestCase
+// because the nineteen copies have to be identical; the alias is the one line
+// per plugin the mechanism needs.
+class_alias( 'WP_DownloadManager_TestCase', 'Plugin_TestCase' );
+require_once __DIR__ . '/helper-metadata-testcase.php';

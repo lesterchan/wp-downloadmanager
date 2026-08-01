@@ -419,6 +419,37 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Delete the option rows uninstall.php deletes, and nothing else.
+	 *
+	 * The uninstaller cannot simply be required here: it drops the downloads
+	 * table that the rest of the suite runs against, and because the include
+	 * would only ever execute once, a second test file asking for it would
+	 * silently prove nothing. The deletions it performs are therefore repeated
+	 * here, read from the same lists on the options class so the two can never
+	 * disagree, and WP_DownloadManager_Uninstall_Test asserts separately that
+	 * uninstall.php reads those lists and delegates the drop to the install
+	 * class.
+	 *
+	 * @return void
+	 */
+	protected function run_uninstall() {
+		$option_names = array_merge(
+			array_keys( WP_DownloadManager_Options::legacy_map() ),
+			array_values( WP_DownloadManager_Options::legacy_structured_rows() ),
+			WP_DownloadManager_Options::legacy_extra_rows(),
+			array(
+				WP_DownloadManager_Options::OPTION,
+				WP_DownloadManager_Options::VERSION,
+				'widget_downloads',
+			)
+		);
+
+		foreach ( $option_names as $option_name ) {
+			delete_option( $option_name );
+		}
+	}
+
+	/**
 	 * A plugin source file with its comments removed.
 	 *
 	 * The source-level guards in this suite assert that a removed API is no
