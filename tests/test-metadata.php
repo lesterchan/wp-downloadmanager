@@ -433,7 +433,14 @@ class WP_DownloadManager_Metadata_Test extends WP_DownloadManager_TestCase {
 		}
 
 		$this->assertSame( array(), (array) glob( $this->root . '/*.css' ), 'stylesheets belong in css/' );
-		$this->assertSame( array(), (array) glob( $this->root . '/*.js' ), 'scripts belong in js/' );
+
+		// playwright.config.js is the one exception, and it is not a script the
+		// plugin ships: section 7.5 puts it at the plugin root because that is
+		// where Playwright looks for it, and the SVN deploy excludes it along with
+		// the rest of the dev tooling.
+		foreach ( (array) glob( $this->root . '/*.js' ) as $path ) {
+			$this->assertSame( 'playwright.config.js', basename( $path ), basename( $path ) . ' belongs in js/' );
+		}
 	}
 
 	public function test_includes_holds_only_prefixed_classes_and_template_tags() {
