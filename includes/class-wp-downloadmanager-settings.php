@@ -878,10 +878,23 @@ class WP_DownloadManager_Settings {
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Download Settings', 'wp-downloadmanager' ); ?></h1>
 			<?php
-			// A custom menu page has to render its own settings errors; WordPress
-			// only does it automatically on the built-in Settings screens. Without
-			// this a rejected value is corrected silently.
-			settings_errors( WP_DownloadManager_Options::OPTION );
+			/*
+			 * Called here because this screen hangs off a top-level menu, and
+			 * unscoped because of what core registers.
+			 *
+			 * Core prints settings errors from wp-admin/options-head.php, which
+			 * admin-header.php requires only when $parent_file is
+			 * options-general.php. This page is dispatched elsewhere, so nothing
+			 * prints them unless the plugin does - and an add_options_page()
+			 * screen that calls this anyway renders every notice twice.
+			 *
+			 * Unscoped because options.php registers "Settings saved." against
+			 * the 'general' slug rather than against this screen, so scoping it to
+			 * the plugin's own option filtered out the one message a save has to
+			 * show. Pressing Save Changes came back here and said nothing at all,
+			 * which looks exactly like a form that did not save.
+			 */
+			settings_errors();
 			?>
 			<nav class="nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Settings tabs', 'wp-downloadmanager' ); ?>">
 				<?php foreach ( self::tabs() as $tab => $label ) : ?>

@@ -148,10 +148,62 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 	public function test_the_page_renders_its_own_settings_errors() {
 		$this->assertStringContainsString(
-			'settings_errors(',
+			'settings_errors();',
 			$this->code( 'includes/class-wp-downloadmanager-settings.php' ),
-			'a custom menu page has to call this itself, or a rejected value is corrected silently'
+			'a top-level menu page has to call this itself, and unscoped, or the save says nothing'
 		);
+	}
+
+	public function test_a_save_is_reported_exactly_once() {
+		$this->become_download_admin();
+
+		$html = $this->render(
+			static function () {
+				// What core's options.php registers once it has written the
+				// option: under the 'general' slug, not under this screen's. That
+				// is the whole of the message a save produces.
+				add_settings_error( 'general', 'settings_updated', 'Settings saved.', 'success' );
+
+				WP_DownloadManager_Settings::render_page();
+			}
+		);
+
+		// One assertion, both failures. Zero is the bug this pins: scoping the
+		// call to the plugin's own option filtered out the only message there was,
+		// and a save that reports nothing looks like a save that did not happen.
+		// Two is the mirror image, which a screen under Settings gets by calling
+		// this at all -- core has already printed them from options-head.php.
+		$this->assertSame(
+			1,
+			substr_count( $html, 'Settings saved.' ),
+			'the save confirmation belongs on the screen once'
+		);
+	}
+
+	public function test_the_settings_screen_is_not_under_core_settings() {
+		// Which is what decides the test above. options-head.php, where core
+		// prints settings errors, is required by admin-header.php only when
+		// $parent_file is options-general.php.
+		$this->assertStringNotContainsString(
+			'add_options_page(',
+			$this->code( 'includes/class-wp-downloadmanager-admin.php' ),
+			'this plugin hangs its screens off a top-level menu; under Settings the call above would print everything twice'
+		);
+	}
+
+	public function test_a_rejected_value_still_says_why_on_the_screen() {
+		$this->become_download_admin();
+
+		$html = $this->render(
+			static function () {
+				WP_DownloadManager_Settings::sanitize( array( 'path' => array( 'dir' => '/etc' ) ) );
+
+				WP_DownloadManager_Settings::render_page();
+			}
+		);
+
+		// Dropping the scope must not drop the plugin's own messages with it.
+		$this->assertStringContainsString( 'has to start inside your wp-content folder', $html );
 	}
 
 	public function test_the_page_is_behind_manage_options() {

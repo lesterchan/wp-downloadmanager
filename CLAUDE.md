@@ -104,6 +104,19 @@ locally and loses the exception.
   same question of both screens generically rather than of this one field.
   `tests/e2e/helpers.js::submitFileForm()` still blanks the field, guarded on the
   old value, and is now a no-op.
+* **The settings screen calls `settings_errors()` itself, and unscoped.** Both
+  halves matter and §4.2.2 states the rule: call it if and only if the screen is
+  *not* under Settings. Core prints notices from `wp-admin/options-head.php`,
+  which `admin-header.php` requires only when `$parent_file` is
+  `options-general.php`; this plugin is a top-level menu, so core never prints
+  them. And `options.php` registers "Settings saved." against the **`general`**
+  slug, so `settings_errors( self::OPTION )` filtered out the only message a save
+  produces — the screen saved and said nothing. Scoped is right for the four
+  screens in `Admin`, which show their own `wp_downloadmanager` notices and are
+  not posted to by `options.php`. Pinned by
+  `test_a_save_is_reported_exactly_once`, which catches the mirror-image bug —
+  printing every notice twice, which is what an `add_options_page()` screen gets
+  for calling this at all — with the same assertion.
 * **The widget must guard every key it reads.** Six unguarded reads fatalled on
   any partial save — block editor, customizer, first save. Pinned by
   `test_the_widget_keeps_edits_made_without_the_legacy_submit_marker`.
