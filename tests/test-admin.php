@@ -309,19 +309,41 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 	 * @return array
 	 */
 	protected function prefilled_values( $html, $type ) {
+		$found = array();
+
+		foreach ( $this->fields_of_type( $html, $type ) as $name => $input ) {
+			if ( ! preg_match( '/\bvalue="([^"]*)"/i', $input, $value ) || '' === $value[1] ) {
+				continue;
+			}
+
+			$found[ $name ] = $value[1];
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Every input of a given type on the screen, keyed by field name.
+	 *
+	 * Separate from prefilled_values() so that a test can assert the screen
+	 * really does render the kind of field it is about to make claims over.
+	 *
+	 * @param string $html Rendered screen.
+	 * @param string $type The input type to collect.
+	 * @return array
+	 */
+	protected function fields_of_type( $html, $type ) {
 		preg_match_all( '/<input[^>]*>/i', $html, $inputs );
 
 		$found = array();
 
 		foreach ( $inputs[0] as $input ) {
 			if ( ! preg_match( '/type="' . $type . '"/i', $input )
-				|| ! preg_match( '/name="([^"]+)"/i', $input, $name )
-				|| ! preg_match( '/\bvalue="([^"]*)"/i', $input, $value )
-				|| '' === $value[1] ) {
+				|| ! preg_match( '/name="([^"]+)"/i', $input, $name ) ) {
 				continue;
 			}
 
-			$found[ $name[1] ] = $value[1];
+			$found[ $name[1] ] = $input;
 		}
 
 		return $found;
@@ -340,6 +362,16 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 						'id'     => $this->ids['public'],
 					)
 				);
+
+			// The fixture first. Once the fix is in there are no prefilled url
+			// fields left, so the loop below runs zero times and the test passes
+			// while asserting nothing -- which PHPUnit calls risky and the shared
+			// config makes fatal, and rightly: the same vacuous pass is what a
+			// renamed field or a screen that stopped rendering would produce.
+			$this->assertNotEmpty(
+				$this->fields_of_type( $html, 'url' ),
+				'the ' . $screen . ' screen renders no type="url" field at all, so this test proves nothing'
+			);
 
 			// The browser validates <input type="url"> before it will submit the
 			// form, and it validates every such field on the screen rather than
