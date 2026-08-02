@@ -157,6 +157,7 @@ wrapper and leave `%FILE_ICON%` on its own.
 * FIXED: SQL injection in the Manage Downloads search box.
 * FIXED: The listing and feed sort columns reached `ORDER BY` unvalidated.
 * FIXED: The upload subfolder was not constrained to the downloads directory.
+* FIXED: A file name or description holding markup reached the downloads page and the `[download]` shortcode unescaped, where the widget and the WP-Stats sections had always filtered it. All five now run it through one allow list.
 * FIXED: A search term containing regex metacharacters blanked the file name it was highlighting.
 * FIXED: `wp_get_sites()` was removed in WordPress 5.1, so activating or uninstalling on a network fatalled; uninstall also stopped at 100 sites and unwound `switch_to_blog()` one short.
 * FIXED: The widget's "Display Link To Download Page?" setting never showed as selected and silently reverted, and widget edits made in the block widget editor or the customizer were discarded.

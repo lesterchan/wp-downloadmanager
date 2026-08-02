@@ -294,6 +294,23 @@ class WP_DownloadManager_Display {
 		$file_des  = null === $context['description'] ? stripslashes( $file->file_des ) : $context['description'];
 		$cat_id    = (int) $file->file_category;
 
+		// The name and the description are the two stored fields a site owner is
+		// allowed to put markup in, so they are run through the allow list rather
+		// than escaped wholesale - and they are run through it here, once, where
+		// they enter the templates. wp_kses_post() on the way in is only as good
+		// as the way in: a row written straight into the table by a restored
+		// backup, a compromised install or a release older than that check
+		// reaches this function exactly as it was stored.
+		//
+		// Five paths render these templates and each used to decide escaping for
+		// itself. Three ran the assembled markup back through allowed_html() and
+		// two did not, and the two that did not were the downloads page and the
+		// [download] shortcode - the two most exposed of the five. A sixth
+		// wrapper would only be a sixth place to forget, so the value is clean
+		// before it is ever substituted.
+		$file_name = wp_kses( $file_name, self::allowed_html() );
+		$file_des  = wp_kses( $file_des, self::allowed_html() );
+
 		$replacements = array(
 			'%FILE_ID%'            => $file->file_id,
 			'%FILE%'               => stripslashes( $file->file ),

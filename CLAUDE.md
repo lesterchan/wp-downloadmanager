@@ -79,6 +79,19 @@ locally and loses the exception.
   `_standards/RESUME.md` calls it the most user-visible bug in the programme.
   Pinned by `test_adding_a_remote_file_stores_the_url_it_was_given`, which was
   confirmed to fail when the `0` is put back. `handle_edit()` always read it.
+* **`%FILE_NAME%` and `%FILE_DESCRIPTION%` are escaped once, in
+  `replace_file_vars()`, and nowhere else.** They are the two stored fields a
+  site owner may put markup in, so the allow list is `allowed_html()` rather than
+  `esc_html()` — escaping them wholesale would turn every existing library's
+  formatting into visible tags. Five paths render these templates and each used
+  to decide for itself: `output()`, the widget and the two WP-Stats sections ran
+  the assembled markup back through `wp_kses()`, while `downloads_page()` and
+  `download_embedded()` — the two most exposed — did not, which is the stored XSS
+  the e2e sweep found. `wp_kses_post()` on write does not save you: a row from a
+  restored backup or a direct write never passed it. **Do not add a sixth
+  wrapper**; it would only be a sixth place to forget. wp-useronline's
+  `[page_useronline]` carries the same note for the same reason (commit
+  `e49b290`). Pinned by the `test_a_hostile_row_is_inert_*` tests.
 * **The widget must guard every key it reads.** Six unguarded reads fatalled on
   any partial save — block editor, customizer, first save. Pinned by
   `test_the_widget_keeps_edits_made_without_the_legacy_submit_marker`.

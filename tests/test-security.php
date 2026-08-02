@@ -236,6 +236,154 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 		$this->assertStringNotContainsString( '<script>alert(1)</script>', $html );
 	}
 
+	/**
+	 * A row carrying every payload, written the way an attacker would write it.
+	 *
+	 * Straight into the table, past wp_kses_post() on the Add File screen -- the
+	 * row a restored backup, a compromised install or a release older than that
+	 * check already has. Sanitising on the way in is the assumption under test,
+	 * not a step to reproduce (STANDARDS.md 7.2.4).
+	 *
+	 * @return int Inserted file_id.
+	 */
+	protected function insert_hostile_file() {
+		return $this->insert_file(
+			array(
+				'file'      => '/hostile.txt',
+				'file_name' => 'Hostile <script>window.pwned = 1;</script>',
+				'file_des'  => 'Description <img src=x onerror="window.pwned = 1"> and " onmouseover="window.pwned = 1',
+			)
+		);
+	}
+
+	/**
+	 * Assert that rendered markup carries nothing a browser would run.
+	 *
+	 * Parsed rather than grepped, because the half of the payload that survives
+	 * is meant to survive: the attribute breakout comes back as the literal text
+	 * " onmouseover="window.pwned = 1, which reads like an attack in a string
+	 * search and is inert in a text node. What matters is whether the parser
+	 * ended up with a script element or an event handler, so ask the parser.
+	 *
+	 * @param string $html  Rendered markup.
+	 * @param string $where The surface being checked, for the failure message.
+	 * @return void
+	 */
+	protected function assert_nothing_can_run( $html, $where ) {
+		$dom = new DOMDocument();
+
+		libxml_use_internal_errors( true );
+		$dom->loadHTML( '<meta http-equiv="Content-Type" content="text/html; charset=utf-8"><body>' . $html . '</body>' );
+		libxml_clear_errors();
+		libxml_use_internal_errors( false );
+
+		$xpath = new DOMXPath( $dom );
+
+		$this->assertSame(
+			0,
+			$xpath->query( '//script' )->length,
+			'a script element reached ' . $where
+		);
+		$this->assertSame(
+			0,
+			$xpath->query( '//@*[starts-with(translate(name(), "ON", "on"), "on")]' )->length,
+			'an event handler attribute reached ' . $where
+		);
+	}
+
+	public function test_a_hostile_row_is_inert_where_the_templates_are_filled_in() {
+		$file = $this->fetch_file( $this->insert_hostile_file() );
+
+		$html = WP_DownloadManager_Display::replace_file_vars( '<p>%FILE_NAME%<br />%FILE_DESCRIPTION%</p>', $file );
+
+		// The one place all five render paths pass through, which is why it is
+		// the one place that decides.
+		$this->assert_nothing_can_run( $html, 'replace_file_vars()' );
+		$this->assertStringContainsString( 'window.pwned', $html, 'and the text of the value is still there, escaped' );
+		$this->assertStringContainsString( 'Hostile', $html );
+		$this->assertStringContainsString( 'onmouseover', $html, 'as text: escaping that ate the value would be its own bug' );
+	}
+
+	public function test_a_hostile_row_is_inert_on_the_downloads_page() {
+		$this->insert_hostile_file();
+
+		$html = WP_DownloadManager_Display::downloads_page();
+
+		$this->assert_nothing_can_run( $html, 'the downloads page' );
+		$this->assertStringContainsString( 'window.pwned', $html );
+	}
+
+	public function test_a_hostile_row_is_inert_in_the_download_shortcode() {
+		$file_id = $this->insert_hostile_file();
+
+		$html = do_shortcode( '[download id="' . $file_id . '"]' );
+
+		$this->assert_nothing_can_run( $html, 'the [download] shortcode' );
+		$this->assertStringContainsString( 'window.pwned', $html );
+	}
+
+	public function test_a_hostile_row_is_inert_in_the_stats_lists() {
+		$this->insert_hostile_file();
+
+		// $display false is the branch that returns rather than echoes, so it
+		// skips the wp_kses() in output(). A theme calling the template tag that
+		// way and echoing the result is the sixth path nobody counted.
+		foreach ( array( 'most_downloaded', 'recent_downloads' ) as $tag ) {
+			$html = call_user_func( array( 'WP_DownloadManager_Display', $tag ), 10, 0, false );
+
+			$this->assert_nothing_can_run( $html, $tag . '() returning its markup' );
+			$this->assertStringContainsString( 'window.pwned', $html );
+		}
+	}
+
+	public function test_a_hostile_row_is_inert_in_the_widget() {
+		$this->insert_hostile_file();
+
+		$widget = new WP_DownloadManager_Widget();
+
+		ob_start();
+		$widget->widget(
+			array(
+				'before_widget' => '<aside>',
+				'after_widget'  => '</aside>',
+				'before_title'  => '<h2>',
+				'after_title'   => '</h2>',
+			),
+			array(
+				'title' => 'Downloads',
+				'type'  => 'most_downloaded',
+				'limit' => 10,
+				'chars' => 0,
+				'link'  => 0,
+			)
+		);
+		$html = ob_get_clean();
+
+		$this->assert_nothing_can_run( $html, 'the widget' );
+		$this->assertStringContainsString( 'window.pwned', $html );
+	}
+
+	public function test_markup_a_site_owner_is_allowed_to_use_still_renders() {
+		$file = $this->fetch_file(
+			$this->insert_file(
+				array(
+					'file'      => '/bold.txt',
+					'file_name' => '<strong>Bold</strong> Release',
+					'file_des'  => 'See <a href="https://example.com/notes">the notes</a>.',
+				)
+			)
+		);
+
+		$html = WP_DownloadManager_Display::replace_file_vars( '<p>%FILE_NAME%<br />%FILE_DESCRIPTION%</p>', $file );
+
+		// The allow list is post-level kses, not esc_html(): these two fields are
+		// the ones the plugin lets a site owner put markup in, and an escape that
+		// turned every existing library's formatting into visible tags would be a
+		// worse bug than the one being fixed.
+		$this->assertStringContainsString( '<strong>Bold</strong>', $html );
+		$this->assertStringContainsString( '<a href="https://example.com/notes">the notes</a>', $html );
+	}
+
 	public function test_a_remote_url_cannot_be_used_for_server_side_request_forgery() {
 		foreach ( array( 'file:///etc/passwd', 'gopher://127.0.0.1:11211/', 'http://127.0.0.1:22/' ) as $candidate ) {
 			$this->assertFalse( WP_DownloadManager_File::is_remote_valid( $candidate ), $candidate . ' should be refused' );
