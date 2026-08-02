@@ -92,6 +92,18 @@ locally and loses the exception.
   wrapper**; it would only be a sixth place to forget. wp-useronline's
   `[page_useronline]` carries the same note for the same reason (commit
   `e49b290`). Pinned by the `test_a_hostile_row_is_inert_*` tests.
+* **`file_remote` carries a `placeholder`, never a `value`.** It is
+  `<input type="url">`, and the browser validates every such field on the screen
+  before it will submit the form, not only the one in use. Shipping the old
+  `value="https://"` — no host, so not a URL — made Add File and Edit File
+  unsubmittable the moment they loaded: focus jumped to the field, a bubble
+  appeared and no request was made, whichever of the four sources the admin had
+  picked. `resolve_source()` already rejects an empty remote with a WP_Error, so
+  nothing wanted the prefill. Pinned by
+  `test_no_field_arrives_holding_a_value_its_own_type_rejects`, which asks the
+  same question of both screens generically rather than of this one field.
+  `tests/e2e/helpers.js::submitFileForm()` still blanks the field, guarded on the
+  old value, and is now a no-op.
 * **The widget must guard every key it reads.** Six unguarded reads fatalled on
   any partial save — block editor, customizer, first save. Pinned by
   `test_the_widget_keeps_edits_made_without_the_legacy_submit_marker`.

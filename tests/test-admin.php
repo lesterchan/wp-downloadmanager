@@ -301,6 +301,73 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		$this->assertScreenIsClean( $html );
 	}
 
+	/**
+	 * Every value a typed input arrives holding, keyed by field name.
+	 *
+	 * @param string $html Rendered screen.
+	 * @param string $type The input type to collect.
+	 * @return array
+	 */
+	protected function prefilled_values( $html, $type ) {
+		preg_match_all( '/<input[^>]*>/i', $html, $inputs );
+
+		$found = array();
+
+		foreach ( $inputs[0] as $input ) {
+			if ( ! preg_match( '/type="' . $type . '"/i', $input )
+				|| ! preg_match( '/name="([^"]+)"/i', $input, $name )
+				|| ! preg_match( '/\bvalue="([^"]*)"/i', $input, $value )
+				|| '' === $value[1] ) {
+				continue;
+			}
+
+			$found[ $name[1] ] = $value[1];
+		}
+
+		return $found;
+	}
+
+	public function test_no_field_arrives_holding_a_value_its_own_type_rejects() {
+		$this->become_download_admin();
+
+		foreach ( array( 'add', 'edit' ) as $screen ) {
+			$html = 'add' === $screen
+				? $this->render( array( 'WP_DownloadManager_Admin', 'render_add' ) )
+				: $this->render(
+					array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+					array(
+						'action' => 'edit',
+						'id'     => $this->ids['public'],
+					)
+				);
+
+			// The browser validates <input type="url"> before it will submit the
+			// form, and it validates every such field on the screen rather than
+			// only the one in use. A field shipped holding "https://" -- no host,
+			// so not a URL -- made the whole form unsubmittable on arrival: focus
+			// jumped to it, a bubble appeared and no request was made, however the
+			// admin had filled the rest in.
+			foreach ( $this->prefilled_values( $html, 'url' ) as $name => $value ) {
+				$this->assertNotFalse(
+					filter_var( $value, FILTER_VALIDATE_URL ),
+					$name . ' arrives on the ' . $screen . ' screen holding "' . $value . '", which no browser will submit'
+				);
+			}
+		}
+	}
+
+	public function test_the_remote_url_field_suggests_the_scheme_without_prefilling_it() {
+		$this->become_download_admin();
+
+		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_add' ) );
+
+		preg_match( '/<input[^>]*name="file_remote"[^>]*>/i', $html, $field );
+
+		$this->assertNotEmpty( $field, 'the remote source field should render' );
+		$this->assertStringContainsString( 'placeholder="https://"', $field[0], 'a hint the browser does not validate' );
+		$this->assertStringNotContainsString( 'value="', $field[0] );
+	}
+
 	public function test_the_add_screen_carries_a_nonce() {
 		$this->become_download_admin();
 

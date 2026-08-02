@@ -498,7 +498,8 @@ class WP_DownloadManager_Admin {
 					<p>
 						<input type="radio" id="file_type_2" name="file_type" value="2" />
 						<label for="file_type_2"><?php esc_html_e( 'Remote file:', 'wp-downloadmanager' ); ?></label>
-						<input type="url" class="regular-text" name="file_remote" maxlength="255" data-checks="file_type_2" value="https://" dir="ltr" />
+						<?php // A placeholder, never a value: "https://" has no host, so as a value it fails HTML5 constraint validation the moment the screen loads and the browser refuses to submit the form at all - whichever source the admin actually picked. ?>
+						<input type="url" class="regular-text" name="file_remote" maxlength="255" data-checks="file_type_2" placeholder="https://" dir="ltr" />
 						<span class="description"><?php esc_html_e( 'Include https:// or ftp:// in front.', 'wp-downloadmanager' ); ?></span>
 					</p>
 				</td>
