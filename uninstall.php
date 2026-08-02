@@ -40,6 +40,12 @@ if ( ! function_exists( 'wp_downloadmanager_uninstall_site' ) ) {
 			)
 		);
 
+		// Except the rows that were never this plugin's to delete. They are on the
+		// lists above because the migration folds them in and has to know where
+		// each one lands; six sibling plugins read them, and any that has not
+		// upgraded yet is reading them still. See legacy_shared_rows().
+		$option_names = array_diff( $option_names, WP_DownloadManager_Options::legacy_shared_rows() );
+
 		foreach ( $option_names as $option_name ) {
 			delete_option( $option_name );
 		}

@@ -98,6 +98,32 @@ class WP_DownloadManager_Options {
 	}
 
 	/**
+	 * The two unprefixed rows this plugin shared with WP-Stats and five others.
+	 *
+	 * They were never any one plugin's to own: whichever of the seven saved the
+	 * WP-Stats screen last wrote the whole row. Each plugin keeps its own copy of
+	 * both settings now, so the migration folds these in and deletes them -- they
+	 * are named in legacy_map() and legacy_structured_rows() for exactly that
+	 * reason, because the fold needs to know where each one lands.
+	 *
+	 * **Uninstall must subtract them.** §13.2 splits the two jobs: the migration
+	 * deletes a shared row because it has folded it in, and uninstall leaves it
+	 * alone because up to six siblings that have not upgraded yet are still
+	 * reading it. Removing WP-DownloadManager from a site was taking the WP-Stats
+	 * settings of every one of them with it, silently and on both rows.
+	 *
+	 * The single list that drives the migration and uninstall together is what
+	 * keeps the two honest about the plugin's own rows, and it is also what caused
+	 * this -- so the exception is named here rather than spelled out at each of
+	 * the places that has to apply it.
+	 *
+	 * @return array
+	 */
+	public static function legacy_shared_rows() {
+		return array( 'stats_display', 'stats_mostlimit' );
+	}
+
+	/**
 	 * Legacy rows that carry no value forward but must still be cleaned up.
 	 *
 	 * @return array

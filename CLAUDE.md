@@ -31,24 +31,28 @@ collection.
   written (§7.2.1).
 * One of the seven WP-Stats plugins (§13).
 
-## Known release blocker
+## The two shared WP-Stats rows
 
-**This plugin deletes both shared WP-Stats rows on uninstall, and it should
-not.** `stats_mostlimit` is in `legacy_map()`
-(`includes/class-wp-downloadmanager-options.php:74`) and `stats_display` in
-`legacy_structured_rows()` (`:96`), and `uninstall.php:32-40` drives uninstall
-from **both** lists. §13.2 says the migration deletes the shared rows and
-uninstall leaves them alone; here one list is doing both jobs, so removing this
-plugin silently reconfigures the other six.
+`stats_mostlimit` is in `legacy_map()` and `stats_display` in
+`legacy_structured_rows()`, because the migration has to know where each one
+lands. **Both are named again in `legacy_shared_rows()`, and everything that
+deletes rows on the way out subtracts that list** — `uninstall.php` and
+`helper-testcase.php::run_uninstall()`, which is the same subtraction written
+twice on purpose so the suite deletes exactly what uninstall deletes.
 
-The single-list design is what makes migration and uninstall agree, and it is
-also what causes this. The fix has to split "rows the migration reads" from
-"rows uninstall may delete" without going back to two independent lists.
-wp-postratings documents the reasoning at
-`includes/class-wp-postratings-options.php:73-89`.
+That split is the fix for a release blocker: one list did both jobs, so removing
+this plugin deleted two rows the other six WP-Stats plugins were still reading
+and silently reconfigured every one of them. §13.2 draws the line — the
+migration deletes a shared row because it has folded it in, uninstall leaves it
+alone. **Do not fold `legacy_shared_rows()` back into the other lists**: the
+single-source-of-truth argument is what caused this. wp-postratings documents the
+same arrangement at `includes/class-wp-postratings-options.php:73-89`, and
+wp-polls had the identical defect on `stats_display`.
 
-Recorded in `_standards/RESUME.md`; wp-polls has the same defect and
-wp-useronline a related one.
+Pinned by `test_the_shared_stats_rows_survive_uninstall` and by
+`test_the_uninstaller_reads_its_row_list_from_the_options_class`, which requires
+`uninstall.php` to name `legacy_shared_rows()` so nobody re-derives the list
+locally and loses the exception.
 
 ## Traps
 

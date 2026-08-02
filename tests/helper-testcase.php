@@ -444,6 +444,11 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 			)
 		);
 
+		// The same subtraction uninstall.php makes, and for the same reason: the
+		// shared WP-Stats rows are on those lists for the migration's benefit and
+		// are not this plugin's to delete. See legacy_shared_rows().
+		$option_names = array_diff( $option_names, WP_DownloadManager_Options::legacy_shared_rows() );
+
 		foreach ( $option_names as $option_name ) {
 			delete_option( $option_name );
 		}

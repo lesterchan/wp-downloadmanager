@@ -49,10 +49,16 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_every_legacy_row_is_removed_even_if_the_migration_never_ran() {
-		$names = array_merge(
-			array_keys( WP_DownloadManager_Options::legacy_map() ),
-			array_values( WP_DownloadManager_Options::legacy_structured_rows() ),
-			WP_DownloadManager_Options::legacy_extra_rows()
+		$names = array_diff(
+			array_merge(
+				array_keys( WP_DownloadManager_Options::legacy_map() ),
+				array_values( WP_DownloadManager_Options::legacy_structured_rows() ),
+				WP_DownloadManager_Options::legacy_extra_rows()
+			),
+			// Every legacy row this plugin owns -- which is not all of them. The
+			// two shared WP-Stats rows are on those lists so the migration knows
+			// where to fold them, and uninstall deliberately leaves them behind.
+			WP_DownloadManager_Options::legacy_shared_rows()
 		);
 
 		foreach ( $names as $name ) {
@@ -122,6 +128,38 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 		$this->assertStringContainsString( 'legacy_map()', $source, 'the uninstaller and the migration must never disagree about which rows belong to the plugin' );
 		$this->assertStringContainsString( 'legacy_extra_rows()', $source );
 		$this->assertStringContainsString( 'legacy_structured_rows()', $source );
+
+		// And the one exception it has to apply, from the same class, so that
+		// nobody reinstates the shared rows by re-deriving the list here.
+		$this->assertStringContainsString( 'legacy_shared_rows()', $source, 'the uninstaller must subtract the rows six sibling plugins are still reading' );
+	}
+
+	/**
+	 * The rows this plugin does not own stay behind.
+	 *
+	 * The stats_display and stats_mostlimit rows were shared with WP-Stats and
+	 * five others, and up to six of them may not have upgraded yet and be reading
+	 * them still. §13.2 splits the jobs: the migration deletes a shared row as it
+	 * has folded it in, and uninstall leaves it alone. Deleting WP-DownloadManager
+	 * was reconfiguring every sibling's WP-Stats blocks with nothing said
+	 * anywhere -- and neither row was visible as a problem from inside this
+	 * plugin, which is why both lived on the migration's lists unremarked.
+	 *
+	 * @return void
+	 */
+	public function test_the_shared_stats_rows_survive_uninstall() {
+		$display = array(
+			'downloads' => 1,
+			'polls'     => 1,
+		);
+
+		update_option( 'stats_display', $display );
+		update_option( 'stats_mostlimit', 15 );
+
+		$this->uninstall();
+
+		$this->assertSame( $display, get_option( 'stats_display' ), 'six sibling plugins read stats_display' );
+		$this->assertSame( '15', (string) get_option( 'stats_mostlimit' ), 'and stats_mostlimit with it' );
 	}
 
 	public function test_the_uninstaller_handles_a_network_site_by_site() {
