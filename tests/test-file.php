@@ -61,7 +61,7 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 
 	public function test_every_allow_listed_sort_column_is_accepted() {
 		foreach ( WP_DownloadManager_File::sort_columns() as $column ) {
-			$this->assertSame( $column, WP_DownloadManager_File::sort_column( $column ) );
+			$this->assertSame( $column, WP_DownloadManager_File::sort_column( $column ), $column . ' is allow-listed but not accepted by sort_column().' );
 		}
 	}
 
@@ -72,34 +72,34 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_a_remote_file_is_recognised_by_its_scheme() {
-		$this->assertTrue( WP_DownloadManager_File::is_remote( 'https://example.com/a.zip' ) );
-		$this->assertTrue( WP_DownloadManager_File::is_remote( 'ftp://example.com/a.zip' ) );
-		$this->assertFalse( WP_DownloadManager_File::is_remote( '/local.zip' ) );
+		$this->assertTrue( WP_DownloadManager_File::is_remote( 'https://example.com/a.zip' ), 'An https URL is recognised as remote.' );
+		$this->assertTrue( WP_DownloadManager_File::is_remote( 'ftp://example.com/a.zip' ), 'An ftp URL is recognised as remote.' );
+		$this->assertFalse( WP_DownloadManager_File::is_remote( '/local.zip' ), 'A local path is not remote.' );
 	}
 
 	public function test_a_remote_url_on_an_unexpected_scheme_is_refused() {
 		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'file:///etc/passwd' ), 'this guard is what stops server-side request forgery' );
-		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'gopher://example.com/' ) );
-		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'not a url at all' ) );
+		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'gopher://example.com/' ), 'A URL on a scheme outside the allow list is refused.' );
+		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'not a url at all' ), 'A string that is not a URL is refused.' );
 	}
 
 	public function test_a_remote_url_on_an_unexpected_port_is_refused() {
-		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'http://example.com:22/a.zip' ) );
-		$this->assertTrue( WP_DownloadManager_File::is_remote_valid( 'https://example.com:443/a.zip' ) );
+		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'http://example.com:22/a.zip' ), 'A URL on a port outside the allow list is refused.' );
+		$this->assertTrue( WP_DownloadManager_File::is_remote_valid( 'https://example.com:443/a.zip' ), 'The standard https port is allowed.' );
 	}
 
 	public function test_the_scheme_allow_list_is_filterable() {
 		add_filter( 'wp_downloadmanager_schemes', fn() => array( 'https' ) );
 
-		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'http://example.com/a.zip' ) );
-		$this->assertTrue( WP_DownloadManager_File::is_remote_valid( 'https://example.com/a.zip' ) );
+		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'http://example.com/a.zip' ), 'A filter can take http out of the scheme allow list.' );
+		$this->assertTrue( WP_DownloadManager_File::is_remote_valid( 'https://example.com/a.zip' ), 'Filtering the allow list leaves https in it.' );
 	}
 
 	public function test_the_port_allow_list_is_filterable() {
 		add_filter( 'wp_downloadmanager_ports', fn() => array( 8080 ) );
 
-		$this->assertTrue( WP_DownloadManager_File::is_remote_valid( 'http://example.com:8080/a.zip' ) );
-		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'http://example.com:80/a.zip' ) );
+		$this->assertTrue( WP_DownloadManager_File::is_remote_valid( 'http://example.com:8080/a.zip' ), 'A filter can add a port to the allow list.' );
+		$this->assertFalse( WP_DownloadManager_File::is_remote_valid( 'http://example.com:80/a.zip' ), 'Filtering the port list replaces it rather than adding to it.' );
 	}
 
 	public function test_a_size_is_formatted_in_binary_units() {
@@ -131,23 +131,23 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 	public function test_a_logged_out_visitor_may_download_a_public_file_only() {
 		$this->login_as( '' );
 
-		$this->assertTrue( WP_DownloadManager_File::can_download( -1 ) );
-		$this->assertFalse( WP_DownloadManager_File::can_download( 0 ) );
-		$this->assertFalse( WP_DownloadManager_File::can_download( 10 ) );
+		$this->assertTrue( WP_DownloadManager_File::can_download( -1 ), 'A logged out visitor may download a public file.' );
+		$this->assertFalse( WP_DownloadManager_File::can_download( 0 ), 'A logged out visitor may not download a registered-users file.' );
+		$this->assertFalse( WP_DownloadManager_File::can_download( 10 ), 'A logged out visitor may not download a privileged file.' );
 	}
 
 	public function test_a_subscriber_may_download_a_registered_users_file() {
 		$this->login_as( 'subscriber' );
 
-		$this->assertTrue( WP_DownloadManager_File::can_download( 0 ) );
-		$this->assertFalse( WP_DownloadManager_File::can_download( 1 ) );
+		$this->assertTrue( WP_DownloadManager_File::can_download( 0 ), 'A subscriber may download a registered-users file.' );
+		$this->assertFalse( WP_DownloadManager_File::can_download( 1 ), 'A subscriber may not download anything above their level.' );
 	}
 
 	public function test_an_editor_may_download_up_to_the_editor_level() {
 		$this->login_as( 'editor' );
 
-		$this->assertTrue( WP_DownloadManager_File::can_download( 7 ) );
-		$this->assertFalse( WP_DownloadManager_File::can_download( 10 ) );
+		$this->assertTrue( WP_DownloadManager_File::can_download( 7 ), 'An editor may download up to the editor level.' );
+		$this->assertFalse( WP_DownloadManager_File::can_download( 10 ), 'An editor may not download above their level.' );
 	}
 
 	public function test_an_administrator_may_download_everything_permitted() {
@@ -205,7 +205,7 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 		$renamed = WP_DownloadManager_File::rename_file( $path, 'my file (1).txt' );
 
 		$this->assertSame( 'my_file_1.txt', $renamed );
-		$this->assertFileExists( $path . $renamed );
+		$this->assertFileExists( $path . $renamed, 'The file is stored under the stripped name, not the one that was uploaded.' );
 
 		$this->remove_download_files();
 	}

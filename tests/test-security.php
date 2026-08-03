@@ -66,7 +66,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 	public function test_a_stored_feed_sort_column_of_sql_cannot_reach_order_by() {
 		WP_DownloadManager_Options::set( 'rss.sortby', 'file_date; DROP TABLE wp_downloads' );
 
-		$this->assertNotEmpty( WP_DownloadManager_Display::feed_files() );
+		$this->assertNotEmpty( WP_DownloadManager_Display::feed_files(), 'The feed still answers, so the injected sort column was ignored rather than fatal.' );
 		$this->assertSame( 5, $this->count_files() );
 	}
 
@@ -332,7 +332,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 			$html = call_user_func( array( 'WP_DownloadManager_Display', $tag ), 10, 0, false );
 
 			$this->assert_nothing_can_run( $html, $tag . '() returning its markup' );
-			$this->assertStringContainsString( 'window.pwned', $html );
+			$this->assertStringContainsString( 'window.pwned', $html, 'The hostile row is rendered at all, or the inertness assertions below are vacuous.' );
 		}
 	}
 

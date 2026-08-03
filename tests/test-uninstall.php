@@ -37,7 +37,7 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 
 		$this->uninstall();
 
-		$this->assertFalse( get_option( WP_DownloadManager_Options::OPTION, false ) );
+		$this->assertFalse( get_option( WP_DownloadManager_Options::OPTION, false ), 'Uninstall deletes the settings row.' );
 	}
 
 	public function test_the_marker_row_is_removed() {
@@ -45,7 +45,7 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 
 		$this->uninstall();
 
-		$this->assertFalse( get_option( WP_DownloadManager_Options::VERSION, false ) );
+		$this->assertFalse( get_option( WP_DownloadManager_Options::VERSION, false ), 'Uninstall deletes the version row.' );
 	}
 
 	public function test_every_legacy_row_is_removed_even_if_the_migration_never_ran() {
@@ -77,7 +77,7 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 
 		$this->uninstall();
 
-		$this->assertFalse( get_option( 'widget_downloads', false ) );
+		$this->assertFalse( get_option( 'widget_downloads', false ), 'Uninstall deletes the widget instance row.' );
 	}
 
 	public function test_nothing_matching_the_plugin_prefix_survives() {
@@ -195,7 +195,7 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 		$closing = strpos( $source, '}', $restore );
 
 		$this->assertGreaterThan( $switch, $restore, 'switch_to_blog() pushes onto a stack, so the restore belongs inside the loop' );
-		$this->assertNotFalse( $closing );
+		$this->assertNotFalse( $closing, 'The loop has a closing brace to compare against, or the ordering below means nothing.' );
 	}
 
 	public function test_the_table_is_dropped_once_rather_than_once_per_option_row() {
@@ -215,6 +215,6 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 
 		$this->uninstall();
 
-		$this->assertFalse( get_option( WP_DownloadManager_Options::OPTION, false ) );
+		$this->assertFalse( get_option( WP_DownloadManager_Options::OPTION, false ), 'Uninstalling a site that never finished installing leaves no row behind.' );
 	}
 }

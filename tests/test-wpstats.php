@@ -125,14 +125,14 @@ class WP_DownloadManager_WPStats_Test extends WP_DownloadManager_TestCase {
 		$sections = WP_DownloadManager_WPStats::register_section( $existing );
 
 		$this->assertArrayHasKey( 'wp_polls', $sections, 'a contributor adds to the array, it does not replace it' );
-		$this->assertArrayHasKey( 'wp_downloadmanager', $sections );
+		$this->assertArrayHasKey( 'wp_downloadmanager', $sections, 'This plugin entry is added alongside the sibling already there.' );
 	}
 
 	public function test_a_non_array_from_an_earlier_filter_does_not_fatal() {
 		$sections = WP_DownloadManager_WPStats::register_section( 'nonsense' );
 
 		$this->assertIsArray( $sections, 'a badly behaved sibling must not take this plugin down with it' );
-		$this->assertArrayHasKey( 'wp_downloadmanager', $sections );
+		$this->assertArrayHasKey( 'wp_downloadmanager', $sections, 'A non-array from an earlier filter is replaced rather than fatal.' );
 	}
 
 	public function test_the_class_reads_only_this_plugins_option_row() {

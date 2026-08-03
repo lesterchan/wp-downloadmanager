@@ -37,7 +37,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 
 		WP_DownloadManager::enqueue_styles();
 
-		$this->assertTrue( wp_style_is( 'wp-downloadmanager', 'enqueued' ) );
+		$this->assertTrue( wp_style_is( 'wp-downloadmanager', 'enqueued' ), 'The front-end stylesheet is enqueued from the plugin.' );
 		$this->assertSame( WP_DOWNLOADMANAGER_URL . 'css/wp-downloadmanager.css', wp_styles()->registered['wp-downloadmanager']->src );
 		$this->assertSame( WP_DOWNLOADMANAGER_VERSION, wp_styles()->registered['wp-downloadmanager']->ver );
 	}
@@ -73,7 +73,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 
 		WP_DownloadManager_Admin::enqueue_assets( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
 
-		$this->assertTrue( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ) );
+		$this->assertTrue( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ), 'The admin script loads on the top-level screen as well as the sub-screens.' );
 	}
 
 	public function test_the_admin_script_loads_nowhere_else() {
@@ -120,9 +120,9 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 	public function test_the_localised_payload_carries_both_halves() {
 		$data = WP_DownloadManager_Admin::script_data();
 
-		$this->assertArrayHasKey( 'templates', $data );
-		$this->assertArrayHasKey( 'quicktag', $data );
-		$this->assertArrayHasKey( 'prompt', $data['quicktag'] );
+		$this->assertArrayHasKey( 'templates', $data, 'The localised payload carries the templates half.' );
+		$this->assertArrayHasKey( 'quicktag', $data, 'The localised payload carries the quicktag half.' );
+		$this->assertArrayHasKey( 'prompt', $data['quicktag'], 'The quicktag half carries the prompt string it needs.' );
 	}
 
 	public function test_no_stylesheet_is_enqueued_on_any_admin_screen() {
@@ -151,7 +151,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 			(array) glob( WP_DOWNLOADMANAGER_DIR . 'js/*.js' )
 		);
 
-		$this->assertNotEmpty( $assets );
+		$this->assertNotEmpty( $assets, 'No assets were found, so the emptiness check below would pass vacuously.' );
 
 		foreach ( $assets as $asset ) {
 			$this->assertGreaterThan( 0, filesize( $asset ), basename( $asset ) . ' is empty and should not ship' );
@@ -164,7 +164,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 
 		WP_DownloadManager_Admin::quicktag();
 
-		$this->assertTrue( wp_script_is( 'wp-downloadmanager-quicktag', 'enqueued' ) );
+		$this->assertTrue( wp_script_is( 'wp-downloadmanager-quicktag', 'enqueued' ), 'The quicktag script is registered and enqueued rather than printed inline.' );
 
 		$registered = wp_scripts()->registered['wp-downloadmanager-quicktag'];
 
@@ -182,8 +182,8 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 
 		WP_DownloadManager_Admin::editor_buttons();
 
-		$this->assertNotFalse( has_filter( 'mce_external_plugins' ) );
-		$this->assertNotFalse( has_filter( 'mce_buttons' ) );
+		$this->assertNotFalse( has_filter( 'mce_external_plugins' ), 'The editor plugin is registered for a user who can use the editor.' );
+		$this->assertNotFalse( has_filter( 'mce_buttons' ), 'The editor button is registered for a user who can use the editor.' );
 	}
 
 	public function test_the_editor_button_points_at_the_unminified_script() {
@@ -206,13 +206,13 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 
 		WP_DownloadManager_Admin::editor_buttons();
 
-		$this->assertFalse( has_filter( 'mce_external_plugins' ) );
+		$this->assertFalse( has_filter( 'mce_external_plugins' ), 'The editor plugin is not registered for a subscriber.' );
 	}
 
 	public function test_the_editor_strings_are_translated_not_escaped_for_javascript() {
 		$strings = WP_DownloadManager_Admin::mce_translation( array() );
 
-		$this->assertArrayHasKey( 'Insert File Download', $strings );
+		$this->assertArrayHasKey( 'Insert File Download', $strings, 'The editor strings are translated, keyed by the English source string.' );
 		$this->assertSame( 'Insert File Download', $strings['Insert File Download'] );
 		$this->assertStringNotContainsString( '\\', $strings['Enter File ID (Separate Multiple IDs By A Comma)'], 'esc_js() double escapes once TinyMCE inserts them into the DOM' );
 	}
@@ -275,7 +275,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		WP_DownloadManager_Install::activate();
 
 		$this->assertSame( $this->table(), $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table() ) ), 'activation is idempotent' );
-		$this->assertTrue( get_role( 'administrator' )->has_cap( 'manage_downloads' ) );
+		$this->assertTrue( get_role( 'administrator' )->has_cap( 'manage_downloads' ), 'Activation grants the capability to the administrator role.' );
 	}
 
 	public function test_the_downloads_table_is_registered_with_wpdb() {
@@ -319,7 +319,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 	public function test_the_widget_supports_selective_refresh() {
 		$widget = new WP_DownloadManager_Widget();
 
-		$this->assertTrue( $widget->widget_options['customize_selective_refresh'] );
+		$this->assertTrue( $widget->widget_options['customize_selective_refresh'], 'The widget declares selective refresh, so the customizer does not reload the page.' );
 	}
 
 	public function test_the_widget_renders_its_chosen_list() {

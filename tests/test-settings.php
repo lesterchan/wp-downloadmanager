@@ -26,7 +26,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 	public function test_the_option_is_registered_once_under_the_one_group() {
 		global $wp_registered_settings;
 
-		$this->assertArrayHasKey( WP_DownloadManager_Options::OPTION, $wp_registered_settings );
+		$this->assertArrayHasKey( WP_DownloadManager_Options::OPTION, $wp_registered_settings, 'The settings row is registered once, so its sanitise callback is attached.' );
 		$this->assertSame(
 			array( 'WP_DownloadManager_Settings', 'sanitize' ),
 			$wp_registered_settings[ WP_DownloadManager_Options::OPTION ]['sanitize_callback'],
@@ -41,8 +41,8 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 	public function test_each_tab_registers_its_sections_against_its_own_page() {
 		global $wp_settings_sections;
 
-		$this->assertArrayHasKey( WP_DownloadManager_Settings::tab_page( 'general' ), $wp_settings_sections );
-		$this->assertArrayHasKey( WP_DownloadManager_Settings::tab_page( 'templates' ), $wp_settings_sections );
+		$this->assertArrayHasKey( WP_DownloadManager_Settings::tab_page( 'general' ), $wp_settings_sections, 'The general tab has its own registered section page.' );
+		$this->assertArrayHasKey( WP_DownloadManager_Settings::tab_page( 'templates' ), $wp_settings_sections, 'The templates tab has its own registered section page.' );
 	}
 
 	public function test_the_general_tab_registers_the_sections_it_should() {
@@ -121,7 +121,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Settings', 'render_page' ), array( 'tab' => 'templates' ) );
 
-		$this->assertMatchesRegularExpression( '/nav-tab nav-tab-active"[^>]*>\s*Templates/s', $html );
+		$this->assertMatchesRegularExpression( '/nav-tab nav-tab-active"[^>]*>\s*Templates/s', $html, 'The tab being viewed is the one marked active.' );
 	}
 
 	public function test_an_unknown_tab_falls_back_to_the_first_one() {
@@ -142,7 +142,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 			// settings_fields() emits single-quoted attributes.
 			$this->assertStringContainsString( "option_page' value='" . WP_DownloadManager_Settings::GROUP, $html, $tab . ' posts to the shared group' );
-			$this->assertStringContainsString( 'action="options.php"', $html );
+			$this->assertStringContainsString( 'action="options.php"', $html, 'Both tabs post to options.php, so one settings group serves them.' );
 		}
 	}
 
@@ -308,7 +308,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 	public function test_a_directory_that_does_not_exist_yet_is_kept() {
 		$missing = WP_CONTENT_DIR . '/files-not-created-yet';
-		$this->assertDirectoryDoesNotExist( $missing );
+		$this->assertDirectoryDoesNotExist( $missing, 'The directory really is absent, or the assertion that it is kept proves nothing.' );
 
 		$saved = WP_DownloadManager_Settings::sanitize( array( 'path' => array( 'dir' => $missing ) ) );
 
@@ -423,7 +423,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 		preg_match_all( '/data-template="([^"]+)"/', $html, $matches );
 
-		$this->assertNotEmpty( $matches[1] );
+		$this->assertNotEmpty( $matches[1], 'A reset button is offered for a template with no default behind it.' );
 		foreach ( $matches[1] as $key ) {
 			$this->assertArrayHasKey( $key, $defaults, $key . ' has a reset button but no default' );
 		}
@@ -464,7 +464,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 		$flat = WP_DownloadManager_Template::for_script();
 
 		foreach ( WP_DownloadManager_Template::paired_keys() as $key ) {
-			$this->assertArrayHasKey( $key, $flat );
+			$this->assertArrayHasKey( $key, $flat, 'The flattened defaults are missing ' . $key . '.' );
 			$this->assertArrayHasKey( $key . '_2', $flat, 'the reset button for the no-permission half needs a key of its own' );
 		}
 	}

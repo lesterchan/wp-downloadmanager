@@ -322,7 +322,7 @@ class WP_DownloadManager_Display_Test extends WP_DownloadManager_TestCase {
 	public function test_the_feed_honours_its_row_limit() {
 		WP_DownloadManager_Options::set( 'rss.limit', 2 );
 
-		$this->assertCount( 2, WP_DownloadManager_Display::feed_files() );
+		$this->assertCount( 2, WP_DownloadManager_Display::feed_files(), 'The feed honours its row limit rather than listing everything.' );
 	}
 
 	public function test_the_feed_renders_valid_looking_rss() {

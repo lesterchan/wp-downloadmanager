@@ -443,7 +443,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertNull( $this->fetch_file( $id ) );
+		$this->assertNull( $this->fetch_file( $id ), 'Deleting the file removes its row.' );
 		$this->assertStringContainsString( '1 file deleted', $html );
 	}
 
@@ -485,8 +485,8 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertFileDoesNotExist( $path );
-		$this->assertNull( $this->fetch_file( $id ) );
+		$this->assertFileDoesNotExist( $path, 'With the disk option ticked, the file itself is removed.' );
+		$this->assertNull( $this->fetch_file( $id ), 'The row is removed along with the file.' );
 	}
 
 	public function test_deleting_a_file_leaves_the_file_on_disk_unless_asked() {
@@ -507,7 +507,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 		);
 
 		$this->assertFileExists( $path, 'removing the row is not the same as removing the file' );
-		$this->assertNull( $this->fetch_file( $id ) );
+		$this->assertNull( $this->fetch_file( $id ), 'The row goes even when the file on disk is asked to stay.' );
 	}
 
 	public function test_deleting_a_file_without_a_nonce_is_refused() {
@@ -547,8 +547,8 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertNull( $this->fetch_file( $this->ids['public'] ) );
-		$this->assertNull( $this->fetch_file( $this->ids['members'] ) );
+		$this->assertNull( $this->fetch_file( $this->ids['public'] ), 'The bulk delete removed the first ticked row.' );
+		$this->assertNull( $this->fetch_file( $this->ids['members'] ), 'The bulk delete removed the second ticked row.' );
 		$this->assertNotNull( $this->fetch_file( $this->ids['editors'] ), 'and leaves the rest alone' );
 		$this->assertStringContainsString( '2 files deleted', $html );
 	}
@@ -566,7 +566,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 				)
 			);
 		} finally {
-			$this->assertNotNull( $this->fetch_file( $this->ids['public'] ) );
+			$this->assertNotNull( $this->fetch_file( $this->ids['public'] ), 'Without a nonce the bulk delete is refused and the row survives.' );
 		}
 	}
 

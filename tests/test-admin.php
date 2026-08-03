@@ -40,7 +40,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 	public function test_no_screen_slug_is_a_file_path() {
 		foreach ( WP_DownloadManager_Admin::screens() as $slug ) {
 			$this->assertStringNotContainsString( '/', $slug, 'the legacy "plugin file as menu slug" form is gone' );
-			$this->assertStringNotContainsString( '.php', $slug );
+			$this->assertStringNotContainsString( '.php', $slug, 'A screen slug that is a file path can be reached without going through the menu.' );
 		}
 	}
 
@@ -516,7 +516,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 
 		foreach ( $screens as $html ) {
 			$this->assertStringNotContainsString( 'valign=', $html, 'section 4.4 allows no valign anywhere' );
-			$this->assertStringNotContainsString( ' align=', $html );
+			$this->assertStringNotContainsString( ' align=', $html, 'The screen still uses a deprecated layout attribute where CSS belongs.' );
 			$this->assertStringNotContainsString( 'onclick=', $html, 'behaviour attaches through data attributes' );
 		}
 	}
@@ -578,7 +578,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		$html = ob_get_clean();
 
 		foreach ( array( 'day', 'month', 'year', 'hour', 'minute', 'second' ) as $part ) {
-			$this->assertStringContainsString( 'id="file_timestamp_' . $part . '"', $html );
+			$this->assertStringContainsString( 'id="file_timestamp_' . $part . '"', $html, 'The timestamp selects are missing the ' . $part . ' part of the date.' );
 		}
 
 		$this->assertStringContainsString( '<option value="15" selected', $html );
