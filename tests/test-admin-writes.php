@@ -96,14 +96,14 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 
 		$this->render( array( 'WP_DownloadManager_Admin', 'render_add' ), array(), $this->add_post() );
 
-		$this->assertSame( $before + 1, $this->count_files() );
+		$this->assertSame( $before + 1, $this->count_files(), 'Adding a file leaves one more row than there was.' );
 	}
 
 	public function test_adding_a_file_says_so_with_its_id() {
 		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_add' ), array(), $this->add_post() );
 
-		$this->assertStringContainsString( 'The Brochure added', $html );
-		$this->assertStringContainsString( 'file ID', $html );
+		$this->assertStringContainsString( 'The Brochure added', $html, 'The notice names the file that was added.' );
+		$this->assertStringContainsString( 'file ID', $html, 'And gives its ID, which is what the next screen needs.' );
 	}
 
 	public function test_adding_a_file_stores_the_submitted_values() {
@@ -113,11 +113,11 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 
 		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
 
-		$this->assertSame( 'The Brochure', $row->file_name );
-		$this->assertSame( 'A brochure.', $row->file_des );
-		$this->assertSame( '/brochure.pdf', $row->file );
-		$this->assertSame( 1, (int) $row->file_category );
-		$this->assertSame( -1, (int) $row->file_permission );
+		$this->assertSame( 'The Brochure', $row->file_name, 'The submitted name is stored.' );
+		$this->assertSame( 'A brochure.', $row->file_des, 'And the description.' );
+		$this->assertSame( '/brochure.pdf', $row->file, 'And the path.' );
+		$this->assertSame( 1, (int) $row->file_category, 'And the category.' );
+		$this->assertSame( -1, (int) $row->file_permission, 'And the permission level, where -1 means everyone.' );
 	}
 
 	public function test_adding_a_file_does_not_double_slash_the_text() {
@@ -141,7 +141,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 
 		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
 
-		$this->assertSame( strlen( 'pretend this is a PDF' ), (int) $row->file_size );
+		$this->assertSame( strlen( 'pretend this is a PDF' ), (int) $row->file_size, 'The size is read off the file on disk rather than typed.' );
 	}
 
 	public function test_a_typed_size_wins_when_detection_is_switched_off() {
@@ -160,7 +160,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 
 		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
 
-		$this->assertSame( 4096, (int) $row->file_size );
+		$this->assertSame( 4096, (int) $row->file_size, 'With detection switched off the typed size is what is stored.' );
 	}
 
 	public function test_a_blank_name_falls_back_to_the_file_on_disk() {
@@ -170,7 +170,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 
 		$row = $wpdb->get_row( "SELECT * FROM {$wpdb->downloads} ORDER BY file_id DESC LIMIT 1" );
 
-		$this->assertSame( 'brochure.pdf', $row->file_name );
+		$this->assertSame( 'brochure.pdf', $row->file_name, 'A blank name falls back to the name of the file on disk.' );
 	}
 
 	/**
@@ -228,7 +228,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertStringContainsString( 'could not be read', $html );
+		$this->assertStringContainsString( 'could not be read', $html, 'A refused scheme is reported rather than stored.' );
 		$this->assertSame( $before, $this->count_files(), 'and nothing is stored' );
 	}
 
@@ -280,11 +280,11 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 
 		$row = $this->fetch_file( $id );
 
-		$this->assertSame( 'Renamed', $row->file_name );
-		$this->assertSame( 'Edited.', $row->file_des );
-		$this->assertSame( 2, (int) $row->file_category );
-		$this->assertSame( 0, (int) $row->file_permission );
-		$this->assertSame( 4, (int) $row->file_hits );
+		$this->assertSame( 'Renamed', $row->file_name, 'The edited name is stored.' );
+		$this->assertSame( 'Edited.', $row->file_des, 'And the description.' );
+		$this->assertSame( 2, (int) $row->file_category, 'And the category.' );
+		$this->assertSame( 0, (int) $row->file_permission, 'And the permission level.' );
+		$this->assertSame( 4, (int) $row->file_hits, 'And the hit count, which the edit form may set directly.' );
 	}
 
 	public function test_editing_a_file_leaves_the_file_alone_when_asked_to() {
@@ -315,7 +315,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 			$this->edit_post( $id )
 		);
 
-		$this->assertNotSame( $before, $this->fetch_file( $id )->file_updated_date );
+		$this->assertNotSame( $before, $this->fetch_file( $id )->file_updated_date, 'An edit stamps the updated date.' );
 	}
 
 	public function test_editing_a_file_can_reset_its_hit_count() {
@@ -330,7 +330,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 			$this->edit_post( $id, array( 'reset_filehits' => '1' ) )
 		);
 
-		$this->assertSame( 0, (int) $this->fetch_file( $id )->file_hits );
+		$this->assertSame( 0, (int) $this->fetch_file( $id )->file_hits, 'The reset box zeroes the hit count.' );
 	}
 
 	public function test_editing_a_file_leaves_its_date_alone_unless_asked() {
@@ -378,7 +378,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertSame( (string) gmmktime( 0, 0, 0, 1, 1, 2001 ), $this->fetch_file( $id )->file_date );
+		$this->assertSame( (string) gmmktime( 0, 0, 0, 1, 1, 2001 ), $this->fetch_file( $id )->file_date, 'The date parts submitted become the stored timestamp.' );
 	}
 
 	public function test_saving_an_unchanged_row_reports_success() {
@@ -405,7 +405,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 		);
 
 		$this->assertStringContainsString( 'saved', $html, 'update() returns 0 when the row already held these values, which is success' );
-		$this->assertStringNotContainsString( 'could not be saved', $html );
+		$this->assertStringNotContainsString( 'could not be saved', $html, 'Saving a row with nothing changed is a success, not a failure.' );
 	}
 
 	public function test_editing_a_file_with_the_wrong_nonce_is_refused() {
@@ -444,7 +444,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 		);
 
 		$this->assertNull( $this->fetch_file( $id ), 'Deleting the file removes its row.' );
-		$this->assertStringContainsString( '1 file deleted', $html );
+		$this->assertStringContainsString( '1 file deleted', $html, 'The notice counts what was deleted.' );
 	}
 
 	public function test_deleting_a_file_lands_back_on_the_list() {
@@ -464,7 +464,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 		);
 
 		$this->assertStringContainsString( 'Members Bundle', $html, 'the confirmation screen has nothing left to confirm' );
-		$this->assertStringNotContainsString( 'data-confirm=', $html );
+		$this->assertStringNotContainsString( 'data-confirm=', $html, 'After deleting, the confirmation screen is not rendered again.' );
 	}
 
 	public function test_deleting_a_file_can_remove_it_from_disk_too() {
@@ -550,7 +550,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 		$this->assertNull( $this->fetch_file( $this->ids['public'] ), 'The bulk delete removed the first ticked row.' );
 		$this->assertNull( $this->fetch_file( $this->ids['members'] ), 'The bulk delete removed the second ticked row.' );
 		$this->assertNotNull( $this->fetch_file( $this->ids['editors'] ), 'and leaves the rest alone' );
-		$this->assertStringContainsString( '2 files deleted', $html );
+		$this->assertStringContainsString( '2 files deleted', $html, 'A bulk delete counts every row it removed.' );
 	}
 
 	public function test_a_bulk_delete_without_a_nonce_is_refused() {
@@ -580,7 +580,7 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertSame( 5, $this->count_files() );
+		$this->assertSame( 5, $this->count_files(), 'A bulk delete with nothing ticked leaves every row alone.' );
 	}
 
 	/**
@@ -617,7 +617,8 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 		);
 		$this->assertStringNotContainsString(
 			'class="updated fade"',
-			$this->code( 'includes/class-wp-downloadmanager-admin.php' )
+			$this->code( 'includes/class-wp-downloadmanager-admin.php' ),
+			'Notices go through the settings errors API rather than being printed by hand.'
 		);
 	}
 }

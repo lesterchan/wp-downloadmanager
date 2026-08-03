@@ -57,7 +57,7 @@ class WP_DownloadManager_WPStats_Test extends WP_DownloadManager_TestCase {
 
 		$this->assertIsString( $section['title'], 'the title is a string' );
 		$this->assertNotSame( '', $section['title'], 'wp-stats skips an entry with an empty title' );
-		$this->assertSame( 'Downloads', $section['title'] );
+		$this->assertSame( 'Downloads', $section['title'], 'The section is titled.' );
 	}
 
 	public function test_the_priority_is_an_integer() {
@@ -161,7 +161,7 @@ class WP_DownloadManager_WPStats_Test extends WP_DownloadManager_TestCase {
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString( 'files were added', $html, 'the totals block is part of the body' );
-		$this->assertStringContainsString( 'hits were generated', $html );
+		$this->assertStringContainsString( 'hits were generated', $html, 'The body reports the library totals.' );
 	}
 
 	public function test_the_body_lists_recent_and_most_downloaded() {
@@ -171,8 +171,8 @@ class WP_DownloadManager_WPStats_Test extends WP_DownloadManager_TestCase {
 		WP_DownloadManager_WPStats::render();
 		$html = ob_get_clean();
 
-		$this->assertStringContainsString( 'Most Recent Downloads', $html );
-		$this->assertStringContainsString( 'Most Downloaded Files', $html );
+		$this->assertStringContainsString( 'Most Recent Downloads', $html, 'It lists the recent downloads.' );
+		$this->assertStringContainsString( 'Most Downloaded Files', $html, 'And the most downloaded.' );
 		$this->assertStringContainsString( 'The Manual', $html, 'and the lists have real rows in them' );
 	}
 
@@ -196,7 +196,7 @@ class WP_DownloadManager_WPStats_Test extends WP_DownloadManager_TestCase {
 
 		// SUM() is NULL on an empty table, which _n() and number_format_i18n()
 		// are both deprecated for on PHP 8.1 and later.
-		$this->assertStringNotContainsString( 'Deprecated', $html );
+		$this->assertStringNotContainsString( 'Deprecated', $html, 'An empty library renders without a deprecation notice.' );
 		$this->assertStringContainsString( 'N/A', $html, 'the lists say so rather than rendering nothing' );
 	}
 

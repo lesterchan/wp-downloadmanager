@@ -126,8 +126,8 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 		$source = $this->code( 'uninstall.php' );
 
 		$this->assertStringContainsString( 'legacy_map()', $source, 'the uninstaller and the migration must never disagree about which rows belong to the plugin' );
-		$this->assertStringContainsString( 'legacy_extra_rows()', $source );
-		$this->assertStringContainsString( 'legacy_structured_rows()', $source );
+		$this->assertStringContainsString( 'legacy_extra_rows()', $source, 'The uninstaller reads the extra row list from the options class.' );
+		$this->assertStringContainsString( 'legacy_structured_rows()', $source, 'And the structured row list, so the two cannot drift.' );
 
 		// And the one exception it has to apply, from the same class, so that
 		// nobody reinstates the shared rows by re-deriving the list here.
@@ -165,16 +165,16 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 	public function test_the_uninstaller_handles_a_network_site_by_site() {
 		$source = $this->code( 'uninstall.php' );
 
-		$this->assertStringContainsString( 'is_multisite()', $source );
-		$this->assertStringContainsString( 'switch_to_blog(', $source );
-		$this->assertStringContainsString( 'restore_current_blog()', $source );
+		$this->assertStringContainsString( 'is_multisite()', $source, 'The uninstaller notices it is on a network.' );
+		$this->assertStringContainsString( 'switch_to_blog(', $source, 'Switches to each site.' );
+		$this->assertStringContainsString( 'restore_current_blog()', $source, 'And switches back.' );
 	}
 
 	public function test_the_uninstaller_does_not_use_the_function_core_deprecated() {
 		$source = $this->code( 'uninstall.php' );
 
 		$this->assertStringNotContainsString( 'wp_get_sites(', $source, 'deprecated in WordPress 4.6 and capped at 100 sites, so a larger network uninstalls in part' );
-		$this->assertStringContainsString( 'get_sites(', $source );
+		$this->assertStringContainsString( 'get_sites(', $source, 'It walks the sites with get_sites(), not the function core deprecated.' );
 	}
 
 	public function test_the_uninstaller_lifts_the_hundred_site_cap() {

@@ -11,11 +11,11 @@
 class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 
 	public function test_an_extension_is_lowercased() {
-		$this->assertSame( 'pdf', WP_DownloadManager_File::extension( '/Manual.PDF' ) );
+		$this->assertSame( 'pdf', WP_DownloadManager_File::extension( '/Manual.PDF' ), 'An extension is lowercased, so PDF and pdf are one family.' );
 	}
 
 	public function test_a_file_with_no_extension_reads_as_its_own_name() {
-		$this->assertSame( 'readme', WP_DownloadManager_File::extension( 'README' ) );
+		$this->assertSame( 'readme', WP_DownloadManager_File::extension( 'README' ), 'A file with no extension reads as its own name.' );
 	}
 
 	public function test_every_known_extension_maps_to_a_family_that_has_a_symbol() {
@@ -27,7 +27,7 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_an_unknown_extension_falls_back_to_a_plain_document() {
-		$this->assertSame( 'file', WP_DownloadManager_File::extension_family( '/thing.qqq' ) );
+		$this->assertSame( 'file', WP_DownloadManager_File::extension_family( '/thing.qqq' ), 'An unknown extension falls back to a plain document.' );
 	}
 
 	public function test_the_families_cover_the_extensions_the_gifs_used_to() {
@@ -45,7 +45,7 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 	public function test_the_family_filter_can_override_the_choice() {
 		add_filter( 'wp_downloadmanager_file_extension_image', fn() => 'video' );
 
-		$this->assertSame( 'video', WP_DownloadManager_File::extension_family( '/bundle.zip' ) );
+		$this->assertSame( 'video', WP_DownloadManager_File::extension_family( '/bundle.zip' ), 'The filter can override the family the extension would have chosen.' );
 	}
 
 	public function test_the_family_filter_cannot_invent_a_family_with_no_symbol() {
@@ -56,7 +56,7 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 
 	public function test_a_sort_column_off_the_allow_list_falls_back() {
 		$this->assertSame( 'file_id', WP_DownloadManager_File::sort_column( 'DROP TABLE' ), 'this value reaches ORDER BY' );
-		$this->assertSame( 'file_name', WP_DownloadManager_File::sort_column( 'nonsense', 'file_name' ) );
+		$this->assertSame( 'file_name', WP_DownloadManager_File::sort_column( 'nonsense', 'file_name' ), 'A sort column off the allow list falls back rather than reaching the query.' );
 	}
 
 	public function test_every_allow_listed_sort_column_is_accepted() {
@@ -66,9 +66,9 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_a_sort_direction_is_constrained_to_two_values() {
-		$this->assertSame( 'asc', WP_DownloadManager_File::sort_order( 'ASC' ) );
-		$this->assertSame( 'desc', WP_DownloadManager_File::sort_order( 'DeSc' ) );
-		$this->assertSame( 'asc', WP_DownloadManager_File::sort_order( '; DROP TABLE' ) );
+		$this->assertSame( 'asc', WP_DownloadManager_File::sort_order( 'ASC' ), 'A direction is lowercased.' );
+		$this->assertSame( 'desc', WP_DownloadManager_File::sort_order( 'DeSc' ), 'Whatever case it arrives in.' );
+		$this->assertSame( 'asc', WP_DownloadManager_File::sort_order( '; DROP TABLE' ), 'And anything else becomes ascending rather than reaching the query.' );
 	}
 
 	public function test_a_remote_file_is_recognised_by_its_scheme() {
@@ -103,19 +103,19 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_a_size_is_formatted_in_binary_units() {
-		$this->assertStringContainsString( 'KiB', WP_DownloadManager_File::format_size( 2048 ) );
-		$this->assertStringContainsString( 'MiB', WP_DownloadManager_File::format_size( 5 * 1048576 ) );
-		$this->assertStringContainsString( 'bytes', WP_DownloadManager_File::format_size( 900 ) );
+		$this->assertStringContainsString( 'KiB', WP_DownloadManager_File::format_size( 2048 ), 'Two kilobytes are formatted in binary units.' );
+		$this->assertStringContainsString( 'MiB', WP_DownloadManager_File::format_size( 5 * 1048576 ), 'And so are megabytes.' );
+		$this->assertStringContainsString( 'bytes', WP_DownloadManager_File::format_size( 900 ), 'While a small size stays in bytes.' );
 	}
 
 	public function test_a_size_is_formatted_in_decimal_units_too() {
-		$this->assertStringContainsString( 'KB', WP_DownloadManager_File::format_size_dec( 2000 ) );
-		$this->assertStringContainsString( 'MB', WP_DownloadManager_File::format_size_dec( 5000000 ) );
+		$this->assertStringContainsString( 'KB', WP_DownloadManager_File::format_size_dec( 2000 ), 'The decimal form uses decimal units.' );
+		$this->assertStringContainsString( 'MB', WP_DownloadManager_File::format_size_dec( 5000000 ), 'For megabytes too.' );
 	}
 
 	public function test_a_size_of_zero_reads_as_unknown() {
-		$this->assertSame( 'unknown', WP_DownloadManager_File::format_size( 0 ) );
-		$this->assertSame( 'unknown', WP_DownloadManager_File::format_size_dec( 0 ) );
+		$this->assertSame( 'unknown', WP_DownloadManager_File::format_size( 0 ), 'A size of zero reads as unknown rather than as no bytes.' );
+		$this->assertSame( 'unknown', WP_DownloadManager_File::format_size_dec( 0 ), 'In the decimal form as well.' );
 	}
 
 	public function test_every_permission_level_has_a_label() {
@@ -125,7 +125,7 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_an_unknown_permission_level_has_no_label() {
-		$this->assertSame( '', WP_DownloadManager_File::permission_label( 42 ) );
+		$this->assertSame( '', WP_DownloadManager_File::permission_label( 42 ), 'An unknown permission level has no label rather than a wrong one.' );
 	}
 
 	public function test_a_logged_out_visitor_may_download_a_public_file_only() {
@@ -160,13 +160,13 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 
 	public function test_the_user_level_is_derived_from_capabilities_not_the_removed_field() {
 		$this->login_as( 'administrator' );
-		$this->assertSame( 10, WP_DownloadManager_File::user_level() );
+		$this->assertSame( 10, WP_DownloadManager_File::user_level(), 'An administrator is level ten.' );
 
 		$this->login_as( 'editor' );
-		$this->assertSame( 7, WP_DownloadManager_File::user_level() );
+		$this->assertSame( 7, WP_DownloadManager_File::user_level(), 'An editor is level seven.' );
 
 		$this->login_as( '' );
-		$this->assertSame( -1, WP_DownloadManager_File::user_level() );
+		$this->assertSame( -1, WP_DownloadManager_File::user_level(), 'And a visitor with no account is below them both.' );
 	}
 
 	public function test_an_upload_subfolder_that_escapes_the_downloads_directory_is_refused() {
@@ -176,8 +176,8 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 		$path = WP_DownloadManager_Options::get( 'path.dir' );
 
 		$this->assertSame( '/', WP_DownloadManager_File::safe_subfolder( $path, '../../..' ), 'nothing stopped a hand-crafted POST dropping an upload anywhere writable' );
-		$this->assertSame( '/', WP_DownloadManager_File::safe_subfolder( $path, "/sub\0/x" ) );
-		$this->assertSame( '/sub', WP_DownloadManager_File::safe_subfolder( $path, '/sub' ) );
+		$this->assertSame( '/', WP_DownloadManager_File::safe_subfolder( $path, "/sub\0/x" ), 'A subfolder carrying a null byte is refused and the root is used instead.' );
+		$this->assertSame( '/sub', WP_DownloadManager_File::safe_subfolder( $path, '/sub' ), 'While an ordinary subfolder is accepted.' );
 
 		$this->remove_download_files();
 	}
@@ -204,7 +204,7 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 
 		$renamed = WP_DownloadManager_File::rename_file( $path, 'my file (1).txt' );
 
-		$this->assertSame( 'my_file_1.txt', $renamed );
+		$this->assertSame( 'my_file_1.txt', $renamed, 'Characters that do not belong in a file name are replaced rather than kept.' );
 		$this->assertFileExists( $path . $renamed, 'The file is stored under the stripped name, not the one that was uploaded.' );
 
 		$this->remove_download_files();
@@ -215,25 +215,25 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 		$path = trailingslashit( WP_DownloadManager_Options::get( 'path.dir' ) );
 		$this->make_download_file( 'clean.txt' );
 
-		$this->assertSame( 'clean.txt', WP_DownloadManager_File::rename_file( $path, 'clean.txt' ) );
+		$this->assertSame( 'clean.txt', WP_DownloadManager_File::rename_file( $path, 'clean.txt' ), 'A name that is already clean is left alone.' );
 
 		$this->remove_download_files();
 	}
 
 	public function test_a_download_url_uses_the_file_id_by_default() {
-		$this->assertSame( get_option( 'home' ) . '/download/7/', WP_DownloadManager_File::download_url( 7, '/manual.pdf' ) );
+		$this->assertSame( get_option( 'home' ) . '/download/7/', WP_DownloadManager_File::download_url( 7, '/manual.pdf' ), 'The download URL is built from the file id.' );
 	}
 
 	public function test_a_download_url_can_use_the_file_name_instead() {
 		WP_DownloadManager_Options::set( 'use_filename', 1 );
 
-		$this->assertSame( get_option( 'home' ) . '/download/manual.pdf', WP_DownloadManager_File::download_url( 7, '/manual.pdf' ) );
+		$this->assertSame( get_option( 'home' ) . '/download/manual.pdf', WP_DownloadManager_File::download_url( 7, '/manual.pdf' ), 'Or from the file name, when that is what is configured.' );
 	}
 
 	public function test_a_download_url_falls_back_to_a_query_string_without_nice_permalinks() {
 		WP_DownloadManager_Options::set( 'nice_permalink', 0 );
 
-		$this->assertSame( get_option( 'home' ) . '/?dl_id=7', WP_DownloadManager_File::download_url( 7, '/manual.pdf' ) );
+		$this->assertSame( get_option( 'home' ) . '/?dl_id=7', WP_DownloadManager_File::download_url( 7, '/manual.pdf' ), 'Without nice permalinks it falls back to a query string.' );
 	}
 
 	public function test_a_remote_download_url_is_not_mangled() {
@@ -258,11 +258,11 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_the_maximum_upload_size_comes_from_wordpress() {
-		$this->assertSame( (int) wp_max_upload_size(), WP_DownloadManager_File::max_upload_size() );
+		$this->assertSame( (int) wp_max_upload_size(), WP_DownloadManager_File::max_upload_size(), 'The upload limit is the one WordPress reports, not one of the plugin.' );
 	}
 
 	public function test_the_endpoint_is_hooked_before_the_theme_gets_a_look_in() {
-		$this->assertSame( 5, has_action( 'template_redirect', array( 'WP_DownloadManager_File', 'serve' ) ) );
+		$this->assertSame( 5, has_action( 'template_redirect', array( 'WP_DownloadManager_File', 'serve' ) ), 'The endpoint runs before the theme gets a look in.' );
 	}
 
 	public function test_the_endpoint_ignores_a_request_that_names_no_file() {
@@ -342,7 +342,7 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 		$after = $this->fetch_file( $this->ids['public'] );
 
 		$this->assertSame( (int) $before->file_hits + 1, (int) $after->file_hits, 'the hit counter is the whole point of the endpoint' );
-		$this->assertNotSame( $before->file_last_downloaded_date, $after->file_last_downloaded_date );
+		$this->assertNotSame( $before->file_last_downloaded_date, $after->file_last_downloaded_date, 'Serving a file stamps the download date.' );
 
 		$this->remove_download_files();
 	}

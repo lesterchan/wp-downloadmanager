@@ -35,7 +35,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_there_are_exactly_two_tabs() {
-		$this->assertSame( array( 'general', 'templates' ), array_keys( WP_DownloadManager_Settings::tabs() ) );
+		$this->assertSame( array( 'general', 'templates' ), array_keys( WP_DownloadManager_Settings::tabs() ), 'There are exactly two tabs, in this order.' );
 	}
 
 	public function test_each_tab_registers_its_sections_against_its_own_page() {
@@ -50,10 +50,10 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 		$sections = array_keys( $wp_settings_sections[ WP_DownloadManager_Settings::tab_page( 'general' ) ] );
 
-		$this->assertContains( WP_DownloadManager_Settings::SECTION_GENERAL, $sections );
-		$this->assertContains( WP_DownloadManager_Settings::SECTION_LISTING, $sections );
-		$this->assertContains( WP_DownloadManager_Settings::SECTION_RSS, $sections );
-		$this->assertContains( WP_DownloadManager_Settings::SECTION_STATS, $sections );
+		$this->assertContains( WP_DownloadManager_Settings::SECTION_GENERAL, $sections, 'The general section is registered.' );
+		$this->assertContains( WP_DownloadManager_Settings::SECTION_LISTING, $sections, 'The listing section.' );
+		$this->assertContains( WP_DownloadManager_Settings::SECTION_RSS, $sections, 'The RSS section.' );
+		$this->assertContains( WP_DownloadManager_Settings::SECTION_STATS, $sections, 'And the stats section.' );
 	}
 
 	public function test_every_section_constant_is_prefixed() {
@@ -85,8 +85,8 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 			$fields = array_merge( $fields, array_keys( $section ) );
 		}
 
-		$this->assertContains( 'download_template_header', $fields );
-		$this->assertContains( 'download_template_listing', $fields );
+		$this->assertContains( 'download_template_header', $fields, 'The header template has a field.' );
+		$this->assertContains( 'download_template_listing', $fields, 'And so does the listing, the half of the pair that is easiest to forget.' );
 		$this->assertContains( 'download_template_listing_2', $fields, 'the no-permission half is a field of its own' );
 	}
 
@@ -101,8 +101,8 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Settings', 'render_page' ) );
 
-		$this->assertStringContainsString( 'nav-tab-wrapper', $html );
-		$this->assertStringContainsString( 'name="' . WP_DownloadManager_Options::OPTION . '[page_url]"', $html );
+		$this->assertStringContainsString( 'nav-tab-wrapper', $html, 'The page renders the core tab strip.' );
+		$this->assertStringContainsString( 'name="' . WP_DownloadManager_Options::OPTION . '[page_url]"', $html, 'And the general tab fields, which is what it shows by default.' );
 		$this->assertScreenIsClean( $html );
 	}
 
@@ -111,7 +111,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Settings', 'render_page' ), array( 'tab' => 'templates' ) );
 
-		$this->assertStringContainsString( 'name="' . WP_DownloadManager_Options::OPTION . '[templates][header]"', $html );
+		$this->assertStringContainsString( 'name="' . WP_DownloadManager_Options::OPTION . '[templates][header]"', $html, 'Asked for the templates tab, the template fields are what it renders.' );
 		$this->assertStringNotContainsString( 'name="' . WP_DownloadManager_Options::OPTION . '[page_url]"', $html, 'a tab shows its own fields and no others' );
 		$this->assertScreenIsClean( $html );
 	}
@@ -131,7 +131,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 		$_GET = array();
 
-		$this->assertSame( 'general', $tab );
+		$this->assertSame( 'general', $tab, 'An unknown tab falls back to the first rather than rendering nothing.' );
 	}
 
 	public function test_both_tabs_post_to_the_same_settings_group() {
@@ -203,7 +203,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 		);
 
 		// Dropping the scope must not drop the plugin's own messages with it.
-		$this->assertStringContainsString( 'has to start inside your wp-content folder', $html );
+		$this->assertStringContainsString( 'has to start inside your wp-content folder', $html, 'A rejected value says why on the screen rather than failing quietly.' );
 	}
 
 	public function test_the_page_is_behind_manage_options() {
@@ -239,18 +239,18 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertSame( 'https://example.com/files', $saved['path']['url'] );
-		$this->assertSame( 'https://example.com/downloads', $saved['page_url'] );
-		$this->assertSame( 0, $saved['method'] );
-		$this->assertSame( 0, $saved['nice_permalink'] );
-		$this->assertSame( 1, $saved['use_filename'] );
+		$this->assertSame( 'https://example.com/files', $saved['path']['url'], 'The files URL round trips.' );
+		$this->assertSame( 'https://example.com/downloads', $saved['page_url'], 'The downloads page URL.' );
+		$this->assertSame( 0, $saved['method'], 'The delivery method.' );
+		$this->assertSame( 0, $saved['nice_permalink'], 'The nice permalink toggle.' );
+		$this->assertSame( 1, $saved['use_filename'], 'The use filename toggle.' );
 		$this->assertSame( array( '', 'Alpha', 'Beta' ), $saved['categories'], 'index 0 is reserved for the "all categories" label' );
-		$this->assertSame( 'file_hits', $saved['sort']['by'] );
-		$this->assertSame( 'desc', $saved['sort']['order'] );
-		$this->assertSame( 15, $saved['sort']['perpage'] );
-		$this->assertSame( 1, $saved['sort']['group'] );
-		$this->assertSame( 'file_size', $saved['rss']['sortby'] );
-		$this->assertSame( 9, $saved['rss']['limit'] );
+		$this->assertSame( 'file_hits', $saved['sort']['by'], 'The sort column.' );
+		$this->assertSame( 'desc', $saved['sort']['order'], 'The sort direction.' );
+		$this->assertSame( 15, $saved['sort']['perpage'], 'The rows per page.' );
+		$this->assertSame( 1, $saved['sort']['group'], 'The grouping toggle.' );
+		$this->assertSame( 'file_size', $saved['rss']['sortby'], 'The feed sort column.' );
+		$this->assertSame( 9, $saved['rss']['limit'], 'And the feed limit.' );
 	}
 
 	public function test_every_offered_sort_column_survives_the_sanitizer() {
@@ -283,19 +283,19 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 	public function test_an_unknown_sort_column_falls_back_rather_than_being_stored() {
 		$saved = WP_DownloadManager_Settings::sanitize( array( 'sort' => array( 'by' => 'DROP TABLE' ) ) );
 
-		$this->assertSame( 'file_name', $saved['sort']['by'] );
+		$this->assertSame( 'file_name', $saved['sort']['by'], 'An unknown sort column falls back rather than being stored.' );
 	}
 
 	public function test_a_download_path_outside_wp_content_is_refused() {
 		$saved = WP_DownloadManager_Settings::sanitize( array( 'path' => array( 'dir' => '/etc' ) ) );
 
-		$this->assertSame( WP_CONTENT_DIR, $saved['path']['dir'] );
+		$this->assertSame( WP_CONTENT_DIR, $saved['path']['dir'], 'A path outside wp-content is refused and the stored one stands.' );
 	}
 
 	public function test_traversal_is_refused_even_when_it_lands_back_inside_wp_content() {
 		$saved = WP_DownloadManager_Settings::sanitize( array( 'path' => array( 'dir' => WP_CONTENT_DIR . '/../../etc' ) ) );
 
-		$this->assertSame( WP_CONTENT_DIR, $saved['path']['dir'] );
+		$this->assertSame( WP_CONTENT_DIR, $saved['path']['dir'], 'Traversal is refused even when it lands back inside wp-content.' );
 	}
 
 	public function test_a_refused_download_path_says_why() {
@@ -318,7 +318,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 	public function test_a_trailing_slash_is_normalised_away() {
 		$saved = WP_DownloadManager_Settings::sanitize( array( 'path' => array( 'dir' => WP_CONTENT_DIR . '/uploads/' ) ) );
 
-		$this->assertSame( WP_CONTENT_DIR . '/uploads', $saved['path']['dir'] );
+		$this->assertSame( WP_CONTENT_DIR . '/uploads', $saved['path']['dir'], 'A trailing slash is normalised away.' );
 	}
 
 	public function test_saving_one_field_leaves_the_stored_path_alone() {
@@ -327,8 +327,8 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 		$saved = WP_DownloadManager_Settings::sanitize( array( 'sort' => array( 'perpage' => '7' ) ) );
 
-		$this->assertSame( $path, $saved['path']['dir'] );
-		$this->assertSame( 7, $saved['sort']['perpage'] );
+		$this->assertSame( $path, $saved['path']['dir'], 'Saving one field leaves the stored path alone.' );
+		$this->assertSame( 7, $saved['sort']['perpage'], 'While the field that was submitted is the one that changed.' );
 	}
 
 	public function test_saving_the_templates_tab_does_not_blank_the_general_tab() {
@@ -337,7 +337,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 		$saved = WP_DownloadManager_Settings::sanitize( array( 'templates' => array( 'header' => '<p>new header</p>' ) ) );
 
 		$this->assertSame( 'https://example.com/keep-me', $saved['page_url'], 'both tabs write the same row, so the callback merges rather than replaces' );
-		$this->assertSame( '<p>new header</p>', $saved['templates']['header'] );
+		$this->assertSame( '<p>new header</p>', $saved['templates']['header'], 'Saving the templates tab stores the template.' );
 	}
 
 	public function test_saving_the_general_tab_does_not_blank_the_templates_tab() {
@@ -345,8 +345,8 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 		$saved = WP_DownloadManager_Settings::sanitize( array( 'page_url' => 'https://example.com/new' ) );
 
-		$this->assertSame( '<p>keep this header</p>', $saved['templates']['header'] );
-		$this->assertSame( 'https://example.com/new', $saved['page_url'] );
+		$this->assertSame( '<p>keep this header</p>', $saved['templates']['header'], 'Saving the general tab leaves the templates alone.' );
+		$this->assertSame( 'https://example.com/new', $saved['page_url'], 'While the general field it submitted is the one that changed.' );
 	}
 
 	public function test_a_permission_pair_keeps_both_halves() {
@@ -354,8 +354,8 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 			array( 'templates' => array( 'listing' => array( '<p>yes</p>', '<p>no</p>' ) ) )
 		);
 
-		$this->assertSame( '<p>yes</p>', $saved['templates']['listing'][0] );
-		$this->assertSame( '<p>no</p>', $saved['templates']['listing'][1] );
+		$this->assertSame( '<p>yes</p>', $saved['templates']['listing'][0], 'The first half of the permission pair is kept.' );
+		$this->assertSame( '<p>no</p>', $saved['templates']['listing'][1], 'And the second, which is the half that used to be dropped.' );
 	}
 
 	public function test_the_page_footer_template_may_keep_its_search_form() {
@@ -368,7 +368,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 		);
 
 		$this->assertStringContainsString( '<form', $saved['templates']['footer'], 'plain wp_kses_post() would delete the search box from the one template that ships with one' );
-		$this->assertStringContainsString( 'name="dl_search"', $saved['templates']['footer'] );
+		$this->assertStringContainsString( 'name="dl_search"', $saved['templates']['footer'], 'The page footer template may keep its search form.' );
 	}
 
 	public function test_templates_are_still_run_through_kses() {
@@ -376,8 +376,8 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 			array( 'templates' => array( 'header' => '<p>ok</p><script>alert(1)</script>' ) )
 		);
 
-		$this->assertStringNotContainsString( '<script>', $saved['templates']['header'] );
-		$this->assertStringContainsString( '<p>ok</p>', $saved['templates']['header'] );
+		$this->assertStringNotContainsString( '<script>', $saved['templates']['header'], 'Templates are still run through kses.' );
+		$this->assertStringContainsString( '<p>ok</p>', $saved['templates']['header'], 'Which leaves the markup a site owner may use.' );
 	}
 
 	public function test_a_garbage_submission_leaves_the_stored_value_alone() {
@@ -385,7 +385,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 		$saved = WP_DownloadManager_Settings::sanitize( 'not an array' );
 
-		$this->assertSame( 'https://example.com/intact', $saved['page_url'] );
+		$this->assertSame( 'https://example.com/intact', $saved['page_url'], 'A garbage submission leaves the stored value alone.' );
 	}
 
 	public function test_the_wp_stats_toggle_round_trips() {
@@ -395,7 +395,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 				'stats_display' => '1',
 			)
 		);
-		$this->assertSame( 1, $on['stats_display'] );
+		$this->assertSame( 1, $on['stats_display'], 'The WP-Stats toggle round trips.' );
 
 		$off = WP_DownloadManager_Settings::sanitize( array( 'page_url' => 'https://example.com/downloads' ) );
 		$this->assertSame( 0, $off['stats_display'], 'an unticked checkbox posts nothing at all, and page_url is what says the tab was submitted' );
@@ -412,7 +412,7 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 	public function test_the_wp_stats_row_limit_is_at_least_one() {
 		$saved = WP_DownloadManager_Settings::sanitize( array( 'stats_most_limit' => '0' ) );
 
-		$this->assertSame( 1, $saved['stats_most_limit'] );
+		$this->assertSame( 1, $saved['stats_most_limit'], 'The row limit is floored at one rather than stored as zero.' );
 	}
 
 	public function test_every_template_shown_has_a_default_behind_its_reset_button() {
@@ -434,8 +434,8 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Settings', 'render_page' ), array( 'tab' => 'templates' ) );
 
-		$this->assertStringContainsString( 'class="button download-template-reset"', $html );
-		$this->assertStringNotContainsString( 'onclick', $html );
+		$this->assertStringContainsString( 'class="button download-template-reset"', $html, 'The reset buttons are buttons carrying data.' );
+		$this->assertStringNotContainsString( 'onclick', $html, 'Rather than inline handlers.' );
 	}
 
 	public function test_the_default_templates_carry_no_image_tag() {
@@ -470,6 +470,6 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_an_unknown_template_default_is_the_empty_string() {
-		$this->assertSame( '', WP_DownloadManager_Template::get_default( 'no-such-template' ) );
+		$this->assertSame( '', WP_DownloadManager_Template::get_default( 'no-such-template' ), 'An unknown template default is the empty string, not a notice.' );
 	}
 }

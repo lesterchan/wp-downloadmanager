@@ -28,19 +28,19 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 	public function test_a_widget_category_list_of_nonsense_matches_nothing() {
 		$html = WP_DownloadManager_Display::downloads_category( array( 'not a number' ), 10, 0, false );
 
-		$this->assertStringContainsString( 'N/A', $html );
+		$this->assertStringContainsString( 'N/A', $html, 'A category list of nonsense matches nothing rather than everything.' );
 	}
 
 	public function test_a_shortcode_id_list_is_cast_before_it_reaches_the_query() {
 		$html = do_shortcode( '[download id="1) OR (1=1"]' );
 
-		$this->assertStringNotContainsString( 'Hidden File', $html );
+		$this->assertStringNotContainsString( 'Hidden File', $html, 'An id list is cast, so a hidden file cannot be reached through it.' );
 	}
 
 	public function test_a_shortcode_category_list_is_cast_before_it_reaches_the_query() {
 		$html = do_shortcode( '[download category="2) OR (1=1"]' );
 
-		$this->assertStringNotContainsString( 'Hidden File', $html );
+		$this->assertStringNotContainsString( 'Hidden File', $html, 'And a category list is cast too.' );
 	}
 
 	public function test_a_search_term_of_sql_cannot_reach_the_listing_query() {
@@ -50,7 +50,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 
 		$_GET = array();
 
-		$this->assertStringContainsString( 'No Files Found', $html );
+		$this->assertStringContainsString( 'No Files Found', $html, 'A search term of SQL matches nothing rather than executing.' );
 		$this->assertSame( 5, $this->count_files(), 'and the table survives' );
 	}
 
@@ -60,21 +60,21 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 		$html = WP_DownloadManager_Display::downloads_page();
 
 		$this->assertStringContainsString( 'The Manual', $html, 'the allow list catches it before the query is built' );
-		$this->assertSame( 5, $this->count_files() );
+		$this->assertSame( 5, $this->count_files(), 'A stored sort column of SQL cannot reach ORDER BY.' );
 	}
 
 	public function test_a_stored_feed_sort_column_of_sql_cannot_reach_order_by() {
 		WP_DownloadManager_Options::set( 'rss.sortby', 'file_date; DROP TABLE wp_downloads' );
 
 		$this->assertNotEmpty( WP_DownloadManager_Display::feed_files(), 'The feed still answers, so the injected sort column was ignored rather than fatal.' );
-		$this->assertSame( 5, $this->count_files() );
+		$this->assertSame( 5, $this->count_files(), 'Nor can the feed sort column.' );
 	}
 
 	public function test_a_shortcode_sort_argument_of_sql_cannot_reach_order_by() {
 		$html = do_shortcode( '[download id="' . $this->ids['public'] . '" sort_by="file_id; DROP TABLE wp_downloads"]' );
 
-		$this->assertStringContainsString( 'The Manual', $html );
-		$this->assertSame( 5, $this->count_files() );
+		$this->assertStringContainsString( 'The Manual', $html, 'A shortcode sort argument of SQL still renders the listing.' );
+		$this->assertSame( 5, $this->count_files(), 'With the table intact, so it never reached ORDER BY.' );
 	}
 
 	public function test_a_hidden_file_is_invisible_everywhere_it_could_leak() {
@@ -94,7 +94,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 	public function test_a_hidden_file_is_not_in_the_feed_either() {
 		$names = wp_list_pluck( WP_DownloadManager_Display::feed_files(), 'file_name' );
 
-		$this->assertNotContains( 'Hidden File', $names );
+		$this->assertNotContains( 'Hidden File', $names, 'A hidden file is not in the feed either.' );
 	}
 
 	public function test_a_visitor_without_permission_gets_the_denied_template_not_the_link() {
@@ -103,7 +103,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 		$html = WP_DownloadManager_Display::downloads_page();
 
 		$this->assertStringContainsString( 'Editor Notes', $html, 'the file is still listed' );
-		$this->assertStringContainsString( 'You do not have permission to download this file.', $html );
+		$this->assertStringContainsString( 'You do not have permission to download this file.', $html, 'A visitor without permission gets the denied template.' );
 	}
 
 	public function test_a_visitor_with_permission_gets_the_download_link() {
@@ -111,7 +111,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 
 		$html = WP_DownloadManager_Display::downloads_page();
 
-		$this->assertStringContainsString( '/download/' . $this->ids['editors'] . '/', $html );
+		$this->assertStringContainsString( '/download/' . $this->ids['editors'] . '/', $html, 'While a visitor with permission gets the link.' );
 	}
 
 	public function test_the_endpoint_refuses_a_file_above_the_visitors_level() {
@@ -153,9 +153,9 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertStringNotContainsString( '<script', $saved['templates']['header'] );
-		$this->assertStringNotContainsString( 'onclick', $saved['templates']['header'] );
-		$this->assertStringNotContainsString( 'javascript:', $saved['templates']['header'] );
+		$this->assertStringNotContainsString( '<script', $saved['templates']['header'], 'A script tag cannot be stored in a template.' );
+		$this->assertStringNotContainsString( 'onclick', $saved['templates']['header'], 'Nor an inline handler.' );
+		$this->assertStringNotContainsString( 'javascript:', $saved['templates']['header'], 'Nor a javascript URL.' );
 	}
 
 	public function test_the_svg_allow_list_does_not_open_a_hole() {
@@ -197,7 +197,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 
 		$this->assertStringNotContainsString( '<script>', $row->file_name, 'the listing templates render this back as markup, so it has to be clean in the database' );
 		$this->assertStringContainsString( '<strong>Bold</strong>', $row->file_name, 'the display name is the one field allowed to carry markup' );
-		$this->assertStringNotContainsString( '<script>', $row->file_des );
+		$this->assertStringNotContainsString( '<script>', $row->file_des, 'A description is run through kses on the way in.' );
 
 		$this->remove_download_files();
 	}
@@ -216,7 +216,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_downloads' ) );
 
-		$this->assertStringNotContainsString( '<script>alert(1)</script>', $html );
+		$this->assertStringNotContainsString( '<script>alert(1)</script>', $html, 'A file name carrying markup is escaped on the admin list.' );
 	}
 
 	public function test_a_file_path_carrying_markup_is_escaped_on_the_admin_list() {
@@ -233,7 +233,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_downloads' ) );
 
-		$this->assertStringNotContainsString( '<script>alert(1)</script>', $html );
+		$this->assertStringNotContainsString( '<script>alert(1)</script>', $html, 'And so is a file path.' );
 	}
 
 	/**
@@ -300,7 +300,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 		// the one place that decides.
 		$this->assert_nothing_can_run( $html, 'replace_file_vars()' );
 		$this->assertStringContainsString( 'window.pwned', $html, 'and the text of the value is still there, escaped' );
-		$this->assertStringContainsString( 'Hostile', $html );
+		$this->assertStringContainsString( 'Hostile', $html, 'The hostile row renders, so what follows is looking at real output.' );
 		$this->assertStringContainsString( 'onmouseover', $html, 'as text: escaping that ate the value would be its own bug' );
 	}
 
@@ -310,7 +310,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 		$html = WP_DownloadManager_Display::downloads_page();
 
 		$this->assert_nothing_can_run( $html, 'the downloads page' );
-		$this->assertStringContainsString( 'window.pwned', $html );
+		$this->assertStringContainsString( 'window.pwned', $html, 'Its script is rendered as text on the downloads page rather than run.' );
 	}
 
 	public function test_a_hostile_row_is_inert_in_the_download_shortcode() {
@@ -319,7 +319,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 		$html = do_shortcode( '[download id="' . $file_id . '"]' );
 
 		$this->assert_nothing_can_run( $html, 'the [download] shortcode' );
-		$this->assertStringContainsString( 'window.pwned', $html );
+		$this->assertStringContainsString( 'window.pwned', $html, 'In the shortcode too.' );
 	}
 
 	public function test_a_hostile_row_is_inert_in_the_stats_lists() {
@@ -360,7 +360,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 		$html = ob_get_clean();
 
 		$this->assert_nothing_can_run( $html, 'the widget' );
-		$this->assertStringContainsString( 'window.pwned', $html );
+		$this->assertStringContainsString( 'window.pwned', $html, 'And in the widget.' );
 	}
 
 	public function test_markup_a_site_owner_is_allowed_to_use_still_renders() {
@@ -380,8 +380,8 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 		// the ones the plugin lets a site owner put markup in, and an escape that
 		// turned every existing library's formatting into visible tags would be a
 		// worse bug than the one being fixed.
-		$this->assertStringContainsString( '<strong>Bold</strong>', $html );
-		$this->assertStringContainsString( '<a href="https://example.com/notes">the notes</a>', $html );
+		$this->assertStringContainsString( '<strong>Bold</strong>', $html, 'Markup a site owner is allowed to use still renders.' );
+		$this->assertStringContainsString( '<a href="https://example.com/notes">the notes</a>', $html, 'Links included, so kses has not been turned into strip_tags.' );
 	}
 
 	public function test_a_remote_url_cannot_be_used_for_server_side_request_forgery() {
@@ -393,8 +393,8 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 	public function test_the_search_highlight_cannot_be_used_to_inject_markup() {
 		$out = WP_DownloadManager_Display::search_highlight( '<script>', 'a <script> b' );
 
-		$this->assertStringNotContainsString( '<script>alert', $out );
-		$this->assertStringContainsString( 'wp-downloadmanager-highlight', $out );
+		$this->assertStringNotContainsString( '<script>alert', $out, 'The highlight cannot be used to inject markup.' );
+		$this->assertStringContainsString( 'wp-downloadmanager-highlight', $out, 'While the highlighting itself still happens.' );
 	}
 
 	public function test_every_write_path_checks_a_nonce() {
@@ -410,7 +410,7 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 	public function test_every_screen_checks_a_capability() {
 		$source = $this->code( 'includes/class-wp-downloadmanager-admin.php' );
 
-		$this->assertStringContainsString( 'current_user_can(', $source );
+		$this->assertStringContainsString( 'current_user_can(', $source, 'Every screen checks a capability.' );
 		$this->assertGreaterThanOrEqual( 3, substr_count( $source, 'require_capability()' ), 'every rendered screen and every write' );
 	}
 
@@ -427,6 +427,6 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 	public function test_uninstall_is_not_reachable_without_the_wordpress_constant() {
 		$source = file_get_contents( WP_DOWNLOADMANAGER_DIR . 'uninstall.php' );
 
-		$this->assertStringContainsString( "if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {", $source );
+		$this->assertStringContainsString( "if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {", $source, 'The uninstaller refuses to run outside WordPress.' );
 	}
 }

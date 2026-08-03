@@ -90,7 +90,7 @@ class WP_DownloadManager_Migration_Test extends WP_DownloadManager_TestCase {
 		$this->migrate();
 
 		$this->assertSame( 'file_hits', WP_DownloadManager_Options::get( 'sort.by' ), 'the sort array comes across whole' );
-		$this->assertSame( 15, WP_DownloadManager_Options::get( 'sort.perpage' ) );
+		$this->assertSame( 15, WP_DownloadManager_Options::get( 'sort.perpage' ), 'A nested legacy row lands under its consolidated key.' );
 		$this->assertSame( array( '', 'Legacy', 'Archive' ), WP_DownloadManager_Options::get( 'categories' ), 'the category list keeps its numbering' );
 	}
 

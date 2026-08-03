@@ -33,8 +33,8 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_the_top_level_slug_is_the_plugin_slug() {
-		$this->assertSame( 'wp-downloadmanager', WP_DownloadManager_Admin::PAGE );
-		$this->assertSame( 'wp-downloadmanager', WP_DownloadManager_Admin::screens()['downloads'] );
+		$this->assertSame( 'wp-downloadmanager', WP_DownloadManager_Admin::PAGE, 'The top level slug is the plugin slug.' );
+		$this->assertSame( 'wp-downloadmanager', WP_DownloadManager_Admin::screens()['downloads'], 'And the downloads screen is registered under it.' );
 	}
 
 	public function test_no_screen_slug_is_a_file_path() {
@@ -109,7 +109,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		$entries = $submenu[ WP_DownloadManager_Admin::PAGE ];
 
 		$this->assertSame( 'manage_downloads', $entries[0][1], 'the downloads library keeps its own capability' );
-		$this->assertSame( 'manage_downloads', $entries[1][1] );
+		$this->assertSame( 'manage_downloads', $entries[1][1], 'A data screen sits behind the plugin capability, not a core one.' );
 	}
 
 	public function test_the_settings_screen_sits_behind_manage_options() {
@@ -130,20 +130,20 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 	public function test_the_capability_goes_through_one_filter() {
 		add_filter( 'wp_downloadmanager_capability', fn( $cap, $context ) => 'settings' === $context ? 'edit_theme_options' : 'edit_posts', 10, 2 );
 
-		$this->assertSame( 'edit_posts', WP_DownloadManager_Admin::capability() );
-		$this->assertSame( 'edit_theme_options', WP_DownloadManager_Admin::capability( 'settings' ) );
+		$this->assertSame( 'edit_posts', WP_DownloadManager_Admin::capability(), 'A filter can replace the data capability.' );
+		$this->assertSame( 'edit_theme_options', WP_DownloadManager_Admin::capability( 'settings' ), 'And the settings capability, which is asked for separately.' );
 	}
 
 	public function test_a_screen_url_points_at_the_menu_slug() {
-		$this->assertStringContainsString( 'page=wp-downloadmanager', WP_DownloadManager_Admin::screen_url() );
-		$this->assertStringContainsString( 'page=wp-downloadmanager-add', WP_DownloadManager_Admin::screen_url( 'add' ) );
-		$this->assertStringContainsString( 'page=wp-downloadmanager-settings', WP_DownloadManager_Admin::screen_url( 'settings' ) );
+		$this->assertStringContainsString( 'page=wp-downloadmanager', WP_DownloadManager_Admin::screen_url(), 'The default screen URL points at the menu slug.' );
+		$this->assertStringContainsString( 'page=wp-downloadmanager-add', WP_DownloadManager_Admin::screen_url( 'add' ), 'The add screen has its own slug.' );
+		$this->assertStringContainsString( 'page=wp-downloadmanager-settings', WP_DownloadManager_Admin::screen_url( 'settings' ), 'And the settings screen.' );
 	}
 
 	public function test_an_edit_or_delete_url_carries_a_nonce() {
-		$this->assertStringContainsString( '_wpnonce=', WP_DownloadManager_Admin::screen_url( 'edit', 3 ) );
-		$this->assertStringContainsString( '_wpnonce=', WP_DownloadManager_Admin::screen_url( 'delete', 3 ) );
-		$this->assertStringContainsString( 'id=3', WP_DownloadManager_Admin::screen_url( 'edit', 3 ) );
+		$this->assertStringContainsString( '_wpnonce=', WP_DownloadManager_Admin::screen_url( 'edit', 3 ), 'An edit link carries a nonce.' );
+		$this->assertStringContainsString( '_wpnonce=', WP_DownloadManager_Admin::screen_url( 'delete', 3 ), 'And so does a delete link.' );
+		$this->assertStringContainsString( 'id=3', WP_DownloadManager_Admin::screen_url( 'edit', 3 ), 'And the edit link carries the row ID it is for.' );
 	}
 
 	public function test_a_listing_url_carries_no_nonce() {
@@ -155,8 +155,8 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_downloads' ) );
 
-		$this->assertStringContainsString( 'The Manual', $html );
-		$this->assertStringContainsString( 'Members Bundle', $html );
+		$this->assertStringContainsString( 'The Manual', $html, 'A file is listed on the downloads screen.' );
+		$this->assertStringContainsString( 'Members Bundle', $html, 'And so is another, so the list is not stopping at one.' );
 		$this->assertScreenIsClean( $html );
 	}
 
@@ -174,9 +174,9 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_downloads' ) );
 
-		$this->assertStringContainsString( 'name="action"', $html );
-		$this->assertStringContainsString( 'value="delete"', $html );
-		$this->assertStringContainsString( 'name="file_ids[]"', $html );
+		$this->assertStringContainsString( 'name="action"', $html, 'The list offers a bulk action select.' );
+		$this->assertStringContainsString( 'value="delete"', $html, 'With delete among its options.' );
+		$this->assertStringContainsString( 'name="file_ids[]"', $html, 'And a checkbox per row for it to act on.' );
 	}
 
 	public function test_the_downloads_screen_offers_row_actions() {
@@ -184,9 +184,9 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_downloads' ) );
 
-		$this->assertStringContainsString( 'row-actions', $html );
-		$this->assertStringContainsString( 'action=edit', $html );
-		$this->assertStringContainsString( 'action=delete', $html );
+		$this->assertStringContainsString( 'row-actions', $html, 'Each row carries the core row actions markup.' );
+		$this->assertStringContainsString( 'action=edit', $html, 'With an edit link.' );
+		$this->assertStringContainsString( 'action=delete', $html, 'And a delete link.' );
 	}
 
 	public function test_the_downloads_screen_shows_the_library_totals() {
@@ -194,8 +194,8 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_downloads' ) );
 
-		$this->assertStringContainsString( 'Download Stats', $html );
-		$this->assertStringContainsString( 'Total Bandwidth', $html );
+		$this->assertStringContainsString( 'Download Stats', $html, 'The screen shows the library totals.' );
+		$this->assertStringContainsString( 'Total Bandwidth', $html, 'Including the bandwidth served.' );
 	}
 
 	public function test_the_downloads_screen_survives_an_empty_library() {
@@ -222,8 +222,8 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertStringContainsString( 'The Manual', $html );
-		$this->assertStringNotContainsString( 'Members Bundle', $html );
+		$this->assertStringContainsString( 'The Manual', $html, 'A search returns the row that matches.' );
+		$this->assertStringNotContainsString( 'Members Bundle', $html, 'And not the one that does not, so the term really filters.' );
 	}
 
 	public function test_a_search_term_of_sql_cannot_rewrite_the_query() {
@@ -268,7 +268,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		);
 
 		$this->assertStringContainsString( 'The Manual', $html, 'an unknown column falls back rather than reaching ORDER BY' );
-		$this->assertSame( 5, $this->count_files() );
+		$this->assertSame( 5, $this->count_files(), 'A sort column off the allow list changes nothing rather than reaching the query.' );
 	}
 
 	public function test_every_sortable_column_has_a_real_sql_column_behind_it() {
@@ -281,11 +281,11 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_the_list_pages_at_twenty_by_default() {
-		$this->assertSame( 20, WP_DownloadManager_Admin::PER_PAGE );
+		$this->assertSame( 20, WP_DownloadManager_Admin::PER_PAGE, 'The list pages at twenty rows by default.' );
 	}
 
 	public function test_the_rows_per_page_preference_is_kept_rather_than_discarded() {
-		$this->assertSame( 15, WP_DownloadManager_Admin::save_screen_option( false, 'wp_downloadmanager_per_page', '15' ) );
+		$this->assertSame( 15, WP_DownloadManager_Admin::save_screen_option( false, 'wp_downloadmanager_per_page', '15' ), 'The rows per page preference is handed back to core to store, not discarded.' );
 		$this->assertFalse( WP_DownloadManager_Admin::save_screen_option( false, 'some_other_plugin_per_page', '15' ), 'and another plugin\'s option is left to it' );
 	}
 
@@ -294,10 +294,10 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_add' ) );
 
-		$this->assertStringContainsString( 'Add File', $html );
-		$this->assertStringContainsString( 'name="file_type"', $html );
-		$this->assertStringContainsString( 'name="file_upload"', $html );
-		$this->assertStringContainsString( 'name="file_remote"', $html );
+		$this->assertStringContainsString( 'Add File', $html, 'The add screen renders its form.' );
+		$this->assertStringContainsString( 'name="file_type"', $html, 'With the source type selector.' );
+		$this->assertStringContainsString( 'name="file_upload"', $html, 'The upload field.' );
+		$this->assertStringContainsString( 'name="file_remote"', $html, 'And the remote URL field.' );
 		$this->assertScreenIsClean( $html );
 	}
 
@@ -397,7 +397,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 
 		$this->assertNotEmpty( $field, 'the remote source field should render' );
 		$this->assertStringContainsString( 'placeholder="https://"', $field[0], 'a hint the browser does not validate' );
-		$this->assertStringNotContainsString( 'value="', $field[0] );
+		$this->assertStringNotContainsString( 'value="', $field[0], 'The remote URL field is left empty, so the scheme is a hint rather than a value to submit.' );
 	}
 
 	public function test_the_add_screen_carries_a_nonce() {
@@ -405,7 +405,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 
 		$html = $this->render( array( 'WP_DownloadManager_Admin', 'render_add' ) );
 
-		$this->assertStringContainsString( 'name="_wpnonce"', $html );
+		$this->assertStringContainsString( 'name="_wpnonce"', $html, 'The add form carries a nonce.' );
 	}
 
 	public function test_the_edit_screen_is_prefilled_from_the_row() {
@@ -419,9 +419,9 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertStringContainsString( 'Edit File', $html );
-		$this->assertStringContainsString( 'value="The Manual"', $html );
-		$this->assertStringContainsString( 'manual.pdf', $html );
+		$this->assertStringContainsString( 'Edit File', $html, 'The edit screen renders its form.' );
+		$this->assertStringContainsString( 'value="The Manual"', $html, 'Prefilled with the stored name.' );
+		$this->assertStringContainsString( 'manual.pdf', $html, 'And the stored path.' );
 		$this->assertScreenIsClean( $html );
 	}
 
@@ -450,8 +450,8 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertStringContainsString( 'Delete File', $html );
-		$this->assertStringContainsString( 'data-confirm=', $html );
+		$this->assertStringContainsString( 'Delete File', $html, 'The delete screen asks before it deletes.' );
+		$this->assertStringContainsString( 'data-confirm=', $html, 'With the confirmation carried as data rather than as an inline handler.' );
 		$this->assertSame( 5, $this->count_files(), 'rendering the confirmation must not delete anything' );
 		$this->assertScreenIsClean( $html );
 	}
@@ -467,7 +467,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertStringContainsString( 'name="unlinkfile"', $html );
+		$this->assertStringContainsString( 'name="unlinkfile"', $html, 'The delete screen offers to remove the file from disk as well as the row.' );
 	}
 
 	public function test_the_delete_screen_does_not_offer_to_unlink_a_remote_file() {
@@ -495,7 +495,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 			)
 		);
 
-		$this->assertStringContainsString( 'no longer exists', $html );
+		$this->assertStringContainsString( 'no longer exists', $html, 'A stale edit link says so rather than fatalling on a missing row.' );
 		$this->assertScreenIsClean( $html );
 	}
 
@@ -552,10 +552,10 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		WP_DownloadManager_Admin::print_folders( $dir, $dir );
 		$folders = ob_get_clean();
 
-		$this->assertStringContainsString( '<option value="/top.txt" selected', $files );
-		$this->assertStringContainsString( '/sub/deep.txt', $files );
-		$this->assertStringContainsString( '<option value="/">/</option>', $folders );
-		$this->assertStringContainsString( 'value="/sub"', $folders );
+		$this->assertStringContainsString( '<option value="/top.txt" selected', $files, 'The stored file is selected in the file list.' );
+		$this->assertStringContainsString( '/sub/deep.txt', $files, 'And a file in a subfolder is listed too, so the walk goes down.' );
+		$this->assertStringContainsString( '<option value="/">/</option>', $folders, 'The folder list starts at the downloads directory itself.' );
+		$this->assertStringContainsString( 'value="/sub"', $folders, 'And carries the subfolders below it.' );
 
 		$this->remove_download_files();
 	}
@@ -569,7 +569,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		WP_DownloadManager_Admin::print_folders( $dir, $dir );
 		$html = ob_get_clean();
 
-		$this->assertStringNotContainsString( 'Warning', $html );
+		$this->assertStringNotContainsString( 'Warning', $html, 'A missing downloads directory renders without a warning.' );
 	}
 
 	public function test_the_timestamp_selects_cover_every_part_of_a_date() {
@@ -581,8 +581,8 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 			$this->assertStringContainsString( 'id="file_timestamp_' . $part . '"', $html, 'The timestamp selects are missing the ' . $part . ' part of the date.' );
 		}
 
-		$this->assertStringContainsString( '<option value="15" selected', $html );
-		$this->assertStringContainsString( '<option value="2020" selected', $html );
+		$this->assertStringContainsString( '<option value="15" selected', $html, 'The day of the stored date is selected.' );
+		$this->assertStringContainsString( '<option value="2020" selected', $html, 'And the year, so every part of the timestamp is covered.' );
 		$this->assertStringContainsString( 'June', $html, 'months read as names, from the site locale' );
 	}
 }

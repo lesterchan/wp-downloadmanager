@@ -13,8 +13,8 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 	public function test_the_download_query_vars_are_registered() {
 		$vars = apply_filters( 'query_vars', array() );
 
-		$this->assertContains( 'dl_id', $vars );
-		$this->assertContains( 'dl_name', $vars );
+		$this->assertContains( 'dl_id', $vars, 'The id query var is registered.' );
+		$this->assertContains( 'dl_name', $vars, 'And the name one.' );
 	}
 
 	public function test_the_download_rewrite_rules_are_prepended() {
@@ -27,7 +27,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		$rules = array_keys( $wp_rewrite->rules );
 
 		$this->assertSame( 'download/([0-9]{1,})/?$', $rules[0], 'the download rules have to win over a catch-all page rule' );
-		$this->assertContains( 'download/(.*)$', $rules );
+		$this->assertContains( 'download/(.*)$', $rules, 'The download rule is among the rewrite rules.' );
 		$this->assertContains( 'existing/?$', $rules, 'and the existing rules survive' );
 	}
 
@@ -38,8 +38,8 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		WP_DownloadManager::enqueue_styles();
 
 		$this->assertTrue( wp_style_is( 'wp-downloadmanager', 'enqueued' ), 'The front-end stylesheet is enqueued from the plugin.' );
-		$this->assertSame( WP_DOWNLOADMANAGER_URL . 'css/wp-downloadmanager.css', wp_styles()->registered['wp-downloadmanager']->src );
-		$this->assertSame( WP_DOWNLOADMANAGER_VERSION, wp_styles()->registered['wp-downloadmanager']->ver );
+		$this->assertSame( WP_DOWNLOADMANAGER_URL . 'css/wp-downloadmanager.css', wp_styles()->registered['wp-downloadmanager']->src, 'The stylesheet is served from the plugin.' );
+		$this->assertSame( WP_DOWNLOADMANAGER_VERSION, wp_styles()->registered['wp-downloadmanager']->ver, 'Versioned with the plugin, so a release busts the cache.' );
 	}
 
 	public function test_a_theme_copy_of_the_stylesheet_wins() {
@@ -51,7 +51,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 
 		WP_DownloadManager::enqueue_styles();
 
-		$this->assertSame( get_stylesheet_directory_uri() . '/wp-downloadmanager.css', wp_styles()->registered['wp-downloadmanager']->src );
+		$this->assertSame( get_stylesheet_directory_uri() . '/wp-downloadmanager.css', wp_styles()->registered['wp-downloadmanager']->src, 'A theme copy of the stylesheet wins over the one in the plugin.' );
 
 		wp_delete_file( $theme_css );
 	}
@@ -95,7 +95,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 
 		$data = (string) wp_scripts()->get_data( 'wp-downloadmanager-admin', 'data' );
 
-		$this->assertStringContainsString( 'wpDownloadManagerL10n', $data );
+		$this->assertStringContainsString( 'wpDownloadManagerL10n', $data, 'The stock templates reach the script under the name it reads.' );
 		foreach ( array_keys( WP_DownloadManager_Template::for_script() ) as $key ) {
 			$this->assertStringContainsString( '"' . $key . '"', $data, $key . ' should be localised for its reset button' );
 		}
@@ -168,8 +168,8 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 
 		$registered = wp_scripts()->registered['wp-downloadmanager-quicktag'];
 
-		$this->assertContains( 'quicktags', $registered->deps );
-		$this->assertNotContains( 'jquery', $registered->deps );
+		$this->assertContains( 'quicktags', $registered->deps, 'The quicktag script depends on quicktags.' );
+		$this->assertNotContains( 'jquery', $registered->deps, 'And not on jQuery, which it does not use.' );
 	}
 
 	public function test_the_editor_button_registers_for_an_editor() {
@@ -189,12 +189,12 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 	public function test_the_editor_button_points_at_the_unminified_script() {
 		$plugins = WP_DownloadManager_Admin::mce_plugin( array() );
 
-		$this->assertStringContainsString( 'tinymce/plugins/downloadmanager/plugin.js', $plugins['downloadmanager'] );
+		$this->assertStringContainsString( 'tinymce/plugins/downloadmanager/plugin.js', $plugins['downloadmanager'], 'The editor button points at the unminified script.' );
 		$this->assertStringNotContainsString( 'plugin.min.js', $plugins['downloadmanager'], 'a hand-minified twin only drifts out of sync' );
 	}
 
 	public function test_the_editor_button_is_added_to_the_toolbar() {
-		$this->assertContains( 'downloadmanager', WP_DownloadManager_Admin::mce_button( array() ) );
+		$this->assertContains( 'downloadmanager', WP_DownloadManager_Admin::mce_button( array() ), 'The button is added to the toolbar.' );
 	}
 
 	public function test_the_editor_button_is_not_registered_for_a_subscriber() {
@@ -213,7 +213,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		$strings = WP_DownloadManager_Admin::mce_translation( array() );
 
 		$this->assertArrayHasKey( 'Insert File Download', $strings, 'The editor strings are translated, keyed by the English source string.' );
-		$this->assertSame( 'Insert File Download', $strings['Insert File Download'] );
+		$this->assertSame( 'Insert File Download', $strings['Insert File Download'], 'The editor strings are translated, not escaped for JavaScript.' );
 		$this->assertStringNotContainsString( '\\', $strings['Enter File ID (Separate Multiple IDs By A Comma)'], 'esc_js() double escapes once TinyMCE inserts them into the DOM' );
 	}
 
@@ -234,8 +234,8 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		WP_DownloadManager::feed_link();
 		$html = ob_get_clean();
 
-		$this->assertStringContainsString( 'application/rss+xml', $html );
-		$this->assertStringContainsString( '/download/rss/', $html );
+		$this->assertStringContainsString( 'application/rss+xml', $html, 'The feed link is printed on the downloads page.' );
+		$this->assertStringContainsString( '/download/rss/', $html, 'Pointing at the feed endpoint.' );
 	}
 
 	public function test_the_feed_link_uses_the_query_form_without_nice_permalinks() {
@@ -255,7 +255,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		WP_DownloadManager::feed_link();
 		$html = ob_get_clean();
 
-		$this->assertStringContainsString( 'dl_name=rss', $html );
+		$this->assertStringContainsString( 'dl_name=rss', $html, 'Without nice permalinks the feed link uses the query form.' );
 	}
 
 	public function test_no_feed_link_is_printed_anywhere_else() {
@@ -265,7 +265,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		WP_DownloadManager::feed_link();
 		$html = ob_get_clean();
 
-		$this->assertSame( '', $html );
+		$this->assertSame( '', $html, 'No feed link is printed anywhere else.' );
 	}
 
 	public function test_activation_creates_the_table_and_grants_the_capability() {
@@ -282,7 +282,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		global $wpdb;
 
 		$this->assertContains( 'downloads', $wpdb->tables, 'registering the name is what makes it survive switch_to_blog()' );
-		$this->assertSame( $wpdb->prefix . 'downloads', $wpdb->downloads );
+		$this->assertSame( $wpdb->prefix . 'downloads', $wpdb->downloads, 'The downloads table is registered with wpdb under the table prefix.' );
 	}
 
 	public function test_the_widget_is_registered_with_core() {
@@ -343,9 +343,9 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		);
 		$html = ob_get_clean();
 
-		$this->assertStringContainsString( '<aside>', $html );
-		$this->assertStringContainsString( '<h2>Downloads</h2>', $html );
-		$this->assertStringContainsString( 'The Manual', $html );
+		$this->assertStringContainsString( '<aside>', $html, 'The widget renders inside the wrapper the theme gave it.' );
+		$this->assertStringContainsString( '<h2>Downloads</h2>', $html, 'With its title.' );
+		$this->assertStringContainsString( 'The Manual', $html, 'And the list it was asked for.' );
 	}
 
 	public function test_the_widget_scopes_its_list_with_the_plugin_class() {
@@ -384,7 +384,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		);
 		$html = ob_get_clean();
 
-		$this->assertStringContainsString( 'Downloads Page', $html );
+		$this->assertStringContainsString( 'Downloads Page', $html, 'The widget can link to the downloads page.' );
 	}
 
 	public function test_the_widget_saves_its_form() {
@@ -403,11 +403,11 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		);
 
 		$this->assertSame( 'Files', $saved['title'], 'the title is plain text' );
-		$this->assertSame( 'downloads_category', $saved['type'] );
-		$this->assertSame( 5, $saved['limit'] );
-		$this->assertSame( 30, $saved['chars'] );
-		$this->assertSame( '1,2', $saved['cat_ids'] );
-		$this->assertSame( 1, $saved['link'] );
+		$this->assertSame( 'downloads_category', $saved['type'], 'The widget stores its list type.' );
+		$this->assertSame( 5, $saved['limit'], 'The row limit.' );
+		$this->assertSame( 30, $saved['chars'], 'The character budget.' );
+		$this->assertSame( '1,2', $saved['cat_ids'], 'The category ids.' );
+		$this->assertSame( 1, $saved['link'], 'And the link toggle.' );
 	}
 
 	public function test_the_widget_keeps_edits_made_without_the_legacy_submit_marker() {
