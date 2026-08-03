@@ -269,11 +269,17 @@ class WP_DownloadManager_File_Test extends WP_DownloadManager_TestCase {
 		set_query_var( 'dl_id', 0 );
 		set_query_var( 'dl_name', '' );
 
+		ob_start();
 		WP_DownloadManager_File::serve();
+		$printed = ob_get_clean();
 
-		// Reaching this line at all is the assertion: serve() returned instead of
-		// ending the request.
-		$this->assertTrue( true, 'a request with no download in it must fall through to WordPress' );
+		// Reaching this line at all is half the assertion -- serve() returned
+		// instead of ending the request -- and assertTrue( true ) used to be the
+		// whole of it. That form cannot fail: it would still pass if serve()
+		// printed an error on the way out, which is the one other thing it must
+		// not do here. WordPress goes on to render the page, so anything echoed
+		// lands above the theme's own output.
+		$this->assertSame( '', $printed, 'A request naming no download falls through to WordPress silently.' );
 	}
 
 	public function test_the_endpoint_refuses_a_file_the_visitor_may_not_have() {
