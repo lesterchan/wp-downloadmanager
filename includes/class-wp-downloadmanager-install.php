@@ -260,15 +260,44 @@ class WP_DownloadManager_Install {
 	}
 
 	/**
-	 * Give administrators the plugin capability.
+	 * Give administrators the capability the screens actually check.
+	 *
+	 * `WP_DownloadManager_Admin::capability()`, not the `manage_downloads`
+	 * literal it usually returns. Every download screen gates on the filtered
+	 * value, so granting the raw string while checking the filtered one means a
+	 * site that filters `wp_downloadmanager_capability` hands its administrator
+	 * a capability nothing looks at and gates every screen on one nobody holds
+	 * -- the owner is locked out of their own plugin, with nothing in any log to
+	 * say why. Two places deciding one fact and only one of them told.
+	 *
+	 * The default context is deliberate: 'downloads' is the data screen, which
+	 * is what this capability is for. The settings screen resolves to
+	 * `manage_options`, which is core's and is not ours to grant.
 	 *
 	 * @return void
 	 */
 	protected static function grant_capability() {
 		$role = get_role( 'administrator' );
 
-		if ( $role && ! $role->has_cap( 'manage_downloads' ) ) {
-			$role->add_cap( 'manage_downloads' );
+		if ( $role instanceof WP_Role ) {
+			$role->add_cap( WP_DownloadManager_Admin::capability() );
+		}
+	}
+
+	/**
+	 * Take the capability back off the administrator role.
+	 *
+	 * The same expression grant_capability() grants, filter and all: removing
+	 * the literal while granting the filtered value would leave a site that
+	 * uses `wp_downloadmanager_capability` with a capability nothing takes back.
+	 *
+	 * @return void
+	 */
+	public static function revoke_capability() {
+		$role = get_role( 'administrator' );
+
+		if ( $role instanceof WP_Role ) {
+			$role->remove_cap( WP_DownloadManager_Admin::capability() );
 		}
 	}
 }

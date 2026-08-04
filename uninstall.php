@@ -50,6 +50,12 @@ if ( ! function_exists( 'wp_downloadmanager_uninstall_site' ) ) {
 			delete_option( $option_name );
 		}
 
+		// The capability this plugin created, taken back off the administrator
+		// role. Granted through the same accessor the screens check, so a site
+		// using wp_downloadmanager_capability does not keep a capability nothing
+		// removes.
+		WP_DownloadManager_Install::revoke_capability();
+
 		// Dropping the plugin's own table is the entire job here. The table was
 		// dropped once per option row before, which worked only by accident.
 		WP_DownloadManager_Install::drop_table();
