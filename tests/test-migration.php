@@ -57,6 +57,31 @@ class WP_DownloadManager_Migration_Test extends WP_DownloadManager_TestCase {
 	}
 
 	/**
+	 * Put the database back the way 1.69.2 left it on a site nobody configured.
+	 *
+	 * Every value comes out of the plugin's own defaults, through legacy_map(),
+	 * rather than being typed -- so a row added to the map is in this fixture
+	 * too, and a changed default cannot quietly turn it into a second
+	 * customised fixture.
+	 *
+	 * @return void
+	 */
+	protected function seed_stock_legacy_rows() {
+		delete_option( WP_DownloadManager_Options::OPTION );
+		delete_option( WP_DownloadManager_Options::VERSION );
+		WP_DownloadManager_Options::flush();
+
+		// With no stored row and the cache dropped, get() answers with the
+		// shipped default for each path, which is what makes each row below
+		// stock rather than merely plausible.
+		foreach ( WP_DownloadManager_Options::legacy_map() as $legacy => $path ) {
+			update_option( $legacy, WP_DownloadManager_Options::get( $path ) );
+		}
+
+		WP_DownloadManager_Options::flush();
+	}
+
+	/**
 	 * Run the migration the way the upgrade path does.
 	 *
 	 * @return void
@@ -65,6 +90,46 @@ class WP_DownloadManager_Migration_Test extends WP_DownloadManager_TestCase {
 		WP_DownloadManager_Options::migrate_from_legacy_rows();
 		WP_DownloadManager_Options::save_markers( WP_DOWNLOADMANAGER_VERSION, WP_DOWNLOADMANAGER_DB_VERSION );
 		WP_DownloadManager_Options::flush();
+	}
+
+	/**
+	 * A site that configured nothing still comes out with a settings row.
+	 *
+	 * The fixture above is customised in every field, which is right for "did
+	 * the values carry across" and cannot see §7.6.1: a result differing from
+	 * the defaults is written whatever happened on the way in.
+	 *
+	 * This seeds the stock values instead, and registers the setting first so
+	 * the default_option_wp_downloadmanager_options filter is live while save()
+	 * runs. An absent row then reads back as the defaults, and update_option()
+	 * returns early on a value identical to the one it just read -- writing
+	 * nothing, while the legacy rows are deleted a few lines later.
+	 *
+	 * WP-DownloadManager survives it because update_option() sanitises before it
+	 * compares and the sanitiser alters the defaults, so core reaches its
+	 * add_option() fallback. That safeguard is real and accidental, and this is
+	 * what stops it being removed without anyone noticing.
+	 *
+	 * Asserted on the raw row, because get() merges over the defaults and cannot
+	 * tell a write that happened from one that did not.
+	 */
+	public function test_a_stock_install_still_gets_its_row_written() {
+		$this->seed_stock_legacy_rows();
+
+		$this->assertFalse( get_option( WP_DownloadManager_Options::OPTION, false ), 'The fixture is only pre-migration if the consolidated row is genuinely absent.' );
+
+		WP_DownloadManager_Settings::register();
+
+		$this->migrate();
+
+		$stored = get_option( WP_DownloadManager_Options::OPTION, false );
+
+		$this->assertIsArray( $stored, 'The migration must write the consolidated row even when its result equals the shipped defaults.' );
+		$this->assertArrayHasKey( 'templates', $stored, 'The written row is the whole structure, not a fragment of it.' );
+
+		foreach ( array_keys( WP_DownloadManager_Options::legacy_map() ) as $legacy ) {
+			$this->assertFalse( get_option( $legacy, false ), sprintf( 'The legacy row %s must not survive the migration.', $legacy ) );
+		}
 	}
 
 	public function test_the_scalar_rows_land_in_the_consolidated_array() {
