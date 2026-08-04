@@ -416,6 +416,132 @@ function resetOptions() {
 }
 
 /**
+ * The whole option row as the database holds it, with no defaults merged in.
+ *
+ * Not the same question as option() above, and the difference is the whole of
+ * §7.6.1: WP_DownloadManager_Options::all() merges over the defaults, so it
+ * answers identically for a row holding the defaults and for no row at all --
+ * which is what a migration that read, deleted and never wrote leaves behind.
+ * Ask the database when the question is "was it written".
+ *
+ * @return {Object|false} The stored array, or false when there is no row.
+ */
+function rawOptions() {
+	return JSON.parse(
+		wpEval( "echo '<<<' . wp_json_encode( get_option( 'wp_downloadmanager_options' ) ) . '>>>';" ),
+	);
+}
+
+/**
+ * The defaults the running code would fall back to.
+ *
+ * Asked of the install rather than transcribed: half of them are built from the
+ * site's own URLs, and a default copied into a test file is a second place
+ * holding one fact.
+ *
+ * @return {Object} The default option array.
+ */
+function defaultOptions() {
+	return JSON.parse(
+		wpEval( "echo '<<<' . wp_json_encode( WP_DownloadManager_Options::defaults() ) . '>>>';" ),
+	);
+}
+
+/**
+ * Put the install back into the shape a pre-2.0.0 site is in.
+ *
+ * The two prefixed rows go away entirely and the scattered unprefixed ones take
+ * their place, because that is what the migration has to meet: thirty-odd rows
+ * named after the plugin's folder, no markers, and nothing else.
+ *
+ * @param {Object} rows Legacy option name => value, stored exactly as given.
+ * @return {void}
+ */
+function installLegacyRows( rows ) {
+	const data = Buffer.from( JSON.stringify( rows ), 'utf8' ).toString( 'base64' );
+
+	wpEval(
+		`delete_option( 'wp_downloadmanager_options' );
+		delete_option( 'wp_downloadmanager_version' );
+		foreach ( json_decode( base64_decode( '${ data }' ), true ) as $name => $value ) {
+			update_option( $name, $value );
+		}
+		WP_DownloadManager_Options::flush();
+		echo '<<<done>>>';`,
+	);
+}
+
+/**
+ * Which of the pre-2.0.0 rows are still in the database.
+ *
+ * Read through the plugin's own lists rather than a set typed out here, so a
+ * row that is added to the migration and forgotten by the cleanup -- or the
+ * other way round -- shows up as a failure instead of going unnoticed.
+ *
+ * @return {string[]} The legacy rows that survive.
+ */
+function survivingLegacyRows() {
+	return JSON.parse(
+		wpEval(
+			`$names = array_merge(
+				array_keys( WP_DownloadManager_Options::legacy_map() ),
+				array_values( WP_DownloadManager_Options::legacy_structured_rows() ),
+				WP_DownloadManager_Options::legacy_extra_rows()
+			);
+			$alive = array();
+			foreach ( array_unique( $names ) as $name ) {
+				if ( false !== get_option( $name, false ) ) {
+					$alive[] = $name;
+				}
+			}
+			echo '<<<' . wp_json_encode( array_values( $alive ) ) . '>>>';`,
+		),
+	);
+}
+
+/**
+ * The upgrade markers, as the database holds them.
+ *
+ * @return {Object|false} The stored array, or false when there is no row.
+ */
+function versionRow() {
+	return JSON.parse(
+		wpEval( "echo '<<<' . wp_json_encode( get_option( 'wp_downloadmanager_version' ) ) . '>>>';" ),
+	);
+}
+
+/**
+ * Stamp the upgrade markers.
+ *
+ * @param {Object} versions The two markers.
+ * @return {void}
+ */
+function setVersionRow( versions ) {
+	const data = Buffer.from( JSON.stringify( versions ), 'utf8' ).toString( 'base64' );
+
+	wpEval(
+		`update_option( 'wp_downloadmanager_version', json_decode( base64_decode( '${ data }' ), true ) );
+		echo '<<<done>>>';`,
+	);
+}
+
+/**
+ * The version numbers the running code expects to find stamped.
+ *
+ * @return {{plugin: string, db: string}} The two markers.
+ */
+function runningVersions() {
+	return JSON.parse(
+		wpEval(
+			`echo '<<<' . wp_json_encode( array(
+				'plugin' => WP_DOWNLOADMANAGER_VERSION,
+				'db'     => (string) WP_DOWNLOADMANAGER_DB_VERSION,
+			) ) . '>>>';`,
+		),
+	);
+}
+
+/**
  * Write one setting straight into the option row.
  *
  * For the preconditions a test needs but is not itself testing -- pointing the
@@ -680,23 +806,30 @@ module.exports = {
 	anonymously,
 	createDownload,
 	createDownloadsPage,
+	defaultOptions,
 	deleteAllDownloads,
 	downloadColumn,
 	downloadHits,
+	installLegacyRows,
 	listRow,
 	listing,
 	logInAs,
 	openSettings,
 	option,
+	rawOptions,
 	removeDownloadFiles,
 	resetOptions,
 	resetSite,
+	runningVersions,
 	saveSettings,
 	seedDownloads,
 	setOption,
+	setVersionRow,
+	survivingLegacyRows,
 	submitFileForm,
 	uniqueName,
 	usePrettyPermalinks,
+	versionRow,
 	wpEval,
 	writeDownloadFile,
 };
