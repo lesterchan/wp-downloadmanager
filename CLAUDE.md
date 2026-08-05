@@ -2,19 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-WP-DownloadManager follows `_standards/STANDARDS.md` in the parent folder, which
-is the contract for all nineteen plugins in the collection. Where this file and
-that one disagree, that one wins.
-
 ## What it is
 
 A download library: files (local or remote URL) with categories, per-file
 permission levels, hit counting, a listing page, an RSS feed, two widgets, a
 `[download]` shortcode and a TinyMCE button. One top-level menu — Manage
-Downloads, Add File, Settings (Settings / Templates tabs).
-
-At ~6,100 lines of `includes/` it is one of the three heaviest plugins in the
-collection.
+Downloads, Add File, Settings (Settings / Templates tabs). At ~6,100 lines of
+`includes/` it is a large plugin, and most of that is the listing templates.
 
 ## Data
 
@@ -25,11 +19,16 @@ collection.
   neither of which folds in with one assignment) and `legacy_extra_rows()`
   (rows carrying no value forward). `uninstall.php` reads the same three lists,
   so it and the migration cannot disagree about what belongs to the plugin.
-* `wp_downloadmanager_version` — from `download_db_version`.
-* **`uninstall.php` drops the table.** With wp-draftsforfriends it is one of only
-  two schema-touching uninstallers, which changes how the uninstall test must be
-  written (§7.2.1).
-* One of the seven WP-Stats plugins (§13).
+* `wp_downloadmanager_version` — the `plugin` and `db` upgrade markers, from
+  `download_db_version`. Keep them out of the settings array: a marker in there
+  has to be rescued from the stored value on every save, because the settings
+  form never posts one.
+* **`uninstall.php` drops the table**, which is why the uninstall test cannot
+  simply `require_once` it — doing that would drop the table the rest of the
+  suite runs against. `helper-testcase.php::run_uninstall()` performs the
+  deletions itself instead.
+* It contributes a section to **WP-Stats**, a separate plugin, by answering the
+  `wp_stats_sections` filter.
 
 ## The two shared WP-Stats rows
 
@@ -41,13 +40,12 @@ deletes rows on the way out subtracts that list** — `uninstall.php` and
 twice on purpose so the suite deletes exactly what uninstall deletes.
 
 That split is the fix for a release blocker: one list did both jobs, so removing
-this plugin deleted two rows the other six WP-Stats plugins were still reading
-and silently reconfigured every one of them. §13.2 draws the line — the
-migration deletes a shared row because it has folded it in, uninstall leaves it
-alone. **Do not fold `legacy_shared_rows()` back into the other lists**: the
-single-source-of-truth argument is what caused this. wp-postratings documents the
-same arrangement at `includes/class-wp-postratings-options.php:73-89`, and
-wp-polls had the identical defect on `stats_display`.
+this plugin deleted two rows that WP-Stats and its other companion plugins were
+still reading, and silently reconfigured every one of them. The line is: **the
+migration deletes a shared row because it has folded it in; uninstall leaves it
+alone**, because a sibling that has not upgraded yet is still reading it. **Do
+not fold `legacy_shared_rows()` back into the other lists** — the
+single-source-of-truth argument is exactly what caused this.
 
 Pinned by `test_the_shared_stats_rows_survive_uninstall` and by
 `test_the_uninstaller_reads_its_row_list_from_the_options_class`, which requires
@@ -75,8 +73,7 @@ locally and loses the exception.
   the owner has withdrawn.
 * **`handle_add()` must read the posted `file_type` radio.** It used to pass a
   hardcoded `0`, so an upload or a remote URL was accepted by the form and then
-  discarded, the row written from whatever Browse held —
-  `_standards/RESUME.md` calls it the most user-visible bug in the programme.
+  discarded and the row was written from whatever Browse held.
   Pinned by `test_adding_a_remote_file_stores_the_url_it_was_given`, which was
   confirmed to fail when the `0` is put back. `handle_edit()` always read it.
 * **`%FILE_NAME%` and `%FILE_DESCRIPTION%` are escaped once, in
@@ -89,9 +86,8 @@ locally and loses the exception.
   `download_embedded()` — the two most exposed — did not, which is the stored XSS
   the e2e sweep found. `wp_kses_post()` on write does not save you: a row from a
   restored backup or a direct write never passed it. **Do not add a sixth
-  wrapper**; it would only be a sixth place to forget. wp-useronline's
-  `[page_useronline]` carries the same note for the same reason (commit
-  `e49b290`). Pinned by the `test_a_hostile_row_is_inert_*` tests.
+  wrapper**; it would only be a sixth place to forget. Pinned by the
+  `test_a_hostile_row_is_inert_*` tests.
 * **`file_remote` carries a `placeholder`, never a `value`.** It is
   `<input type="url">`, and the browser validates every such field on the screen
   before it will submit the form, not only the one in use. Shipping the old
@@ -105,8 +101,8 @@ locally and loses the exception.
   `tests/e2e/helpers.js::submitFileForm()` still blanks the field, guarded on the
   old value, and is now a no-op.
 * **The settings screen calls `settings_errors()` itself, and unscoped.** Both
-  halves matter and §4.2.2 states the rule: call it if and only if the screen is
-  *not* under Settings. Core prints notices from `wp-admin/options-head.php`,
+  halves matter, and the rule is: call it if and only if the screen is *not*
+  under Settings. Core prints notices from `wp-admin/options-head.php`,
   which `admin-header.php` requires only when `$parent_file` is
   `options-general.php`; this plugin is a top-level menu, so core never prints
   them. And `options.php` registers "Settings saved." against the **`general`**
@@ -130,21 +126,47 @@ locally and loses the exception.
   `wp_downloadmanager_embedded`**, no shims; they fail silently.
 * `format_filesize()` used to be a global here and wp-serverinfo defined one too
   — whichever loaded first won. Both are class methods now.
-* The `tinymce/` directory is one of only two in the collection (wp-polls has the
-  other) and is exempted by §1. Its `plugin.js` is vanilla JS; do not reintroduce
-  jQuery.
+* The `tinymce/` directory holds the Classic Editor button. Its `plugin.js` is
+  vanilla JS; do not reintroduce jQuery.
 * The theme stylesheet override is `wp-downloadmanager.css`, and
   `download-search-highlight` is now `wp-downloadmanager-highlight`.
+
+## Migrations, and why they are tested through a browser
+
+`maybe_upgrade()` hangs off `admin_init` as well as activation, because
+activation hooks do not fire on a plugin update — the usual reason a migration
+never runs at all. `tests/e2e/upgrade.spec.js` drives that path, and three
+things about it are worth knowing before changing either side:
+
+* **The legacy row wins over an existing current row.** The migration seeds from
+  `all()` and lays the old rows over it, because the old rows are what the site
+  was actually running on. The opposite reading is equally plausible from the
+  code, so the test asserts both halves: a dedicated `download_*` row wins, and
+  a setting no legacy row names survives untouched.
+* **Read the row raw when the question is "was it written".** `all()` merges
+  over the defaults, so it cannot tell a written row from an absent one — which
+  is the state a migration that read, deleted and never wrote leaves behind.
+  Seed the *shipped* defaults for the same reason.
+* **`wp-downloadmanager.php` calls `Install::init()` before `Settings::init()`**,
+  both hooking `admin_init` at the same priority, so the migration runs before
+  `register_setting()` attaches its `default` to the row. Swap those two lines
+  and an install whose migrated settings equal the defaults writes no row at all
+  while its old rows are deleted anyway. The stock-settings test is what would
+  catch that.
 
 ## Tests
 
 `test-admin-writes.php` and `test-security.php` are the ones to read first —
 between them they cover the Add/Edit write paths and the permission gate.
-`test-wpstats.php` pins the §13.2 hazard (commit `e498907`), which is worth
-knowing given the blocker above.
+`test-wpstats.php` pins the shared-row hazard above (commit `e498907`).
 
-`tests/e2e/` is 5 specs and 79 tests. `upgrade.spec.js` (6) is green as of
-2026-08-05; **the other four were not re-run that day**, so verify before
-trusting them. Note the e2e suite once asserted the active tab read
-"General"; §4.2.2 uses that as its example that renaming a tab is never only the
-label.
+`bin/test.sh` runs PHPUnit, `bin/test-multisite.sh` the network pass, and
+`bin/test-e2e.sh` the Playwright suite. **Run them rather than trusting a note
+about their last result** — CI is the authority, and this file cannot be.
+
+Two things the e2e suite has already been caught on. It once asserted the active
+tab read "General" — renaming a tab is never only the label. And a scalar legacy
+row reads back from `wp_options` as a **string**: `update_option(
+'download_method', 2 )` comes back as `"2"`, while the rows that were arrays
+keep their types. Every reader casts, so it has never mattered in the plugin;
+a test asserting the integer is asserting something untrue of every install.
