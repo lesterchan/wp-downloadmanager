@@ -143,7 +143,8 @@ between them they cover the Add/Edit write paths and the permission gate.
 `test-wpstats.php` pins the §13.2 hazard (commit `e498907`), which is worth
 knowing given the blocker above.
 
-`tests/e2e/` (4 specs, 73 tests) is among the twelve suites `_standards/RESUME.md`
-lists as never run to green. Note the e2e suite once asserted the active tab read
+`tests/e2e/` is 5 specs and 79 tests. `upgrade.spec.js` (6) is green as of
+2026-08-05; **the other four were not re-run that day**, so verify before
+trusting them. Note the e2e suite once asserted the active tab read
 "General"; §4.2.2 uses that as its example that renaming a tab is never only the
 label.
