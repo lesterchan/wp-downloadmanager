@@ -127,15 +127,11 @@ wrapper and leave `%FILE_ICON%` on its own.
 
 ## Screenshots
 
-1. Admin - Downloads Embedded
-2. Admin - Downloads Add
-3. Admin - Download Manage
-4. Admin - Download Options
-5. Admin - Download Stats
-6. Admin - Download Templates
-7. Admin - Download Templates
-8. Download Embedded
-9. Downloads Page
+1. Downloads, every file with its size, its hits and who is allowed to take it
+2. Add File, which uploads, browses the downloads folder, or points at a remote URL
+3. Download Settings: the folder, how a file is delivered, and how the page sorts
+4. The Templates tab, holding the markup of the download page and of every link
+5. The downloads page a visitor sees, grouped by category
 
 ## Changelog
 ### 2.0.0
