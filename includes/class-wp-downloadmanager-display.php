@@ -94,6 +94,22 @@ class WP_DownloadManager_Display {
 			return $search_text;
 		}
 
+		/*
+		 * Split into tags and text, and only ever rewrite the text.
+		 *
+		 * This runs over markup that kses has already approved, so a term that
+		 * happened to appear inside an attribute value -- "example" in a stored
+		 * <a href="https://example.com/notes"> -- had the span spliced into the
+		 * middle of the attribute and terminated it early. The injected string
+		 * is a fixed literal, so no handler or script could be introduced, but a
+		 * visitor could corrupt the markup of any listing with ?dl_search=.
+		 */
+		$parts = preg_split( '/(<[^>]*+>)/', $search_text, -1, PREG_SPLIT_DELIM_CAPTURE );
+
+		if ( ! is_array( $parts ) ) {
+			return $search_text;
+		}
+
 		foreach ( explode( ' ', $search_word ) as $term ) {
 			if ( '' === trim( $term ) ) {
 				continue;
@@ -101,17 +117,34 @@ class WP_DownloadManager_Display {
 			// preg_quote() the term: it comes from ?dl_search=, so a bare "(" was
 			// enough to make preg_replace() fail compilation, return null and
 			// blank out the file name it was supposed to be highlighting.
-			$replaced = preg_replace(
-				'/\w*?' . preg_quote( $term, '/' ) . '\w*/i',
-				'<span class="wp-downloadmanager-highlight">$0</span>',
-				$search_text
-			);
-			if ( null !== $replaced ) {
-				$search_text = $replaced;
+			foreach ( $parts as $index => $part ) {
+				// Odd indexes are the captured tags; leave them exactly as they
+				// are. Only the text between them is highlighted.
+				if ( '' === $part || ( isset( $part[0] ) && '<' === $part[0] ) ) {
+					continue;
+				}
+
+				$replaced = preg_replace(
+					'/\w*?' . preg_quote( $term, '/' ) . '\w*/i',
+					'<span class="wp-downloadmanager-highlight">$0</span>',
+					$part
+				);
+
+				if ( null !== $replaced ) {
+					$parts[ $index ] = $replaced;
+				}
+			}
+
+			// Re-split, so a term matched later does not see the spans this pass
+			// has just added as text to highlight again.
+			$parts = preg_split( '/(<[^>]*+>)/', implode( '', $parts ), -1, PREG_SPLIT_DELIM_CAPTURE );
+
+			if ( ! is_array( $parts ) ) {
+				return $search_text;
 			}
 		}
 
-		return $search_text;
+		return implode( '', $parts );
 	}
 
 	/**
@@ -313,7 +346,19 @@ class WP_DownloadManager_Display {
 
 		$replacements = array(
 			'%FILE_ID%'            => $file->file_id,
-			'%FILE%'               => stripslashes( $file->file ),
+			/*
+			 * Escaped, where %FILE_NAME% and %FILE_DESCRIPTION% above are
+			 * kses'd. Those two are the fields a site owner is meant to put
+			 * markup in; this is a file path and that is a URL, and neither has
+			 * any business carrying any. The stock templates put the URL inside
+			 * an href, and esc_url_raw() -- which is what the remote branch of
+			 * the Add File screen stores through -- permits a single quote, so a
+			 * site-authored template using single-quoted attributes had nothing
+			 * standing between it and a broken-out one. Both are also reachable
+			 * by a direct row write, which is the threat model the kses-at-render
+			 * decision above was made for in the first place.
+			 */
+			'%FILE%'               => esc_html( stripslashes( $file->file ) ),
 			'%FILE_NAME%'          => self::search_highlight( $search, $file_name ),
 			'%FILE_EXT%'           => self::search_highlight( $search, WP_DownloadManager_File::extension( stripslashes( $file->file ) ) ),
 			'%FILE_ICON%'          => self::icon( stripslashes( $file->file ) ),
@@ -327,7 +372,7 @@ class WP_DownloadManager_Display {
 			'%FILE_UPDATED_DATE%'  => mysql2date( get_option( 'date_format' ), gmdate( 'Y-m-d H:i:s', (int) $file->file_updated_date ) ),
 			'%FILE_UPDATED_TIME%'  => mysql2date( get_option( 'time_format' ), gmdate( 'Y-m-d H:i:s', (int) $file->file_updated_date ) ),
 			'%FILE_HITS%'          => number_format_i18n( $file->file_hits ),
-			'%FILE_DOWNLOAD_URL%'  => WP_DownloadManager_File::download_url( $file->file_id, $file->file ),
+			'%FILE_DOWNLOAD_URL%'  => esc_url( WP_DownloadManager_File::download_url( $file->file_id, $file->file ) ),
 		);
 
 		return str_replace( array_keys( $replacements ), array_values( $replacements ), $template );

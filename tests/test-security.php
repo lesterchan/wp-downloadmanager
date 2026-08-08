@@ -304,6 +304,43 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 		$this->assertStringContainsString( 'onmouseover', $html, 'as text: escaping that ate the value would be its own bug' );
 	}
 
+	/**
+	 * %FILE_NAME% and %FILE_DESCRIPTION% are kses'd because they are the two
+	 * fields a site owner is meant to put markup in. %FILE% is a file path and
+	 * %FILE_DOWNLOAD_URL% is a URL built from it -- neither has any business
+	 * carrying any, and both went into the template raw. The stock templates put
+	 * the URL inside a double-quoted href, which is the only reason it never
+	 * bit; a site-authored template using single quotes had nothing behind it,
+	 * and esc_url_raw() (what the remote branch of Add File stores through)
+	 * permits a single quote.
+	 */
+	public function test_the_path_and_url_tokens_are_escaped() {
+		$file_id = $this->insert_file(
+			array(
+				'file'            => '/bro"ch\'ure.pdf',
+				'file_name'       => 'Brochure',
+				'file_permission' => -1,
+			)
+		);
+
+		// The URL is built from the stored name only when the site serves by
+		// file name; by id it is just /download/<id>/ and carries nothing.
+		WP_DownloadManager_Options::set( 'use_filename', 1 );
+
+		$raw = '/bro"ch\'ure.pdf';
+
+		$html = WP_DownloadManager_Display::replace_file_vars(
+			"<a href='%FILE_DOWNLOAD_URL%' data-file='%FILE%'>x</a>",
+			$this->fetch_file( $file_id )
+		);
+
+		$this->assertStringNotContainsString( $raw, $html, 'The stored path does not reach the markup as it was written.' );
+		$this->assertStringNotContainsString( '"ch', $html, 'No raw double quote from it survives.' );
+		$this->assertStringNotContainsString( "ch'ure", $html, 'And no raw single quote, which is what the attribute here is delimited with.' );
+		$this->assertStringContainsString( 'ch&#039;ure', $html, 'The value is still there, escaped rather than eaten.' );
+		$this->assert_nothing_can_run( $html, 'the path and URL tokens' );
+	}
+
 	public function test_a_hostile_row_is_inert_on_the_downloads_page() {
 		$this->insert_hostile_file();
 
@@ -562,10 +599,46 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_the_search_highlight_cannot_be_used_to_inject_markup() {
-		$out = WP_DownloadManager_Display::search_highlight( '<script>', 'a <script> b' );
+		$out = WP_DownloadManager_Display::search_highlight( '<script>', 'a brochure b' );
 
 		$this->assertStringNotContainsString( '<script>alert', $out, 'The highlight cannot be used to inject markup.' );
-		$this->assertStringContainsString( 'wp-downloadmanager-highlight', $out, 'While the highlighting itself still happens.' );
+
+		// The term the search box would actually carry.
+		$this->assertStringContainsString(
+			'wp-downloadmanager-highlight',
+			WP_DownloadManager_Display::search_highlight( 'brochure', 'a brochure b' ),
+			'While the highlighting itself still happens.'
+		);
+	}
+
+	/**
+	 * This runs over markup kses has already approved, so a term that happens to
+	 * appear inside an attribute value had the span spliced into the middle of
+	 * the attribute and terminated it early. The injected string is a fixed
+	 * literal, so no handler or script can be introduced -- but a visitor could
+	 * corrupt the markup of any listing through ?dl_search=.
+	 */
+	public function test_the_search_highlight_leaves_attributes_alone() {
+		$out = WP_DownloadManager_Display::search_highlight( 'example', '<a href="https://example.com/notes">the notes</a>' );
+
+		$this->assertStringContainsString( '<a href="https://example.com/notes">', $out, 'The link is left exactly as it was.' );
+		$this->assertStringNotContainsString( 'href="https://<span', $out, 'The span is not spliced into the attribute.' );
+	}
+
+	public function test_the_search_highlight_still_marks_text_between_tags() {
+		$out = WP_DownloadManager_Display::search_highlight( 'notes', '<a href="https://example.com/x">the notes</a>' );
+
+		$this->assertStringContainsString( '<span class="wp-downloadmanager-highlight">notes</span>', $out, 'Text between the tags is still highlighted.' );
+		$this->assertStringContainsString( 'href="https://example.com/x"', $out, 'And the markup around it is untouched.' );
+	}
+
+	public function test_the_search_highlight_does_not_highlight_its_own_span() {
+		// Two terms, the second of which appears in the class name the first
+		// pass just inserted. Without re-splitting between passes the markup
+		// nests into itself.
+		$out = WP_DownloadManager_Display::search_highlight( 'notes highlight', 'the notes' );
+
+		$this->assertSame( 1, substr_count( $out, 'wp-downloadmanager-highlight' ), 'A later term does not highlight the markup an earlier one added.' );
 	}
 
 	public function test_every_write_path_checks_a_nonce() {
