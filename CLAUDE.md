@@ -131,6 +131,44 @@ locally and loses the exception.
 * The theme stylesheet override is `wp-downloadmanager.css`, and
   `download-search-highlight` is now `wp-downloadmanager-highlight`.
 
+## The blocks
+
+`wp-downloadmanager/download` and `wp-downloadmanager/page-download`, registered
+by `WP_DownloadManager_Blocks` from the metadata `bin/build` compiles out of
+`src/` into `build/`. **`build/` is generated and gitignored**, so a checkout
+that has never been built registers no blocks; `bin/test.sh` and
+`bin/test-e2e.sh` build first.
+
+**Three shortcodes, two blocks, and that is not an oversight.**
+`[page_download]` and `[page_downloads]` are both registered to
+`page_shortcode()`, which takes `$atts` and never the tag, so it cannot tell
+which invoked it: identical output, identical single `category` attribute. The
+singular is canonical -- it is what this README documents and what the tests
+call the listing -- and the plural is an alias that **stays registered and
+supported** while getting no block of its own.
+
+**The blocks wrap the shortcodes and never replace them**, and both entry points
+meet at `WP_DownloadManager_Display::render_download()` and `downloads_page()`.
+**Neither calls the other**; the block does not run `do_shortcode()`.
+
+**`render_download()` exists because the shortcode compared a string to an
+integer.** `download_shortcode()` tested `0 !== $id`, strictly, against integer
+zero -- but `shortcode_atts()` returns what was typed, so a shortcode's `"0"`
+took a branch a block's `0` did not. It was invisible while the resulting query
+matched no rows, and diverged for real once combined: `[download id="0"
+category="3"]` rendered nothing where the equivalent block rendered category 3.
+The extracted renderer trims both to strings and treats `''` and `'0'` alike.
+
+**`id` and `category` are strings on the block, not numbers.**
+`[download id="1,2,3"]` is a documented feature, and a numeric attribute would
+make the block say less than the shortcode it wraps.
+
+**The icon sprite defeats naive identical-markup tests.** `icon()` emits the
+whole SVG sprite with the *first* icon of a request and nothing afterwards, so
+two renders in one PHP process are never byte-identical. `reset_sprite()` is
+what the block tests call between renders; without it every "the two agree" test
+fails on a difference that is not one.
+
 ## WP-CLI
 
 `wp downloadmanager list|get|stats|reset-hits|delete`, registered as the bare
