@@ -33,9 +33,15 @@ these plugins, if you really love my plugins and could spare me a couple of
 bucks, I will really appreciate it. If not feel free to use it without any
 obligations.
 
+## Installation
+
+1. Install and activate the plugin.
+1. Re-save your permalinks at `WP-Admin -> Settings -> Permalinks -> Save Changes`, so the `/download/` links are registered.
+1. Add your first file at `WP-Admin -> Downloads -> Add File`.
+1. To upload straight into the downloads folder, that folder must be writable by the web server. Choose which folder at `WP-Admin -> Downloads -> Settings`.
+
 ## Usage
 
-1. You Need To Re-Generate The Permalink `WP-Admin -> Settings -> Permalinks -> Save Changes`
 1. To embed a specific file to be downloaded into a post/page, use `[download id="2"]` where 2 is your file id.
 1. To embed multiple files to be downloaded into a post/page, use `[download id="1,2,3"]` where 1,2,3 are your file ids.
 1. To limit the number of embedded downloads shown for each post in a post stream, use the `stream_limit` option.
