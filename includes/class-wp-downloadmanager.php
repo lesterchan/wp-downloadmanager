@@ -22,6 +22,28 @@ class WP_DownloadManager {
 		add_filter( 'generate_rewrite_rules', array( __CLASS__, 'rewrite_rules' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
 		add_action( 'wp_head', array( __CLASS__, 'feed_link' ) );
+
+		self::register_command();
+	}
+
+	/**
+	 * Register the WP-CLI command.
+	 *
+	 * The class file is required here rather than at plugin load because it
+	 * extends WP_CLI_Command, which only exists when WP-CLI is the one running
+	 * WordPress. Requiring it unconditionally is a fatal error on every web
+	 * request.
+	 *
+	 * @return void
+	 */
+	public static function register_command() {
+		if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
+			return;
+		}
+
+		require_once WP_DOWNLOADMANAGER_DIR . 'includes/class-wp-downloadmanager-command.php';
+
+		WP_CLI::add_command( 'downloadmanager', 'WP_DownloadManager_Command' );
 	}
 
 	/**

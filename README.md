@@ -65,6 +65,23 @@ obligations.
 1. Go to `WP-Admin -> Appearance -> Widgets`
 1. The widget name is `Downloads`.
 
+### WP-CLI
+```
+wp downloadmanager list
+wp downloadmanager list --category=3 --orderby=file_hits --order=desc --limit=10
+wp downloadmanager get 3
+wp downloadmanager stats
+wp downloadmanager reset-hits 3 --yes
+wp downloadmanager delete 3 --yes
+wp downloadmanager delete 3 --delete-file --yes
+```
+
+`list` and `stats` report what the Downloads screen shows, including the files whose permission is Hidden — this is the library's own inventory, not what a visitor can see. Sizes are in bytes rather than the rounded units the screen prints, because a figure a script is going to compare is worth having exact.
+
+`reset-hits` is the "Reset the hit count to zero" checkbox on Edit File, and touches the counter and nothing else. **`delete --delete-file` deletes the file from the server as well**, which is the checkbox the Delete File screen offers; without it only the row goes. Both ask before doing anything, so a script has to pass `--yes`.
+
+There is no `create` or `update`: adding and editing a file offer a four-way choice of source — keep the current file, pick one already in the downloads directory, upload one, or name a remote URL — and two of those are a browser handing over a multipart body.
+
 ## Frequently Asked Questions
 
 ### Where did Download Options and Download Templates go?
@@ -142,6 +159,7 @@ wrapper and leave `%FILE_ICON%` on its own.
 * BREAKING: Every class gained a `WP_DownloadManager_` prefix, and `DownloadManager_Templates` became `WP_DownloadManager_Template`.
 * BREAKING: `%FILE_ICON%` is the complete icon element rather than a GIF file name, and the plugin ships no images at all.
 * BREAKING: The `stats_display` and `stats_mostlimit` rows shared with WP-Stats are replaced by this plugin's own settings, and WP-Stats collects sections through the `wp_stats_sections` filter.
+* NEW: A `wp downloadmanager` WP-CLI command: `list`, `get`, `stats`, `reset-hits` and `delete`, the last two asking for confirmation and `delete --delete-file` taking the file off the server as well.
 * NEW: Manage Downloads is a real `WP_List_Table`, with sortable columns, row actions, bulk delete, a search box and a per-user rows-per-page setting.
 * NEW: One inline SVG icon sprite, drawn in the theme's own colour and covering modern file types the GIF set never had.
 * NEW: Restructured into `includes/class-wp-downloadmanager-*.php`, with nothing loose at the plugin root.

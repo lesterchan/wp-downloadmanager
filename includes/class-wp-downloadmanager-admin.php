@@ -277,21 +277,13 @@ class WP_DownloadManager_Admin {
 	 * @return void
 	 */
 	protected static function render_totals() {
-		global $wpdb;
+		$library = WP_DownloadManager_Download::totals();
 
-		$unknown = __( 'unknown', 'wp-downloadmanager' );
-
-		// Cast: SUM() is NULL on an empty table, and number_format_i18n( null )
-		// is deprecated on PHP 8.1 and later.
 		$totals = array(
-			__( 'Total Files', 'wp-downloadmanager' )     => number_format_i18n( (int) $wpdb->get_var( "SELECT COUNT(file_id) FROM {$wpdb->downloads}" ) ),
-			__( 'Total Size', 'wp-downloadmanager' )      => WP_DownloadManager_File::format_size(
-				(int) $wpdb->get_var( $wpdb->prepare( "SELECT SUM(file_size) FROM {$wpdb->downloads} WHERE file_size != %s", $unknown ) )
-			),
-			__( 'Total Hits', 'wp-downloadmanager' )      => number_format_i18n( (int) $wpdb->get_var( "SELECT SUM(file_hits) FROM {$wpdb->downloads}" ) ),
-			__( 'Total Bandwidth', 'wp-downloadmanager' ) => WP_DownloadManager_File::format_size(
-				(int) $wpdb->get_var( $wpdb->prepare( "SELECT SUM(file_hits*file_size) FROM {$wpdb->downloads} WHERE file_size != %s", $unknown ) )
-			),
+			__( 'Total Files', 'wp-downloadmanager' )     => number_format_i18n( $library['files'] ),
+			__( 'Total Size', 'wp-downloadmanager' )      => WP_DownloadManager_File::format_size( $library['size'] ),
+			__( 'Total Hits', 'wp-downloadmanager' )      => number_format_i18n( $library['hits'] ),
+			__( 'Total Bandwidth', 'wp-downloadmanager' ) => WP_DownloadManager_File::format_size( $library['bandwidth'] ),
 		);
 		?>
 		<table class="widefat striped">
@@ -611,9 +603,7 @@ class WP_DownloadManager_Admin {
 	 * @return object|null
 	 */
 	public static function get_file( $file_id ) {
-		global $wpdb;
-
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->downloads} WHERE file_id = %d", (int) $file_id ) );
+		return WP_DownloadManager_Download::get( $file_id );
 	}
 
 	/**
@@ -791,7 +781,7 @@ class WP_DownloadManager_Admin {
 		self::require_capability();
 
 		$post    = wp_unslash( $_POST );
-		$deleted = self::delete_files( array( $file_id ), (bool) self::posted_int( $post, 'unlinkfile' ) );
+		$deleted = WP_DownloadManager_Download::delete( array( $file_id ), (bool) self::posted_int( $post, 'unlinkfile' ) );
 
 		if ( ! $deleted ) {
 			self::notice( __( 'That file no longer exists.', 'wp-downloadmanager' ), 'error' );
@@ -850,7 +840,10 @@ class WP_DownloadManager_Admin {
 			return;
 		}
 
-		$deleted = self::delete_files( $ids, false );
+		// The bulk action never unlinks: the checkbox that offers it is on the
+		// per-file Delete File screen, where the row it applies to is in front of
+		// whoever ticks it.
+		$deleted = WP_DownloadManager_Download::delete( $ids, false );
 
 		self::notice(
 			sprintf(
@@ -859,38 +852,6 @@ class WP_DownloadManager_Admin {
 				number_format_i18n( $deleted )
 			)
 		);
-	}
-
-	/**
-	 * Remove rows, and optionally the files behind them.
-	 *
-	 * @param array $file_ids  File IDs.
-	 * @param bool  $from_disk Also delete the file inside the downloads directory.
-	 * @return int Number of rows removed.
-	 */
-	protected static function delete_files( $file_ids, $from_disk ) {
-		global $wpdb;
-
-		$path    = WP_DownloadManager_Options::get( 'path.dir' );
-		$deleted = 0;
-
-		foreach ( $file_ids as $file_id ) {
-			$file = self::get_file( $file_id );
-			if ( ! $file ) {
-				continue;
-			}
-
-			if ( $from_disk && ! WP_DownloadManager_File::is_remote( stripslashes( $file->file ) ) ) {
-				// wp_delete_file_from_directory() refuses anything that resolves
-				// outside the downloads directory, so a crafted row cannot make
-				// this unlink somewhere else.
-				wp_delete_file_from_directory( $path . stripslashes( $file->file ), $path );
-			}
-
-			$deleted += (int) $wpdb->delete( $wpdb->downloads, array( 'file_id' => (int) $file_id ) );
-		}
-
-		return $deleted;
 	}
 
 	/**

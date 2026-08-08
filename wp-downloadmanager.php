@@ -57,6 +57,7 @@ define( 'WP_DOWNLOADMANAGER_URL', plugin_dir_url( __FILE__ ) );
 // accessor are both reached before any action fires.
 require_once __DIR__ . '/includes/class-wp-downloadmanager-template.php';
 require_once __DIR__ . '/includes/class-wp-downloadmanager-options.php';
+require_once __DIR__ . '/includes/class-wp-downloadmanager-download.php';
 require_once __DIR__ . '/includes/class-wp-downloadmanager-file.php';
 require_once __DIR__ . '/includes/class-wp-downloadmanager-display.php';
 require_once __DIR__ . '/includes/class-wp-downloadmanager-install.php';

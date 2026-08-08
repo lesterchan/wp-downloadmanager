@@ -112,20 +112,15 @@ class WP_DownloadManager_List_Table extends WP_List_Table {
 	 * The columns the SQL is allowed to sort by.
 	 *
 	 * The request decides the ORDER BY clause, so it needs an allow list rather
-	 * than sanitize_text_field().
+	 * than sanitize_text_field(). The list itself belongs to the downloads table
+	 * rather than to this screen, because the WP-CLI command sorts by the same
+	 * columns and WP_List_Table lives in wp-admin, where a command cannot reach
+	 * it.
 	 *
 	 * @return array
 	 */
 	public static function sortable_sql_columns() {
-		return array(
-			'file_id'         => 'file_id',
-			'file_name'       => 'file_name',
-			'file_size'       => '(file_size+0.00)',
-			'file_hits'       => 'file_hits',
-			'file_permission' => 'file_permission',
-			'file_category'   => 'file_category',
-			'file_date'       => 'FROM_UNIXTIME(file_date)',
-		);
+		return WP_DownloadManager_Download::sortable_columns();
 	}
 
 	/**
@@ -134,51 +129,21 @@ class WP_DownloadManager_List_Table extends WP_List_Table {
 	 * @return void
 	 */
 	public function prepare_items() {
-		global $wpdb;
-
 		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns() );
 
 		$per_page = $this->get_items_per_page( 'wp_downloadmanager_per_page', WP_DownloadManager_Admin::PER_PAGE );
 		$paged    = max( 1, (int) $this->get_pagenum() );
-		$search   = (string) $this->get_search();
 
-		$columns = self::sortable_sql_columns();
-		$orderby = $this->request( 'orderby' );
-		$orderby = isset( $columns[ $orderby ] ) ? $columns[ $orderby ] : $columns['file_name'];
-		$order   = 'desc' === strtolower( $this->request( 'order' ) ) ? 'DESC' : 'ASC';
-
-		// The search binds rather than being concatenated in: with no search term
-		// the first test reads 1 = 1, which makes the whole OR group true and the
-		// clause a no-op, exactly what leaving it out used to mean. esc_like() so
-		// a literal % or _ in the term is not read as a wildcard.
-		$search_all = '' === $search ? 1 : 0;
-		$like       = '%' . $wpdb->esc_like( $search ) . '%';
-
-		$total = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(file_id) FROM {$wpdb->downloads} WHERE file_id > %d AND ( %d = 1 OR file LIKE %s OR file_name LIKE %s OR file_des LIKE %s )",
-				0,
-				$search_all,
-				$like,
-				$like,
-				$like
-			)
+		$args = array(
+			'search'  => (string) $this->get_search(),
+			'orderby' => $this->request( 'orderby' ),
+			'order'   => $this->request( 'order' ),
+			'number'  => $per_page,
+			'offset'  => ( $paged - 1 ) * $per_page,
 		);
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $orderby is a value from self::sortable_sql_columns() and $order is one of the two literals chosen above; an ORDER BY column and direction cannot be bound.
-		$this->items = (array) $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->downloads} WHERE file_id > %d AND ( %d = 1 OR file LIKE %s OR file_name LIKE %s OR file_des LIKE %s ) ORDER BY {$orderby} {$order} LIMIT %d, %d",
-				0,
-				$search_all,
-				$like,
-				$like,
-				$like,
-				( $paged - 1 ) * $per_page,
-				$per_page
-			)
-		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$total       = WP_DownloadManager_Download::count( $args );
+		$this->items = WP_DownloadManager_Download::query( $args );
 
 		$this->set_pagination_args(
 			array(

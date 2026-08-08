@@ -131,6 +131,45 @@ locally and loses the exception.
 * The theme stylesheet override is `wp-downloadmanager.css`, and
   `download-search-highlight` is now `wp-downloadmanager-highlight`.
 
+## WP-CLI
+
+`wp downloadmanager list|get|stats|reset-hits|delete`, registered as the bare
+noun rather than the plugin slug. There is no REST namespace: the plugin
+registers no `admin-ajax.php` action, so there is no client a route would be an
+improvement for.
+
+**Everything goes through `WP_DownloadManager_Download`, and that class exists
+for a reason.** The listing query was inside the list table's `prepare_items()`,
+beside the per-page preference and the paging it also has to work out; the
+library totals were inside a method that echoed a table around them; the delete
+was a protected method on the admin class. A second caller could only have
+copied all three, and a copied delete is one more chance to forget that a local
+file may be unlinked and a remote one never can be.
+
+**`delete --delete-file` takes the file off the server**, which is the checkbox
+the Delete File screen offers, and is why both destructive subcommands go
+through `WP_CLI::confirm()` and a script has to pass `--yes`. It is a no-op for
+a file stored as a remote URL: gluing a URL onto the end of the downloads
+directory names nothing anybody meant to delete, and the screen does not offer
+the checkbox for one either. Pinned from both sides in `test-cli.php`.
+
+**`reset-hits` touches the counter and nothing else.** The Edit File screen
+resets it as one column of a whole-row save and stamps `file_updated_date` on
+the way through; that is a fact about saving that form rather than about the
+counter, and a listing sorted by "last updated" should not reshuffle because
+somebody cleared a tally.
+
+**Nothing adds or edits a download.** Add File and Edit File offer four sources
+and two of them are a browser handing over a multipart body, so a command can
+only half implement the choice. A test asserts no `create` or `update`
+subcommand exists, which makes growing one a decision rather than a gap somebody
+fills.
+
+**`list` and `stats` include the files marked Hidden**, because they report the
+library's own inventory rather than what a visitor can see, and the Downloads
+screen makes the same choice. The `file_permission != -2` rule above belongs to
+the front-end queries.
+
 ## Migrations, and why they are tested through a browser
 
 `maybe_upgrade()` hangs off `admin_init` as well as activation, because
