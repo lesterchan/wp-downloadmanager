@@ -1,0 +1,24 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wp-downloadmanager/page-download",
+	"version": "2.0.0",
+	"title": "Downloads Page",
+	"category": "widgets",
+	"icon": "download",
+	"description": "The whole download library, with its categories, search and paging.",
+	"keywords": [ "downloads", "library", "listing" ],
+	"textdomain": "wp-downloadmanager",
+	"attributes": {
+		"category": {
+			"type": "number",
+			"default": 0
+		}
+	},
+	"supports": {
+		"html": false,
+		"multiple": false,
+		"reusable": false
+	},
+	"editorScript": "file:./index.js"
+}

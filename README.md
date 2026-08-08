@@ -61,6 +61,19 @@ obligations.
 1. You can also use `[page_download category="1"]`, this will display all downloads in Category ID 1.
 1. Click 'Publish'
 
+### Showing Downloads In A Block
+
+Two blocks are available in the editor, under **Widgets**:
+
+* **Download** — one file or several, embedded in a post. **File IDs** and **Category IDs** in the sidebar each take one id or a comma-separated list, and between them they say everything `[download]` says: **Show** chooses between the name with its description and the name alone, and the Order panel carries the sort column, the direction and the limit that applies where the post is one of many in a stream.
+* **Downloads Page** — the whole library with its categories, search box and paging, the same listing `[page_download]` produces. **Category ID** narrows it to one category, and zero lists them all.
+
+Both render on the server, so the block preview in the editor is the real listing rather than an approximation, and adding a file updates every post showing it without re-saving anything.
+
+**The shortcodes still work and are not going anywhere.** `[download]`, `[download=2]`, `[page_download]` and `[page_downloads]` behave exactly as they always have, and a post already containing one needs no change. The blocks call the same code the shortcodes call, so the two render identically — use whichever suits the post.
+
+There is no third block for `[page_downloads]`. The plural and the singular are one and the same shortcode registered under two tags, so a block for each would be one block under two names — and unlike a shortcode, a block name is written into the post and stays there. The block wraps `[page_download]`; the plural remains a shortcode you can keep using.
+
 ### Download Stats (With Widgets)
 1. Go to `WP-Admin -> Appearance -> Widgets`
 1. The widget name is `Downloads`.
@@ -160,6 +173,7 @@ wrapper and leave `%FILE_ICON%` on its own.
 * BREAKING: `%FILE_ICON%` is the complete icon element rather than a GIF file name, and the plugin ships no images at all.
 * BREAKING: The `stats_display` and `stats_mostlimit` rows shared with WP-Stats are replaced by this plugin's own settings, and WP-Stats collects sections through the `wp_stats_sections` filter.
 * NEW: A `wp downloadmanager` WP-CLI command: `list`, `get`, `stats`, `reset-hits` and `delete`, the last two asking for confirmation and `delete --delete-file` taking the file off the server as well.
+* NEW: Two editor blocks, **Download** and **Downloads Page**, wrapping `[download]` and `[page_download]`. The shortcodes are unchanged, still registered and still supported — `[download]`, `[download=2]`, `[page_download]` and `[page_downloads]` all behave exactly as before, nothing needs re-saving, and the blocks render through the same code so the two are identical.
 * NEW: Manage Downloads is a real `WP_List_Table`, with sortable columns, row actions, bulk delete, a search box and a per-user rows-per-page setting.
 * NEW: One inline SVG icon sprite, drawn in the theme's own colour and covering modern file types the GIF set never had.
 * NEW: Restructured into `includes/class-wp-downloadmanager-*.php`, with nothing loose at the plugin root.

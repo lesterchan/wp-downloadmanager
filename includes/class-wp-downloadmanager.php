@@ -21,6 +21,7 @@ class WP_DownloadManager {
 		add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
 		add_filter( 'generate_rewrite_rules', array( __CLASS__, 'rewrite_rules' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
+		add_action( 'enqueue_block_assets', array( __CLASS__, 'block_editor_styles' ) );
 		add_action( 'wp_head', array( __CLASS__, 'feed_link' ) );
 
 		self::register_command();
@@ -88,6 +89,29 @@ class WP_DownloadManager {
 			: WP_DOWNLOADMANAGER_URL . 'css/wp-downloadmanager.css';
 
 		wp_enqueue_style( 'wp-downloadmanager', $src, array(), WP_DOWNLOADMANAGER_VERSION );
+	}
+
+	/**
+	 * The same stylesheet, inside the block editor.
+	 *
+	 * The blocks preview themselves through ServerSideRender, which draws the
+	 * real front-end markup into the editor canvas -- and that markup opens with
+	 * the inline SVG sprite, which is a definitions block the stylesheet hides.
+	 * Without the stylesheet the editor shows an empty 300x150 box above every
+	 * listing, and the icons and layout below it are unstyled.
+	 *
+	 * Guarded on is_admin() because `enqueue_block_assets` fires on the front
+	 * end too, where enqueue_styles() has already done this on
+	 * `wp_enqueue_scripts`.
+	 *
+	 * @return void
+	 */
+	public static function block_editor_styles() {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		self::enqueue_styles();
 	}
 
 	/**

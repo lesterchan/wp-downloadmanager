@@ -1065,6 +1065,70 @@ class WP_DownloadManager_Display {
 	}
 
 	/**
+	 * Files chosen by id and by category, embedded in a post.
+	 *
+	 * The renderer behind both the `[download]` shortcode and the
+	 * `wp-downloadmanager/download` block. **Neither entry point is implemented
+	 * in terms of the other**: both land here, which is what makes the two
+	 * render identically, and what keeps the shortcode's positional
+	 * `[download=1]` parsing out of a block that has no way to produce it.
+	 *
+	 * `$id` and `$category` are each one id or a comma-separated list of them,
+	 * and each arrives as a string a user typed -- into a shortcode attribute
+	 * or into the block's sidebar. They are normalised here for the same reason
+	 * downloads_page() casts its category on entry: an empty string and a zero
+	 * both have to mean "not given", or an attributeless block and an
+	 * attributeless shortcode ask two different questions. Every surviving id
+	 * goes through intval() before it reaches SQL.
+	 *
+	 * @param string|int $id           One file id, or several separated by commas.
+	 * @param string|int $category     One category id, or several separated by commas.
+	 * @param string     $display      'both' or 'name'.
+	 * @param string     $sort_by      Sort column, validated against the allow list downstream.
+	 * @param string     $sort_order   Sort direction.
+	 * @param int        $stream_limit Cap outside a single post, 0 for no cap.
+	 * @return string
+	 */
+	public static function render_download( $id = 0, $category = 0, $display = 'both', $sort_by = 'file_id', $sort_order = 'asc', $stream_limit = 0 ) {
+		if ( is_feed() ) {
+			return __( 'Note: There is a file embedded within this post, please visit this post to download the file.', 'wp-downloadmanager' );
+		}
+
+		$conditions = array();
+		$id         = trim( (string) $id );
+		$category   = trim( (string) $category );
+
+		if ( '' !== $id && '0' !== $id ) {
+			if ( false !== strpos( $id, ',' ) ) {
+				$ids          = array_map( 'intval', explode( ',', $id ) );
+				$conditions[] = 'file_id IN (' . implode( ',', $ids ) . ')';
+			} else {
+				$conditions[] = 'file_id = ' . (int) $id;
+			}
+		}
+		if ( '' !== $category && '0' !== $category ) {
+			if ( false !== strpos( $category, ',' ) ) {
+				$categories   = array_map( 'intval', explode( ',', $category ) );
+				$conditions[] = 'file_category IN (' . implode( ',', $categories ) . ')';
+			} else {
+				$conditions[] = 'file_category = ' . (int) $category;
+			}
+		}
+
+		if ( ! $conditions ) {
+			return '';
+		}
+
+		return self::download_embedded(
+			implode( ' AND ', $conditions ),
+			$display,
+			$sort_by,
+			$sort_order,
+			$stream_limit
+		);
+	}
+
+	/**
 	 * The [download] shortcode.
 	 *
 	 * @param array $atts Shortcode attributes.
@@ -1083,42 +1147,18 @@ class WP_DownloadManager_Display {
 			$atts
 		);
 
-		if ( is_feed() ) {
-			return __( 'Note: There is a file embedded within this post, please visit this post to download the file.', 'wp-downloadmanager' );
-		}
+		$id = $attributes['id'];
 
-		$conditions = array();
-		$id         = $attributes['id'];
-		$category   = $attributes['category'];
-
-		// Backward compatibility with [download=1].
+		// Backward compatibility with [download=1]. Shortcode syntax with no
+		// block equivalent, so it is parsed here rather than in the shared
+		// renderer: a block has no positional attribute to produce it with.
 		if ( ! $id && ! empty( $atts[0] ) ) {
 			$id = trim( $atts[0], '="\'' );
 		}
 
-		if ( 0 !== $id ) {
-			if ( false !== strpos( $id, ',' ) ) {
-				$ids          = array_map( 'intval', explode( ',', $id ) );
-				$conditions[] = 'file_id IN (' . implode( ',', $ids ) . ')';
-			} else {
-				$conditions[] = 'file_id = ' . (int) $id;
-			}
-		}
-		if ( 0 !== $category ) {
-			if ( false !== strpos( $category, ',' ) ) {
-				$categories   = array_map( 'intval', explode( ',', $category ) );
-				$conditions[] = 'file_category IN (' . implode( ',', $categories ) . ')';
-			} else {
-				$conditions[] = 'file_category = ' . (int) $category;
-			}
-		}
-
-		if ( ! $conditions ) {
-			return '';
-		}
-
-		return self::download_embedded(
-			implode( ' AND ', $conditions ),
+		return self::render_download(
+			$id,
+			$attributes['category'],
 			$attributes['display'],
 			$attributes['sort_by'],
 			$attributes['sort_order'],

@@ -1,0 +1,46 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wp-downloadmanager/download",
+	"version": "2.0.0",
+	"title": "Download",
+	"category": "widgets",
+	"icon": "download",
+	"description": "One or more files from the download library, embedded in a post.",
+	"keywords": [ "download", "file", "attachment" ],
+	"textdomain": "wp-downloadmanager",
+	"attributes": {
+		"id": {
+			"type": "string",
+			"default": ""
+		},
+		"category": {
+			"type": "string",
+			"default": ""
+		},
+		"display": {
+			"type": "string",
+			"enum": [ "both", "name" ],
+			"default": "both"
+		},
+		"sortBy": {
+			"type": "string",
+			"default": "file_id"
+		},
+		"sortOrder": {
+			"type": "string",
+			"enum": [ "asc", "desc" ],
+			"default": "asc"
+		},
+		"streamLimit": {
+			"type": "number",
+			"default": 0
+		}
+	},
+	"supports": {
+		"html": false,
+		"multiple": true,
+		"reusable": false
+	},
+	"editorScript": "file:./index.js"
+}
