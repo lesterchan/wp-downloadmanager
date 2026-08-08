@@ -346,6 +346,7 @@ class WP_DownloadManager_Display {
 
 		$replacements = array(
 			'%FILE_ID%'            => $file->file_id,
+
 			/*
 			 * Escaped, where %FILE_NAME% and %FILE_DESCRIPTION% above are
 			 * kses'd. Those two are the fields a site owner is meant to put
