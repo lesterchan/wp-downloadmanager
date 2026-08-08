@@ -162,6 +162,7 @@ wrapper and leave `%FILE_ICON%` on its own.
 3. Download Settings: the folder, how a file is delivered, and how the page sorts
 4. The Templates tab, holding the markup of the download page and of every link
 5. The downloads page a visitor sees, grouped by category
+6. The Download block in the editor, with the file it embeds previewed and the sidebar choosing which files, which categories and what each row shows
 
 ## Changelog
 ### 2.0.0
