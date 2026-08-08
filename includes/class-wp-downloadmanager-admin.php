@@ -894,6 +894,19 @@ class WP_DownloadManager_Admin {
 
 			default:
 				$file = isset( $post['file'] ) ? trim( sanitize_text_field( $post['file'] ) ) : '';
+
+				/*
+				 * The Browse select offers only files inside the downloads
+				 * directory, but the value is a request field like any other and
+				 * nothing checked it. sanitize_text_field() does not touch "."
+				 * or "/", and rename_file() below keeps both on purpose, so
+				 * "/../../wp-config.php" reached the row unchanged -- and the
+				 * download endpoint reads the row's path.
+				 */
+				if ( '' !== $file && ! WP_DownloadManager_File::is_safe_relative_file( $file ) ) {
+					return new WP_Error( 'file', __( 'That file is not inside the downloads directory.', 'wp-downloadmanager' ) );
+				}
+
 				$file = WP_DownloadManager_File::rename_file( $path, $file );
 
 				return array(

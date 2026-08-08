@@ -385,9 +385,180 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_a_remote_url_cannot_be_used_for_server_side_request_forgery() {
-		foreach ( array( 'file:///etc/passwd', 'gopher://127.0.0.1:11211/', 'http://127.0.0.1:22/' ) as $candidate ) {
+		$candidates = array(
+			// Refused on scheme or port.
+			'file:///etc/passwd',
+			'gopher://127.0.0.1:11211/',
+			'http://127.0.0.1:22/',
+			// Refused on where the host resolves to, which is the only thing
+			// standing between the endpoint and these: every one of them passes
+			// the scheme test, and an absent port skips the port test entirely.
+			'http://127.0.0.1/',
+			'http://localhost/admin',
+			'http://169.254.169.254/latest/meta-data/',
+			'http://10.0.0.1/',
+			'http://192.168.1.1/',
+			'http://172.16.0.1/',
+			'https://[::1]/',
+		);
+
+		foreach ( $candidates as $candidate ) {
 			$this->assertFalse( WP_DownloadManager_File::is_remote_valid( $candidate ), $candidate . ' should be refused' );
 		}
+	}
+
+	public function test_a_remote_url_on_a_public_host_is_still_allowed() {
+		// Stubbed rather than resolved: the assertion is about the plugin's
+		// decision, and a suite that needs working DNS to make it fails on an
+		// offline runner for a reason that has nothing to do with the plugin.
+		add_filter(
+			'wp_downloadmanager_host_is_public',
+			static function ( $is_public, $host ) {
+				return 'mirror.example.com' === $host ? true : $is_public;
+			},
+			10,
+			2
+		);
+
+		$this->assertTrue(
+			WP_DownloadManager_File::is_remote_valid( 'https://mirror.example.com/brochure.pdf' ),
+			'A remote file on a public host is the feature, and it still works.'
+		);
+	}
+
+	/**
+	 * The Browse source stores a path relative to the downloads directory, so it
+	 * cannot be reduced with basename(), and rename_file()'s character filter
+	 * keeps "." and "/" because a relative path needs them. Nothing else stood
+	 * between a hand-crafted POST and the download endpoint's readfile().
+	 */
+	public function test_a_browse_file_name_cannot_escape_the_downloads_directory() {
+		$refused = array(
+			'/../../../wp-config.php',
+			'../wp-config.php',
+			'sub/../../etc/passwd',
+			"/sub/\0/../..",
+			'//evil.example.com/share',
+		);
+
+		foreach ( $refused as $candidate ) {
+			$this->assertFalse(
+				WP_DownloadManager_File::is_safe_relative_file( $candidate ),
+				$candidate . ' must not be storable as a download'
+			);
+		}
+
+		$allowed = array( '/brochure.pdf', '/sub/brochure.pdf', 'brochure.pdf', '/release..2.zip' );
+
+		foreach ( $allowed as $candidate ) {
+			$this->assertTrue(
+				WP_DownloadManager_File::is_safe_relative_file( $candidate ),
+				$candidate . ' is an ordinary download and must still be storable'
+			);
+		}
+	}
+
+	public function test_the_add_screen_refuses_a_browse_file_name_that_escapes() {
+		global $wpdb;
+
+		$this->become_download_admin();
+		$this->on_admin_screen();
+
+		$before = $this->count_files();
+
+		$this->render(
+			array( 'WP_DownloadManager_Admin', 'render_add' ),
+			array(),
+			array_merge(
+				array(
+					'do'              => 'Add File',
+					'_wpnonce'        => $this->nonce( 'wp_downloadmanager_add' ),
+					'file_type'       => '0',
+					'file'            => '/../../../wp-config.php',
+					'file_name'       => 'Config',
+					'file_cat'        => '1',
+					'file_permission' => '-1',
+				)
+			)
+		);
+
+		$this->assertSame( $before, $this->count_files(), 'The row was refused rather than written.' );
+	}
+
+	/**
+	 * The write path is now closed, so this is about the rows that predate it --
+	 * and about anything that writes the table without going through the screen.
+	 */
+	public function test_the_endpoint_refuses_a_row_whose_file_escapes_the_downloads_directory() {
+		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-security' );
+		WP_DownloadManager_Options::set( 'method', 0 );
+
+		// The downloads directory, and a file that is deliberately *outside* it
+		// but really does exist. That last part is the whole test: pointed at a
+		// path that resolves to nothing, the endpoint answers 404 whether or not
+		// it confines anything, and the assertion below would hold for a plugin
+		// with no fix in it at all.
+		$this->make_download_file( 'keep.txt' );
+		$outside = WP_CONTENT_DIR . '/dm-outside-secret.txt';
+		$this->filesystem()->put_contents( $outside, 'DB_PASSWORD would be here' );
+
+		$file_id = $this->insert_file(
+			array(
+				'file'            => '/../dm-outside-secret.txt',
+				'file_name'       => 'Secret',
+				'file_permission' => -1,
+			)
+		);
+
+		$this->assertFileExists( $outside, 'The target exists, so a 404 can only come from the confinement.' );
+
+		$served = false;
+		add_action(
+			'wp_downloadmanager_served',
+			static function () use ( &$served ) {
+				$served = true;
+				throw new WPDieException( 'served' );
+			}
+		);
+
+		set_query_var( 'dl_id', $file_id );
+
+		$message = '';
+
+		try {
+			WP_DownloadManager_File::serve();
+			$this->fail( 'the endpoint should have ended the request' );
+		} catch ( WPDieException $e ) {
+			$message = $e->getMessage();
+		}
+
+		$this->assertFalse( $served, 'A row climbing out of the downloads directory must not be served.' );
+		$this->assertStringContainsString( 'File does not exist', $message, 'It reads as a missing file rather than as a file.' );
+
+		$this->filesystem()->delete( $outside );
+		$this->remove_download_files();
+	}
+
+	public function test_safe_file_path_resolves_a_real_download_and_refuses_a_climb() {
+		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/dm-security' );
+		$this->make_download_file( 'sub/keep.txt' );
+
+		$path = WP_DownloadManager_Options::get( 'path.dir' );
+
+		$this->assertNotFalse(
+			WP_DownloadManager_File::safe_file_path( $path, '/sub/keep.txt' ),
+			'A real file inside the downloads directory resolves.'
+		);
+		$this->assertFalse(
+			WP_DownloadManager_File::safe_file_path( $path, '/sub/../../../wp-config.php' ),
+			'A name that climbs out does not, even when the target exists.'
+		);
+		$this->assertFalse(
+			WP_DownloadManager_File::safe_file_path( $path, '/sub/missing.txt' ),
+			'And a name inside the directory that is not a file is not one.'
+		);
+
+		$this->remove_download_files();
 	}
 
 	public function test_the_search_highlight_cannot_be_used_to_inject_markup() {

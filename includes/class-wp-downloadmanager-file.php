@@ -257,6 +257,79 @@ class WP_DownloadManager_File {
 			return false;
 		}
 
+		if ( empty( $parsed['host'] ) || ! self::host_is_public( $parsed['host'] ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Whether a host resolves somewhere outside this network.
+	 *
+	 * The scheme and port checks above cannot make this one, and it is the one
+	 * that matters: with a default port, `http://169.254.169.254/latest/meta-data/`
+	 * and `http://127.0.0.1/` satisfy both of them. The download endpoint
+	 * proxies a remote file with readfile(), which is a raw stream wrapper and
+	 * not wp_safe_remote_get(), so nothing else on the path performs the check
+	 * WordPress would normally have made.
+	 *
+	 * Every A record is tested, not just the first, so a name answering with one
+	 * public and one private address is refused rather than accepted on a coin
+	 * toss. A host with no A record at all is refused too: this cannot resolve
+	 * AAAA portably, and refusing an IPv6-only mirror is the safe way to be
+	 * wrong.
+	 *
+	 * This is checked when the row is saved and again when the file is served,
+	 * because the answer can change between the two.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $host Host from the remote URL.
+	 * @return bool
+	 */
+	public static function host_is_public( $host ) {
+		$host  = trim( (string) $host, '[]' );
+		$flags = FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE;
+
+		/**
+		 * Filters whether a remote file's host counts as reachable.
+		 *
+		 * The escape hatch for a site whose mirror genuinely is on the local
+		 * network, and for one behind split-horizon DNS where the lookup this
+		 * server makes is not the one that matters. Returning true for a host
+		 * turns off the check that stops the download endpoint being pointed at
+		 * a metadata service, so return it for one host rather than for all.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param bool|null $is_public Null to run the usual check.
+		 * @param string    $host      Host from the remote URL.
+		 */
+		$filtered = apply_filters( 'wp_downloadmanager_host_is_public', null, $host );
+
+		if ( null !== $filtered ) {
+			return (bool) $filtered;
+		}
+
+		// A literal address needs no lookup. A name does, and the lookup is the
+		// point -- "internal.example.com" is only recognisable by where it goes.
+		if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			return (bool) filter_var( $host, FILTER_VALIDATE_IP, $flags );
+		}
+
+		$addresses = gethostbynamel( $host );
+
+		if ( empty( $addresses ) ) {
+			return false;
+		}
+
+		foreach ( $addresses as $address ) {
+			if ( ! filter_var( $address, FILTER_VALIDATE_IP, $flags ) ) {
+				return false;
+			}
+		}
+
 		return true;
 	}
 
@@ -467,6 +540,92 @@ class WP_DownloadManager_File {
 	}
 
 	/**
+	 * Whether a stored file name stays inside the downloads directory.
+	 *
+	 * The Browse source stores a path *relative to the downloads directory*
+	 * rather than a bare file name, because subfolders are a feature -- so it
+	 * cannot be reduced with basename() the way an upload's name is, and
+	 * rename_file() below is not a confinement either. That filter keeps "."
+	 * and "/" precisely because a relative path needs both, so
+	 * "/../../wp-config.php" passes through it byte for byte.
+	 *
+	 * This is a check on the *name*, and it deliberately does not require the
+	 * file to exist: the Add File screen has always accepted a name for a file
+	 * that is not there yet, and stores it with a size of zero.
+	 * safe_file_path() is the check on the resolved path, for the moment the
+	 * bytes are actually read.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $file Stored file name, relative to the downloads directory.
+	 * @return bool
+	 */
+	public static function is_safe_relative_file( $file ) {
+		$file = str_replace( '\\', '/', (string) $file );
+
+		if ( '' === $file || false !== strpos( $file, "\0" ) ) {
+			return false;
+		}
+
+		// One leading slash is the stored convention ("/brochure.pdf"). Two is
+		// an absolute path on some systems and "//host/share" on others.
+		if ( 0 === strpos( $file, '//' ) ) {
+			return false;
+		}
+
+		// Segment by segment rather than strpos( $file, '..' ), which would
+		// also refuse the perfectly ordinary "release..2.zip".
+		foreach ( explode( '/', $file ) as $segment ) {
+			if ( '..' === $segment ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Resolve a stored file name to a real file inside the downloads directory.
+	 *
+	 * The read-side counterpart of safe_subfolder(), and it exists for the same
+	 * reason: the value arrives from a request and is stored, so the only check
+	 * that means anything is resolving both ends and confirming the file really
+	 * sits inside the folder.
+	 *
+	 * Done here rather than in the caller so that no later caller can hand the
+	 * endpoint a path nothing has checked -- and it runs even for a row written
+	 * by something other than the Add File screen, which is where a crafted
+	 * value would come from once the screen refuses one.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $file_path Downloads directory.
+	 * @param string $file      Stored file name, relative to that directory.
+	 * @return string|false Absolute path, or false when it is not a file inside
+	 *                      the downloads directory.
+	 */
+	public static function safe_file_path( $file_path, $file ) {
+		if ( ! self::is_safe_relative_file( $file ) ) {
+			return false;
+		}
+
+		$file      = str_replace( '\\', '/', (string) $file );
+		$real_base = realpath( $file_path );
+		$real_file = realpath( rtrim( $file_path, '/' ) . '/' . ltrim( $file, '/' ) );
+
+		if ( false === $real_base || false === $real_file ) {
+			return false;
+		}
+
+		// The separator matters: without it /files-public would pass as /files.
+		if ( 0 !== strpos( $real_file, rtrim( $real_base, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR ) ) {
+			return false;
+		}
+
+		return is_file( $real_file ) ? $real_file : false;
+	}
+
+	/**
 	 * Strip characters that do not belong in a stored file name.
 	 *
 	 * Credits: imvain2.
@@ -570,15 +729,24 @@ class WP_DownloadManager_File {
 		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->downloads} SET file_hits = (file_hits + 1), file_last_downloaded_date = %s WHERE file_id = %d AND file_permission != -2", self::now(), $file_id ) );
 
 		if ( ! self::is_remote( $file_name ) ) {
-			if ( ! is_file( $file_path . $file_name ) ) {
+			/*
+			 * Resolved rather than concatenated. The row's file column is a
+			 * relative path and this endpoint is public, so a row holding
+			 * "/../../wp-config.php" -- however it got written -- must read as
+			 * a missing file rather than as a file. The old is_file() on the
+			 * concatenation answered true for exactly that.
+			 */
+			$real_file = self::safe_file_path( $file_path, $file_name );
+
+			if ( false === $real_file ) {
 				status_header( 404 );
 				wp_die( esc_html__( 'File does not exist.', 'wp-downloadmanager' ), '', array( 'response' => 404 ) );
 			}
 
 			if ( 0 === $method ) {
-				self::send_headers( basename( $file_name ), filesize( $file_path . $file_name ) );
+				self::send_headers( basename( $real_file ), filesize( $real_file ) );
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Streaming the bytes out is what this endpoint is for: readfile() writes straight to the output buffer, so a multi-gigabyte download never has to fit in the PHP memory limit. WP_Filesystem has no streaming read at all - get_contents() returns the whole file as a string.
-				readfile( $file_path . $file_name );
+				readfile( $real_file );
 			} else {
 				// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- Sends the visitor to the configured download URL, which is deliberately allowed to be off-site: a CDN or a mirror is the normal reason to choose this method over streaming. wp_safe_redirect() would send every one of those visitors to the dashboard instead.
 				wp_redirect( $file_url . $file_name );
@@ -586,16 +754,52 @@ class WP_DownloadManager_File {
 			self::finish();
 		}
 
+		/*
+		 * Checked again here, and not only when the row was saved. What the
+		 * host resolves to can change between the two, the row may predate the
+		 * check, and a row can be written by something that never passed
+		 * through the Add File screen at all.
+		 */
+		if ( ! self::is_remote_valid( $file_name ) ) {
+			status_header( 404 );
+			wp_die( esc_html__( 'File does not exist.', 'wp-downloadmanager' ), '', array( 'response' => 404 ) );
+		}
+
 		if ( ini_get( 'allow_url_fopen' ) && 0 === $method ) {
 			$file_size = self::remote_filesize( $file_name );
 			self::send_headers( basename( $file_name ), __( 'unknown', 'wp-downloadmanager' ) === $file_size ? 0 : $file_size );
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- $file_name is an http(s) URL here, so this proxies a remote file through to the client a chunk at a time. WP_Filesystem does not read URLs, and wp_remote_get() would buffer the entire remote file in memory first.
-			readfile( $file_name );
+			readfile( $file_name, false, self::remote_stream_context() );
 		} else {
 			// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- $file_name is the off-site URL the file is stored at; handing the visitor to it is the whole of this branch. wp_safe_redirect() rejects any host but this one, so it would send every remote download to the dashboard.
 			wp_redirect( $file_name );
 		}
 		self::finish();
+	}
+
+	/**
+	 * The stream context a proxied remote download is read through.
+	 *
+	 * Redirects are not followed, and that is the point of the method existing.
+	 * The host check in is_remote_valid() is made against the URL the row holds,
+	 * and PHP's HTTP wrapper follows redirects on its own by default -- so
+	 * without this an allowed host answers 302 and sends the read somewhere the
+	 * check would have refused, which puts the port allow list back to nothing
+	 * too.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return resource
+	 */
+	protected static function remote_stream_context() {
+		return stream_context_create(
+			array(
+				'http' => array(
+					'follow_location' => 0,
+					'timeout'         => 30,
+				),
+			)
+		);
 	}
 
 	/**

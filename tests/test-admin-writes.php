@@ -193,6 +193,11 @@ class WP_DownloadManager_Admin_Writes_Test extends WP_DownloadManager_TestCase {
 	public function test_adding_a_remote_file_stores_the_url_it_was_given() {
 		global $wpdb;
 
+		// A remote file is now refused when its host resolves onto this network,
+		// which means the check makes a DNS lookup. Stubbed here so the suite
+		// does not need working DNS to answer a question about the Add screen.
+		add_filter( 'wp_downloadmanager_host_is_public', '__return_true' );
+
 		$this->render(
 			array( 'WP_DownloadManager_Admin', 'render_add' ),
 			array(),
