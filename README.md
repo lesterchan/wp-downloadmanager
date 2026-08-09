@@ -207,6 +207,7 @@ wrapper and leave `%FILE_ICON%` on its own.
 * FIXED: Removed `download-admin-css.css`, a zero-byte stylesheet that had been enqueued on every plugin admin screen since 2010.
 * NOTE: Some translated strings gained numbered placeholders (`%1$s`), which changes their msgid. Those strings need retranslating.
 * NOTE: The downloads RSS feed's title is built with a placeholder instead of gluing the site name onto a translated string that began with a space. Translators could not see that space, so the feed title ran together in every language but English. The msgid changed, so an existing translation of it falls back to English until it is retranslated
+* NOTE: The bare "to" between the file chooser and the folder select carries translator context now. That msgid changed, so an existing translation of it falls back to English until it is retranslated
 
 ## Upgrade Notice
 

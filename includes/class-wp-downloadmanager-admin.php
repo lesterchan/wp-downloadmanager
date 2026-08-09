@@ -476,7 +476,7 @@ class WP_DownloadManager_Admin {
 						<input type="radio" id="file_type_1" name="file_type" value="1" />
 						<label for="file_type_1"><?php esc_html_e( 'Upload file:', 'wp-downloadmanager' ); ?></label>
 						<input type="file" name="file_upload" data-checks="file_type_1" dir="ltr" />
-						<label for="file_upload_to"><?php esc_html_e( 'to', 'wp-downloadmanager' ); ?></label>
+						<label for="file_upload_to"><?php echo esc_html( _x( 'to', 'Between the file chooser and the folder the upload lands in', 'wp-downloadmanager' ) ); ?></label>
 						<select id="file_upload_to" name="file_upload_to" data-checks="file_type_1" dir="ltr">
 							<?php self::print_folders( $file_path, $file_path ); ?>
 						</select>
