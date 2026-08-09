@@ -675,14 +675,21 @@ class WP_DownloadManager_Settings {
 			printf( '<p class="description">%s</p>', esc_html( $args['desc'] ) );
 		}
 
-		echo '<p class="description">' . esc_html__( 'Allowed Variables:', 'wp-downloadmanager' ) . '<br />';
+		// Inline code spans on one line, not a hyphenated column of <br />s: a
+		// handful of short tokens, and a column pushes the field they belong to
+		// off the screen. Sentence case, and the tokens outside the translatable
+		// string -- phpcbf reads a % inside one as a printf placeholder and
+		// renumbers it, which would show %1$FILE_NAME% to the user.
+		echo '<p class="description">' . esc_html__( 'Allowed variables:', 'wp-downloadmanager' ) . ' ';
+
 		if ( empty( $args['vars'] ) ) {
-			echo '- ' . esc_html__( 'N/A', 'wp-downloadmanager' ) . '<br />';
+			echo esc_html__( 'N/A', 'wp-downloadmanager' );
 		} else {
 			foreach ( $args['vars'] as $var ) {
-				echo '- ' . esc_html( $var ) . '<br />';
+				echo '<code>' . esc_html( $var ) . '</code> ';
 			}
 		}
+
 		echo '</p>';
 
 		printf(

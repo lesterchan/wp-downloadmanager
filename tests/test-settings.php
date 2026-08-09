@@ -106,6 +106,31 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 		$this->assertScreenIsClean( $html );
 	}
 
+	/**
+	 * The token list is a hint about the control, so it follows the control.
+	 *
+	 * This one carried a third arrangement of its own: a hyphenated column of
+	 * br tags with no code spans, under a capitalised "Allowed Variables:". The
+	 * rule is WordPress's own -- a description paragraph directly after the
+	 * field, sentence case, tokens as literal code spans.
+	 */
+	public function test_the_token_list_follows_the_field_it_describes() {
+		$this->become_download_admin();
+
+		$html = $this->render( array( 'WP_DownloadManager_Settings', 'render_page' ), array( 'tab' => 'templates' ) );
+
+		$hint = strpos( $html, 'Allowed variables:' );
+
+		$this->assertNotFalse( $hint, 'the tokens are listed' );
+		$this->assertStringNotContainsString( 'Allowed Variables:', $html, 'in sentence case' );
+		$this->assertGreaterThan( strpos( $html, '<textarea' ), $hint, 'after a control, not before every one of them' );
+
+		$hint_paragraph = substr( $html, strrpos( substr( $html, 0, $hint ), '<p' ), 60 );
+
+		$this->assertStringContainsString( 'class="description"', $hint_paragraph, 'in a description paragraph' );
+		$this->assertStringContainsString( '<code>', substr( $html, $hint, 200 ), 'with the tokens as code spans, not a hyphen list' );
+	}
+
 	public function test_the_page_renders_the_templates_tab_when_asked() {
 		$this->become_download_admin();
 
