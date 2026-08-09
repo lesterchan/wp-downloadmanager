@@ -647,34 +647,19 @@ async function anonymously( page ) {
 /**
  * Press one of the file form's submit buttons.
  *
- * The clearing of #file_remote is a workaround for a bug in the plugin, not a
- * convenience. That field is <input type="url"> and ships with value="https://",
- * which is not a valid URL -- it has no host -- so the browser's own constraint
- * validation refuses to submit the form at all, on Add File and on Edit File
- * alike, and the button silently does nothing. The bug has a test of its own
- * ("no field on the Add File form blocks the form from being submitted"), which
- * is left failing on purpose; emptying the field here is what stops that single
- * defect from taking every other test of these two screens down with it. Delete
- * this line once the default is a placeholder rather than a value.
+ * This used to blank #file_remote first, because that field is
+ * <input type="url"> and once shipped value="https://" -- no host, so not a
+ * valid URL, so the browser's own constraint validation refused to submit
+ * either screen and the button silently did nothing. The field carries a
+ * placeholder now, so there is nothing to clear and the guard has been
+ * removed. "No field on the Add File form blocks the form from being
+ * submitted" is the test that says so, and it passes.
  *
  * @param {import('@playwright/test').Page} page  Page under test.
  * @param {string}                          label The button's text.
  * @return {Promise<void>} Resolves once the form has been submitted.
  */
 async function submitFileForm( page, label ) {
-	const remote = page.locator( '#wpbody-content input[name="file_remote"]' );
-
-	if ( ( await remote.count() ) && 'https://' === ( await remote.inputValue() ) ) {
-		// Assigned rather than filled, and that matters: the field carries
-		// data-checks, and the screen's script ticks the radio named there on
-		// focusin. Typing into it -- which is what fill() does -- would silently
-		// switch the chosen source to "Remote file", and the form would then be
-		// submitted with an empty URL. Setting the property fires no events.
-		await remote.evaluate( ( field ) => {
-			field.value = '';
-		} );
-	}
-
 	await page.getByRole( 'button', { name: label } ).click();
 }
 

@@ -98,8 +98,8 @@ locally and loses the exception.
   nothing wanted the prefill. Pinned by
   `test_no_field_arrives_holding_a_value_its_own_type_rejects`, which asks the
   same question of both screens generically rather than of this one field.
-  `tests/e2e/helpers.js::submitFileForm()` still blanks the field, guarded on the
-  old value, and is now a no-op.
+  `tests/e2e/helpers.js::submitFileForm()` used to blank the field before
+  submitting; that guard is gone, and the helper only presses the button.
 * **The settings screen calls `settings_errors()` itself, and unscoped.** Both
   halves matter, and the rule is: call it if and only if the screen is *not*
   under Settings. Core prints notices from `wp-admin/options-head.php`,
