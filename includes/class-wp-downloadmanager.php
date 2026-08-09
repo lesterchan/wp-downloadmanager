@@ -137,7 +137,13 @@ class WP_DownloadManager {
 
 		printf(
 			'<link rel="alternate" type="application/rss+xml" title="%1$s" href="%2$s" />' . "\n",
-			esc_attr( get_bloginfo_rss( 'name' ) . __( ' Downloads RSS Feed', 'wp-downloadmanager' ) ),
+			esc_attr(
+				sprintf(
+					/* translators: %s: The site name. */
+					__( '%s Downloads RSS Feed', 'wp-downloadmanager' ),
+					get_bloginfo_rss( 'name' )
+				)
+			),
 			esc_url( $link )
 		);
 	}

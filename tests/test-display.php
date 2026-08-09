@@ -339,6 +339,29 @@ class WP_DownloadManager_Display_Test extends WP_DownloadManager_TestCase {
 		$this->assertStringContainsString( 'The Manual', $xml, 'And the items it is there to carry.' );
 	}
 
+	/**
+	 * The feed title names the site through a placeholder, not a concatenation.
+	 *
+	 * It used to be the site name glued to a translatable string that began
+	 * with a space -- padding a translator cannot see in the msgid list, let
+	 * alone reproduce, and which pinned the site name to the front in every
+	 * language.
+	 */
+	public function test_the_feed_title_carries_the_site_name() {
+		update_option( 'blogname', 'Fixture Site' );
+
+		ob_start();
+		WP_DownloadManager_Display::render_feed();
+		$xml = ob_get_clean();
+
+		$this->assertStringContainsString(
+			'<title>Fixture Site Downloads RSS Feed</title>',
+			$xml,
+			'The feed title is the site name and the feed name, with exactly one space between them.'
+		);
+		$this->assertStringNotContainsString( '%s', $xml, 'The placeholder was substituted rather than printed.' );
+	}
+
 	public function test_the_feed_does_not_use_the_option_core_removed() {
 		$this->assertStringNotContainsString(
 			"get_option( 'rss_language' )",

@@ -965,8 +965,12 @@ class WP_DownloadManager_Display {
 		);
 		$categories   = (array) WP_DownloadManager_Options::get( 'categories', array() );
 		$files        = self::feed_files();
-		$title        = get_bloginfo_rss( 'name' ) . __( ' Downloads RSS Feed', 'wp-downloadmanager' );
-		$charset      = get_option( 'blog_charset' );
+		$title        = sprintf(
+			/* translators: %s: The site name. */
+			__( '%s Downloads RSS Feed', 'wp-downloadmanager' ),
+			get_bloginfo_rss( 'name' )
+		);
+		$charset = get_option( 'blog_charset' );
 
 		// Guarded: if anything has already sent output - an early echo from
 		// another plugin, or a caller that is buffering - header() would emit a
