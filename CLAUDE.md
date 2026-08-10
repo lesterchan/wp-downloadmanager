@@ -61,6 +61,25 @@ locally and loses the exception.
   every network silently dropped to level 7 and lost the level 8–10 downloads on
   their own site. `manage_options` means "administers this site" in both
   (commit `c4866b6`). This was one of the two real bugs the multisite sweep found.
+* **Category 0 is "no category", and the shipped list reserves it.** The listing
+  page overwrites slot 0 with the totals label, the settings textarea leaves it
+  blank every time it rebuilds the numbering, and the Add File dropdown hides any
+  category whose name is empty — so a real category at index 0 is offered as
+  value 0, filed against as 0, and then renumbered out from under its own files
+  the first time anybody saves the settings screen. The default shipped as
+  `array( 'General' )` for a decade and did exactly that. Two things now stop it:
+  the default is `array( '', 'General' )`, and `upgrade_pre_201()` shifts a stored
+  list whose slot 0 is non-empty **and adds one to every `file_category` in the
+  same breath** — the list and the rows only mean anything together. It writes the
+  option before the table on purpose, so a request dying between the two cannot
+  come back and add a second 1 to every row.
+* **`merge()` fills in a stored array from the defaults, and must not do it to
+  `categories`.** The keys of that list are data — element 3 is category 3, which
+  is what a row's `file_category` points at — so a stored list shorter than the
+  default would be handed elements it never had: `array( 'General' )` comes back
+  as 'General' twice under two numbers, and a site that emptied its list gets
+  'General' back on every read. `list_keys()` is the exception list, and it has
+  one entry.
 * **`sort_columns()` is an allow-list, not decoration.** The `sort.by` and
   `rss.sortby` settings are written by the settings screen and read straight into
   an `ORDER BY`, where `sanitize_text_field()` would prove nothing.

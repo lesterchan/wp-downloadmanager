@@ -139,8 +139,17 @@ class WP_DownloadManager_Options {
 	/**
 	 * Default values for every key.
 	 *
-	 * These mirror the pre-2.0.0 add_option() calls exactly. Changing any of
-	 * them silently changes what a fresh install looks like.
+	 * These mirror the pre-2.0.0 add_option() calls, with one deliberate
+	 * exception: `categories` gains the empty element at index 0 that the rest of
+	 * the plugin has always assumed was there. 1.69.2 shipped
+	 * `array( 'General' )`, so a fresh install put its only category in the slot
+	 * a file uses to mean "no category", the Add File dropdown offered it as
+	 * value 0, and the first save of the settings screen -- which rebuilds the
+	 * numbering from the textarea, where index 0 is always blank -- moved
+	 * 'General' to 1 and left every file behind at 0 reading as uncategorised.
+	 *
+	 * Changing any of the others silently changes what a fresh install looks
+	 * like.
 	 *
 	 * @return array
 	 */
@@ -154,7 +163,7 @@ class WP_DownloadManager_Options {
 			'method'           => 1,
 			'nice_permalink'   => 1,
 			'use_filename'     => 0,
-			'categories'       => array( 'General' ),
+			'categories'       => array( '', 'General' ),
 			'sort'             => array(
 				'by'      => 'file_name',
 				'order'   => 'asc',
@@ -301,6 +310,28 @@ class WP_DownloadManager_Options {
 	}
 
 	/**
+	 * Keys holding a list, which a stored value replaces rather than fills in.
+	 *
+	 * `categories` is numbered and the numbers are data: element 3 of the list is
+	 * category 3, and that is what every row's `file_category` column points at.
+	 * So the stored list has to come back exactly as long as it was written.
+	 * Filling the short end in from the defaults hands a site categories it does
+	 * not have -- a stored `array( 'General' )`, which is what every install
+	 * created before the empty slot at index 0 was shipped, comes back as
+	 * 'General' twice under two different numbers, and a site that emptied its
+	 * category list is given 'General' back on every read.
+	 *
+	 * It is the one key where that is true. Every other array here is a fixed set
+	 * of named settings, and a stored one missing a key genuinely wants the
+	 * default for it -- that is how a partial save keeps its siblings.
+	 *
+	 * @return array
+	 */
+	protected static function list_keys() {
+		return array( 'categories' );
+	}
+
+	/**
 	 * Recursive defaults merge that does not renumber list arrays.
 	 *
 	 * @param array $defaults Defaults.
@@ -308,8 +339,15 @@ class WP_DownloadManager_Options {
 	 * @return array
 	 */
 	protected static function merge( $defaults, $values ) {
+		$lists = self::list_keys();
+
 		foreach ( $values as $key => $value ) {
-			if ( is_array( $value ) && isset( $defaults[ $key ] ) && is_array( $defaults[ $key ] ) ) {
+			$fill_in = is_array( $value )
+				&& isset( $defaults[ $key ] )
+				&& is_array( $defaults[ $key ] )
+				&& ! in_array( $key, $lists, true );
+
+			if ( $fill_in ) {
 				$defaults[ $key ] = self::merge( $defaults[ $key ], $value );
 			} else {
 				$defaults[ $key ] = $value;

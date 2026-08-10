@@ -393,6 +393,204 @@ class WP_DownloadManager_Migration_Test extends WP_DownloadManager_TestCase {
 		$this->assertSame( WP_DOWNLOADMANAGER_VERSION, WP_DownloadManager_Options::markers()['plugin'], 'and the plugin marker catches up' );
 	}
 
+	/**
+	 * A fresh install must not put a real category in the "no category" slot.
+	 *
+	 * Index 0 is what the rest of the plugin already treats as "in no category":
+	 * the listing page overwrites it with the totals label and the settings
+	 * textarea leaves it blank every time it rebuilds the numbering. 1.69.2
+	 * shipped `array( 'General' )` there, so a fresh install filed everything
+	 * under 0 and lost it all on the first save of the settings screen.
+	 */
+	public function test_a_fresh_install_reserves_the_first_category_slot() {
+		$categories = WP_DownloadManager_Options::defaults()['categories'];
+
+		$this->assertSame( '', $categories[0], 'slot 0 means "no category", so the shipped list leaves it empty' );
+		$this->assertSame( array( '', 'General' ), $categories, 'and the one shipped category is numbered 1' );
+	}
+
+	/**
+	 * The end-to-end case: what the site owner would have lost.
+	 *
+	 * A 2.0.0 install storing its shipped list, two files filed through the Add
+	 * File dropdown at the numbers that dropdown offered, and the upgrade run the
+	 * way an admin request runs it. Both files have to still name their own
+	 * category afterwards -- which is the whole point of moving the rows and the
+	 * list together rather than only fixing the default.
+	 */
+	public function test_the_upgrade_moves_a_category_out_of_slot_zero_and_takes_its_files_with_it() {
+		WP_DownloadManager_Options::save( array( 'categories' => array( 'General', 'Manuals' ) ) );
+		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+
+		$general = $this->insert_file(
+			array(
+				'file_name'     => 'Handbook',
+				'file_category' => 0,
+			)
+		);
+		$manuals = $this->insert_file(
+			array(
+				'file_name'     => 'Installation Guide',
+				'file_category' => 1,
+			)
+		);
+
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
+
+		$categories = WP_DownloadManager_Options::get( 'categories' );
+
+		$this->assertSame( array( '', 'General', 'Manuals' ), $categories, 'the list gains its empty head and keeps its order' );
+		$this->assertSame( 1, (int) $this->fetch_file( $general )->file_category, 'the file filed under 0 follows General to 1' );
+		$this->assertSame( 2, (int) $this->fetch_file( $manuals )->file_category, 'and every other file moves by the same one' );
+
+		$this->assertSame(
+			'General',
+			WP_DownloadManager_Display::category_name( $categories, $this->fetch_file( $general )->file_category ),
+			'a file filed under General still reads General'
+		);
+		$this->assertSame(
+			'Manuals',
+			WP_DownloadManager_Display::category_name( $categories, $this->fetch_file( $manuals )->file_category ),
+			'and one filed under Manuals still reads Manuals'
+		);
+	}
+
+	/**
+	 * The 1.69.2 site that never opened the settings screen.
+	 *
+	 * The download_categories row was created as `array( 'General' )` too, so the
+	 * fold brings the same broken numbering across and the shift has to run after
+	 * it.
+	 */
+	public function test_a_legacy_list_with_a_category_in_slot_zero_is_shifted_after_the_fold() {
+		$this->seed_legacy_rows( array( 'download_categories' => array( 'General' ) ) );
+
+		$file = $this->insert_file(
+			array(
+				'file_name'     => 'Handbook',
+				'file_category' => 0,
+			)
+		);
+
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
+
+		$this->assertSame( array( '', 'General' ), WP_DownloadManager_Options::get( 'categories' ), 'the folded-in list is shifted as well' );
+		$this->assertSame( 1, (int) $this->fetch_file( $file )->file_category, 'and the rows it numbers move with it' );
+	}
+
+	/**
+	 * An install whose owner has saved the settings screen is already correct.
+	 *
+	 * Its list was renumbered years ago, by the same textarea that leaves slot 0
+	 * blank, so moving its rows now would be this bug with the sign flipped.
+	 */
+	public function test_a_list_that_already_reserves_slot_zero_is_left_alone() {
+		WP_DownloadManager_Options::save( array( 'categories' => array( '', 'Alpha', 'Beta' ) ) );
+		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+
+		$before = $this->fetch_file( $this->ids['public'] )->file_category;
+
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
+
+		$this->assertSame( array( '', 'Alpha', 'Beta' ), WP_DownloadManager_Options::get( 'categories' ), 'a list with an empty head is not shifted again' );
+		$this->assertSame( $before, $this->fetch_file( $this->ids['public'] )->file_category, 'and no row is touched' );
+	}
+
+	/**
+	 * A gap in the numbering has to survive, because the rows move by one.
+	 *
+	 * The list is stored key for key and nothing renumbers it, so the keys are not
+	 * always consecutive. The column update adds one to every row, so the keys
+	 * have to move by exactly one each -- anything that renumbers from scratch,
+	 * array_unshift() included, closes the gap and pulls every file above it into
+	 * the wrong category.
+	 */
+	public function test_the_shift_moves_every_key_by_one_and_closes_no_gap() {
+		WP_DownloadManager_Options::save(
+			array(
+				'categories' => array(
+					0 => 'General',
+					2 => 'Manuals',
+				),
+			)
+		);
+		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+
+		$file = $this->insert_file( array( 'file_category' => 2 ) );
+
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
+
+		$categories = WP_DownloadManager_Options::get( 'categories' );
+
+		$this->assertSame( 'Manuals', $categories[3], 'the name two slots along is now three slots along' );
+		$this->assertSame( 3, (int) $this->fetch_file( $file )->file_category, 'and the row that pointed at it moved by the same one' );
+		$this->assertSame( 'Manuals', WP_DownloadManager_Display::category_name( $categories, $this->fetch_file( $file )->file_category ), 'so the file still reads its own category' );
+	}
+
+	/**
+	 * The failure mode worth the most: a second shift.
+	 *
+	 * The schema marker gates it, and so does the state of slot 0 -- which is
+	 * written before the rows, so even an install whose marker row went missing
+	 * cannot be told to add a second 1 to every file_category.
+	 */
+	public function test_the_shift_runs_exactly_once() {
+		WP_DownloadManager_Options::save( array( 'categories' => array( 'General', 'Manuals' ) ) );
+		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+
+		$file = $this->insert_file( array( 'file_category' => 1 ) );
+
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
+
+		$once = WP_DownloadManager_Options::get( 'categories' );
+
+		// Put the markers back where an upgrade that never recorded itself would
+		// leave them, which is the only way to reach the step a second time.
+		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
+
+		$this->assertSame( $once, WP_DownloadManager_Options::get( 'categories' ), 'the list is not shifted a second time' );
+		$this->assertSame( 2, (int) $this->fetch_file( $file )->file_category, 'and no row is moved twice' );
+	}
+
+	/**
+	 * The hazard the new default introduces, and where it is answered.
+	 *
+	 * `all()` merges the stored row over the defaults, so a two-element default
+	 * would fill in index 1 of any stored list that has only index 0 -- handing
+	 * every install created before this release 'General' a second time, under a
+	 * second number, in the window before the upgrade runs. The category list is
+	 * data rather than a set of named settings, so a stored one replaces the
+	 * default outright.
+	 */
+	public function test_a_stored_list_of_one_category_does_not_come_back_twice() {
+		WP_DownloadManager_Options::save( array( 'categories' => array( 'General' ) ) );
+		WP_DownloadManager_Options::flush();
+
+		$this->assertSame(
+			array( 'General' ),
+			WP_DownloadManager_Options::get( 'categories' ),
+			'the shipped default must not lend its second element to a shorter stored list'
+		);
+	}
+
+	/**
+	 * The same hazard from the other end: a site that emptied its category list.
+	 */
+	public function test_an_emptied_list_is_not_given_a_category_back() {
+		WP_DownloadManager_Options::save( array( 'categories' => array( '' ) ) );
+		WP_DownloadManager_Options::flush();
+
+		$this->assertSame( array( '' ), WP_DownloadManager_Options::get( 'categories' ), 'a list with no categories in it stays that way' );
+	}
+
 	public function test_the_upgrade_does_nothing_when_both_markers_are_current() {
 		WP_DownloadManager_Options::save( array( 'page_url' => 'https://example.com/untouched' ) );
 		WP_DownloadManager_Options::save_markers( WP_DOWNLOADMANAGER_VERSION, WP_DOWNLOADMANAGER_DB_VERSION );

@@ -4,7 +4,7 @@ Donate link: https://lesterchan.net/site/donation/
 Tags: download, downloads, file, files, manager  
 Requires at least: 6.8  
 Tested up to: 7.0  
-Stable tag: 2.0.0  
+Stable tag: 2.0.1  
 Requires PHP: 8.2  
 License: GPLv2 or later  
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -171,6 +171,9 @@ wrapper and leave `%FILE_ICON%` on its own.
 6. The Download block in the editor, with the file it embeds previewed and the sidebar choosing which files, which categories and what each row shows
 
 ## Changelog
+### 2.0.1
+* FIXED: A fresh install shipped one category, General, in the numbered slot that means "no category", so the Add File dropdown offered it as category 0 and every file you added was filed there. The first time you saved the Settings tab — for any reason at all — the category list was renumbered and General became category 1, while your files stayed at 0 and stopped showing a category on the downloads page, in the feed, in the widget and on Manage Downloads. Nothing warned you, and re-picking the category on every file was the only way back. The list now ships with that slot empty, and updating moves your categories up one and moves every file with them, so a file filed under General still reads General
+
 ### 2.0.0
 * FIXED: `%FILE%` and `%FILE_DOWNLOAD_URL%` were substituted into the templates unescaped, where `%FILE_NAME%` and `%FILE_DESCRIPTION%` are filtered. Those two are the fields a site owner is meant to put markup in; a file path and a URL are not. The stock templates put the URL in a double-quoted attribute, which is the only reason it never bit — a template of your own using single quotes had nothing behind it
 * FIXED: Search highlighting rewrote already-rendered markup, so a search term that happened to appear inside an attribute — `example` in a stored link to `example.com` — spliced the highlight into the middle of the attribute and ended it early. Any visitor could corrupt a listing's markup through the search box. Only the text between tags is highlighted now
@@ -210,6 +213,12 @@ wrapper and leave `%FILE_ICON%` on its own.
 * NOTE: The bare "to" between the file chooser and the folder select carries translator context now. That msgid changed, so an existing translation of it falls back to English until it is retranslated
 
 ## Upgrade Notice
+
+### 2.0.1
+
+**This one renumbers your categories and your downloads table, once, on the first dashboard load after updating.** Category 1 becomes category 2, and so on, with an empty slot taking the front of the list, because a file whose category is 0 means "no category" everywhere else in the plugin. Every row in the downloads table moves up by the same one, so each file keeps the category you gave it and the downloads page, the feed, the widget and Manage Downloads all read the same as before. Take your usual backup first if you like, but nothing is deleted and nothing needs re-picking.
+
+If you had already saved the Settings tab at least once, your list already has that empty slot and neither it nor your files are touched.
 
 ### 2.0.0
 

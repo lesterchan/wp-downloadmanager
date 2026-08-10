@@ -28,13 +28,18 @@
 
 const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
 const {
+	LIST_URL,
 	SETTINGS_URL,
 	createDownloadsPage,
 	defaultOptions,
+	deleteAllDownloads,
+	downloadColumn,
 	installLegacyRows,
+	listRow,
 	openSettings,
 	option,
 	rawOptions,
+	removeDownloadFiles,
 	resetOptions,
 	runningVersions,
 	seedDownloads,
@@ -289,6 +294,53 @@ test.describe( 'The pre-2.0.0 upgrade', () => {
 		expect( survivingLegacyRows() ).toEqual( [ 'download_page_url' ] );
 
 		wpEval( "delete_option( 'download_page_url' ); echo '<<<done>>>';" );
+	} );
+
+	test( 'a category sitting in slot 0 moves up one, and its files move with it', async ( {
+		page,
+	} ) => {
+		// A 2.0.0 install, which shipped its one category in the slot index 0
+		// reserves for "no category": the Add File dropdown offered it as value 0,
+		// so that is what the rows hold. The list and the rows have to move
+		// together or every download reads as uncategorised, and the only way to
+		// see that is to ask the screen the owner would have been looking at.
+		const stored = Buffer.from(
+			JSON.stringify( { ...defaultOptions(), categories: [ 'Manuals', 'Firmware' ] } ),
+			'utf8',
+		).toString( 'base64' );
+
+		wpEval(
+			`update_option( 'wp_downloadmanager_options', json_decode( base64_decode( '${ stored }' ), true ) );
+			WP_DownloadManager_Options::flush();
+			echo '<<<done>>>';`,
+		);
+		setVersionRow( { plugin: '2.0.0', db: '3' } );
+
+		const name = uniqueName( 'Filed under slot zero' );
+		const ids = seedDownloads( {
+			one: { file: 'e2e-slot-zero.txt', name, category: 0 },
+		} );
+
+		await page.goto( DASHBOARD_URL );
+
+		expect( rawOptions().categories ).toEqual( [ '', 'Manuals', 'Firmware' ] );
+		expect( downloadColumn( ids.one, 'file_category' ) ).toBe( '1' );
+
+		// Present is not alive: the number moved, so the name the screen prints
+		// has to be the one the file was filed under and not N/A.
+		await page.goto( LIST_URL );
+
+		await expect( listRow( page, name ) ).toContainText( 'Manuals' );
+		await expect( listRow( page, name ) ).not.toContainText( 'N/A' );
+
+		// And a second admin request must not move it again.
+		await page.goto( DASHBOARD_URL );
+
+		expect( rawOptions().categories ).toEqual( [ '', 'Manuals', 'Firmware' ] );
+		expect( downloadColumn( ids.one, 'file_category' ) ).toBe( '1' );
+
+		deleteAllDownloads();
+		removeDownloadFiles();
 	} );
 
 	test( 'the settings screen is reachable after all of it', async ( { page } ) => {

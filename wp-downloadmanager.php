@@ -3,7 +3,7 @@
  * Plugin Name: WP-DownloadManager
  * Plugin URI: https://lesterchan.net/portfolio/programming/php/
  * Description: Adds a simple download manager to your WordPress blog.
- * Version: 2.0.0
+ * Version: 2.0.1
  * Requires at least: 6.8
  * Requires PHP: 8.2
  * Author: Lester 'GaMerZ' Chan
@@ -46,8 +46,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 // the two keys of the wp_downloadmanager_version option row on every admin
 // request. Bump DB_VERSION whenever the table or the shape of the settings
 // array changes.
-define( 'WP_DOWNLOADMANAGER_VERSION', '2.0.0' );
-define( 'WP_DOWNLOADMANAGER_DB_VERSION', '3' );
+define( 'WP_DOWNLOADMANAGER_VERSION', '2.0.1' );
+define( 'WP_DOWNLOADMANAGER_DB_VERSION', '4' );
 define( 'WP_DOWNLOADMANAGER_SLUG', 'wp-downloadmanager' );
 define( 'WP_DOWNLOADMANAGER_MAIN_FILE', __FILE__ );
 define( 'WP_DOWNLOADMANAGER_DIR', plugin_dir_path( __FILE__ ) );

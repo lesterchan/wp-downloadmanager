@@ -123,6 +123,15 @@ class WP_DownloadManager_Install {
 			);
 		}
 
+		// Schema 4 is the empty slot at the head of the category list. It runs
+		// after either branch above, because both can leave a list behind with a
+		// real category at index 0 - the fold brings one across from
+		// download_categories, and an install already at schema 3 has been
+		// carrying one since it was installed.
+		if ( $installed < 4 ) {
+			self::upgrade_pre_201();
+		}
+
 		// Both markers in one write, so a half-finished upgrade never records
 		// itself as complete.
 		WP_DownloadManager_Options::save_markers(
@@ -244,6 +253,65 @@ class WP_DownloadManager_Install {
 				$wpdb->query( "UPDATE {$wpdb->downloads} SET file_permission = 0 WHERE file_permission = 1" );
 			}
 		}
+	}
+
+	/**
+	 * Category numbers moved up one in 2.0.1, so index 0 is "no category".
+	 *
+	 * Every other part of the plugin already reads index 0 that way: the listing
+	 * page overwrites it with the totals label, the settings textarea leaves it
+	 * blank whenever it rebuilds the numbering, and the Add File dropdown hides
+	 * any category whose name is empty. What was shipped, since 1.0, was
+	 * `array( 'General' )` -- a real category in that slot. So the dropdown
+	 * offered General as value 0, files were filed under 0, and the first save of
+	 * the settings screen renumbered the list without renumbering the rows: every
+	 * download the site had added dropped out of its category, on a screen the
+	 * owner had visited to change something else entirely.
+	 *
+	 * The two halves have to happen together, which is what makes this a
+	 * migration rather than a changed default. The list gains its empty head and
+	 * every row's file_category moves up by the same one, so a file filed under
+	 * General still reads General afterwards.
+	 *
+	 * A list whose index 0 is already empty is left alone, rows and all: that is
+	 * an install whose owner has saved the settings screen at least once, which
+	 * did the renumbering to the list years ago, and moving its rows now would be
+	 * the same bug with the sign flipped.
+	 *
+	 * The option is written before the table, and the order is deliberate. Both
+	 * the marker and the state of index 0 gate this, so the shift cannot run
+	 * twice; writing the list first means a request that dies between the two
+	 * cannot come back and add a second 1 to every row.
+	 *
+	 * @return void
+	 */
+	protected static function upgrade_pre_201() {
+		global $wpdb;
+
+		WP_DownloadManager_Options::flush();
+		$categories = (array) WP_DownloadManager_Options::get( 'categories', array() );
+
+		if ( ! isset( $categories[0] ) || '' === trim( (string) $categories[0] ) ) {
+			return;
+		}
+
+		// Built by hand rather than with array_unshift(), which renumbers from
+		// scratch and would close any gap in the keys. A stored list can have
+		// gaps -- nothing renumbers it when a category is emptied -- and the
+		// column update below adds one to every row, so the keys have to move by
+		// exactly one each for the two to still agree.
+		$shifted = array( '' );
+		foreach ( $categories as $index => $category ) {
+			$shifted[ (int) $index + 1 ] = $category;
+		}
+
+		WP_DownloadManager_Options::set( 'categories', $shifted );
+		WP_DownloadManager_Options::flush();
+
+		// Negative numbers are not category ids and never were; leaving them
+		// where they are keeps a hand-written row out of slot 0, which now means
+		// something.
+		$wpdb->query( "UPDATE {$wpdb->downloads} SET file_category = file_category + 1 WHERE file_category >= 0" );
 	}
 
 	/**
