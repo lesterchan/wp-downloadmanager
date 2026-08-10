@@ -256,12 +256,13 @@ class WP_DownloadManager_List_Table extends WP_List_Table {
 				return esc_html( WP_DownloadManager_File::permission_label( $item->file_permission ) );
 
 			case 'file_category':
-				$name = WP_DownloadManager_Display::category_name(
-					(array) WP_DownloadManager_Options::get( 'categories', array() ),
-					$item->file_category
+				return esc_html(
+					WP_DownloadManager_Display::category_name(
+						(array) WP_DownloadManager_Options::get( 'categories', array() ),
+						$item->file_category,
+						__( 'N/A', 'wp-downloadmanager' )
+					)
 				);
-
-				return esc_html( '' !== $name ? $name : __( 'N/A', 'wp-downloadmanager' ) );
 
 			case 'file_date':
 				return esc_html(

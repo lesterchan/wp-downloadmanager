@@ -173,6 +173,7 @@ wrapper and leave `%FILE_ICON%` on its own.
 ## Changelog
 ### 2.0.1
 * FIXED: A fresh install shipped one category, General, in the numbered slot that means "no category", so the Add File dropdown offered it as category 0 and every file you added was filed there. The first time you saved the Settings tab — for any reason at all — the category list was renumbered and General became category 1, while your files stayed at 0 and stopped showing a category on the downloads page, in the feed, in the widget and on Manage Downloads. Nothing warned you, and re-picking the category on every file was the only way back. The list now ships with that slot empty, and updating moves your categories up one and moves every file with them, so a file filed under General still reads General
+* FIXED: Manage Downloads read "N/A" for a file in no category, or in one you had deleted, while the Delete File confirmation for that same file left the category blank — one click apart, on the row you had just clicked
 
 ### 2.0.0
 * FIXED: `%FILE%` and `%FILE_DOWNLOAD_URL%` were substituted into the templates unescaped, where `%FILE_NAME%` and `%FILE_DESCRIPTION%` are filtered. Those two are the fields a site owner is meant to put markup in; a file path and a URL are not. The stock templates put the URL in a double-quoted attribute, which is the only reason it never bit — a template of your own using single quotes had nothing behind it

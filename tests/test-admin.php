@@ -470,6 +470,42 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		$this->assertStringContainsString( 'name="unlinkfile"', $html, 'The delete screen offers to remove the file from disk as well as the row.' );
 	}
 
+	/**
+	 * The list table has always labelled a file in no category "N/A", and the
+	 * Delete File screen showed the same file a blank cell -- one click apart, on
+	 * the row the owner had just clicked. Both read one lookup, so both are asked
+	 * here rather than the lookup being asked twice.
+	 */
+	public function test_the_delete_screen_labels_no_category_as_the_list_does() {
+		$this->become_download_admin();
+
+		$loose = $this->insert_file(
+			array(
+				'file_name'     => 'Loose File',
+				'file_category' => 0,
+			)
+		);
+
+		$table = new WP_DownloadManager_List_Table();
+		$cell  = $table->column_default( (object) array( 'file_category' => 0 ), 'file_category' );
+
+		$html = $this->render(
+			array( 'WP_DownloadManager_Admin', 'render_downloads' ),
+			array(
+				'action' => 'delete',
+				'id'     => $loose,
+			)
+		);
+
+		$this->assertSame( 'N/A', $cell, 'the list table labels a file that is in no category' );
+		$this->assertMatchesRegularExpression(
+			'#<th[^>]*>File Category</th>\s*<td>N/A</td>#',
+			$html,
+			'and the delete screen gives that same file the same label'
+		);
+		$this->assertScreenIsClean( $html );
+	}
+
 	public function test_the_delete_screen_does_not_offer_to_unlink_a_remote_file() {
 		$this->become_download_admin();
 

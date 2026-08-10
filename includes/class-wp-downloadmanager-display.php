@@ -28,20 +28,28 @@ class WP_DownloadManager_Display {
 	 *
 	 * Deleting a category on the settings screen leaves files pointing at an ID
 	 * that is no longer in the list, which used to be an "Undefined array key"
-	 * warning on every affected row.
+	 * warning on every affected row. Category 0 arrives here too and reads back
+	 * blank by design: it is the slot that means "in no category".
 	 *
-	 * @param array $categories Category list.
-	 * @param int   $cat_id     Category ID.
+	 * What to show for either of those is the caller's to decide, which is why
+	 * the fallback is a parameter rather than a fixed "N/A". A per-file admin row
+	 * wants that label; the listing page's own heading does not, because 0 there
+	 * means every category and the heading would read "Downloads: N/A"; and
+	 * WP-CLI's csv, json and yaml output wants the empty string, which cannot be
+	 * mistaken for a category somebody named N/A.
+	 *
+	 * @param array  $categories Category list.
+	 * @param int    $cat_id     Category ID.
+	 * @param string $fallback   Returned when the ID has no name. Default ''.
 	 * @return string
 	 */
-	public static function category_name( $categories, $cat_id ) {
+	public static function category_name( $categories, $cat_id, $fallback = '' ) {
 		$cat_id = (int) $cat_id;
+		$name   = is_array( $categories ) && isset( $categories[ $cat_id ] )
+			? stripslashes( $categories[ $cat_id ] )
+			: '';
 
-		if ( ! is_array( $categories ) || ! isset( $categories[ $cat_id ] ) ) {
-			return '';
-		}
-
-		return stripslashes( $categories[ $cat_id ] );
+		return '' !== $name ? $name : $fallback;
 	}
 
 	/**

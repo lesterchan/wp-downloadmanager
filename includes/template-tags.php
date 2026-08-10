@@ -323,11 +323,12 @@ if ( ! function_exists( 'download_category_name' ) ) {
 	/**
 	 * Look up a category name by ID.
 	 *
-	 * @param array $categories Category list.
-	 * @param int   $cat_id     Category ID.
+	 * @param array  $categories Category list.
+	 * @param int    $cat_id     Category ID.
+	 * @param string $fallback   Returned when the ID has no name. Default ''.
 	 * @return string
 	 */
-	function download_category_name( $categories, $cat_id ) {
-		return WP_DownloadManager_Display::category_name( $categories, $cat_id );
+	function download_category_name( $categories, $cat_id, $fallback = '' ) {
+		return WP_DownloadManager_Display::category_name( $categories, $cat_id, $fallback );
 	}
 }

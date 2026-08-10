@@ -137,6 +137,26 @@ class WP_DownloadManager_Display_Test extends WP_DownloadManager_TestCase {
 		$this->assertSame( '', WP_DownloadManager_Display::category_name( array( '', 'General' ), 9 ), 'a file pointing at a deleted category used to be an undefined-key warning' );
 	}
 
+	public function test_a_category_name_falls_back_for_a_deleted_category() {
+		$this->assertSame( 'N/A', WP_DownloadManager_Display::category_name( array( '', 'General' ), 9, 'N/A' ), 'a caller that has a label for "no name" is given it' );
+	}
+
+	public function test_a_category_name_falls_back_for_the_reserved_slot() {
+		$this->assertSame( 'N/A', WP_DownloadManager_Display::category_name( array( '', 'General' ), 0, 'N/A' ), 'category 0 is the slot that means "in no category", and reads back blank rather than absent' );
+	}
+
+	public function test_a_category_name_is_not_replaced_by_the_fallback() {
+		$this->assertSame( 'General', WP_DownloadManager_Display::category_name( array( '', 'General' ), 1, 'N/A' ), 'a category that has a name keeps it' );
+	}
+
+	public function test_a_category_named_zero_is_not_mistaken_for_no_name() {
+		$this->assertSame( '0', WP_DownloadManager_Display::category_name( array( '', '0' ), 1, 'N/A' ), 'the blank test is a string comparison, so a category named 0 is not swallowed by it' );
+	}
+
+	public function test_the_category_name_template_tag_forwards_the_whole_signature() {
+		$this->assertSame( 'N/A', download_category_name( array( '', 'General' ), 0, 'N/A' ), 'a forwarder that quietly drops the fallback would leave a theme with no way to label a file in no category' );
+	}
+
 	public function test_a_category_name_is_unslashed() {
 		$this->assertSame( "O'Reilly", WP_DownloadManager_Display::category_name( array( '', "O\\'Reilly" ), 1 ), 'A slashed category name is unslashed before it is rendered.' );
 	}

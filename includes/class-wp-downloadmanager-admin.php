@@ -382,7 +382,10 @@ class WP_DownloadManager_Admin {
 		$rows       = array(
 			__( 'File', 'wp-downloadmanager' )          => stripslashes( $file->file ),
 			__( 'File Name', 'wp-downloadmanager' )     => wp_strip_all_tags( stripslashes( $file->file_name ) ),
-			__( 'File Category', 'wp-downloadmanager' ) => WP_DownloadManager_Display::category_name( $categories, $file->file_category ),
+			// Same label the Downloads list table gives this file, so the two
+			// screens do not disagree one click apart about a file in no
+			// category.
+			__( 'File Category', 'wp-downloadmanager' ) => WP_DownloadManager_Display::category_name( $categories, $file->file_category, __( 'N/A', 'wp-downloadmanager' ) ),
 			__( 'File Size', 'wp-downloadmanager' )     => WP_DownloadManager_File::format_size( $file->file_size ),
 			__( 'File Hits', 'wp-downloadmanager' )     => number_format_i18n( (int) $file->file_hits ),
 			__( 'Allowed To Download', 'wp-downloadmanager' ) => WP_DownloadManager_File::permission_label( $file->file_permission ),
