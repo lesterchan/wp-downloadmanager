@@ -73,6 +73,13 @@ locally and loses the exception.
   same breath** — the list and the rows only mean anything together. It writes the
   option before the table on purpose, so a request dying between the two cannot
   come back and add a second 1 to every row.
+* **A file in no category reads "N/A" on the two admin screens and blank in the
+  feed, the listing heading and WP-CLI's csv/json/yaml — deliberately.**
+  `category_name()`'s no-name fallback is a parameter so the choice sits at each
+  call site; its docblock names the three callers that decline it and why. Do
+  not "fix" the blanks to N/A, and do not hardcode the fallback: the agreement
+  test asks both admin surfaces about one uncategorised file, which is what
+  stops the screens drifting apart again one click from each other.
 * **`merge()` fills in a stored array from the defaults, and must not do it to
   `categories`.** The keys of that list are data — element 3 is category 3, which
   is what a row's `file_category` points at — so a stored list shorter than the
