@@ -257,10 +257,34 @@ class WP_DownloadManager_Settings {
 	/**
 	 * One category per line, index 0 reserved for the "all" label.
 	 *
-	 * @param string $raw Newline separated category names.
+	 * Two shapes reach this, and only one of them is a textarea. The form posts a
+	 * single string, and that is where the numbering is built: index 0 is left
+	 * empty because a file whose file_category is 0 is in no category, and the
+	 * listing page prints that slot as the totals label instead.
+	 *
+	 * The stored list arrives as an array whenever something writes the whole row
+	 * rather than posting the form -- an upgrade re-sanitising what it just read,
+	 * WP-CLI, or core running this callback from add_option() and update_option().
+	 * Handing an array to a string sanitiser yields an empty string, so every one
+	 * of those writes used to collapse the whole list to a single blank entry and
+	 * leave every file reading "N/A". It is kept key for key instead: those keys
+	 * are what each file's file_category points at, and renumbering them moves
+	 * files into categories nobody chose.
+	 *
+	 * @param string|array $raw Newline separated category names, or the stored list.
 	 * @return array
 	 */
 	protected static function sanitize_categories( $raw ) {
+		if ( is_array( $raw ) ) {
+			$categories = array();
+
+			foreach ( $raw as $index => $category ) {
+				$categories[ $index ] = is_scalar( $category ) ? sanitize_text_field( (string) $category ) : '';
+			}
+
+			return $categories;
+		}
+
 		$categories = array( '' );
 
 		foreach ( explode( "\n", sanitize_textarea_field( $raw ) ) as $category ) {

@@ -226,10 +226,15 @@ things about it are worth knowing before changing either side:
   Seed the *shipped* defaults for the same reason.
 * **`wp-downloadmanager.php` calls `Install::init()` before `Settings::init()`**,
   both hooking `admin_init` at the same priority, so the migration runs before
-  `register_setting()` attaches its `default` to the row. Swap those two lines
-  and an install whose migrated settings equal the defaults writes no row at all
-  while its old rows are deleted anyway. The stock-settings test is what would
-  catch that.
+  `register_setting()` touches the row. That order used to be load-bearing twice
+  over, and neither dependency was asserted anywhere. `save()` now adds the row
+  outright when a bare `get_option()` says it is absent, so an install whose
+  migrated settings equal the defaults no longer writes nothing while its old
+  rows are deleted anyway; and `sanitize_categories()` now accepts the stored
+  array as well as the textarea's string, so the sanitize pass core runs on every
+  `add_option()`/`update_option()` no longer collapses the category list to one
+  blank entry. Both are pinned by tests that write through the door with
+  `register_setting()` already in place.
 
 ## Tests
 

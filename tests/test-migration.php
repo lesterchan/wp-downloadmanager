@@ -95,20 +95,22 @@ class WP_DownloadManager_Migration_Test extends WP_DownloadManager_TestCase {
 	/**
 	 * A site that configured nothing still comes out with a settings row.
 	 *
-	 * The fixture above is customised in every field, which is right for "did
-	 * the values carry across" and cannot see §7.6.1: a result differing from
-	 * the defaults is written whatever happened on the way in.
+	 * The fixture above is customised in every field, which is right for "did the
+	 * values carry across" but cannot see the case that matters here: a result
+	 * differing from the defaults is written whatever happened on the way in.
 	 *
-	 * This seeds the stock values instead, and registers the setting first so
-	 * the default_option_wp_downloadmanager_options filter is live while save()
-	 * runs. An absent row then reads back as the defaults, and update_option()
-	 * returns early on a value identical to the one it just read -- writing
+	 * This seeds the stock values instead, and registers the setting first so the
+	 * default_option_wp_downloadmanager_options filter is live while save() runs.
+	 * An absent row then reads back as the defaults, and update_option() on its
+	 * own returns early on a value identical to the one it just read -- writing
 	 * nothing, while the legacy rows are deleted a few lines later.
 	 *
-	 * WP-DownloadManager survives it because update_option() sanitises before it
-	 * compares and the sanitiser alters the defaults, so core reaches its
-	 * add_option() fallback. That safeguard is real and accidental, and this is
-	 * what stops it being removed without anyone noticing.
+	 * What stops that is the explicit add_option() in save(). It used to be an
+	 * accident instead: the sanitiser could not read a stored category list, so
+	 * it altered the defaults on the way past and core found a difference to
+	 * write. Both are pinned at the door as well, in test-options.php and
+	 * test-settings.php, so this test is the end-to-end pass rather than the only
+	 * thing standing between the migration and a silently absent row.
 	 *
 	 * Asserted on the raw row, because get() merges over the defaults and cannot
 	 * tell a write that happened from one that did not.

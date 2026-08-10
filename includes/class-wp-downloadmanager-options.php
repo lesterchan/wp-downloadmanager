@@ -256,11 +256,37 @@ class WP_DownloadManager_Options {
 	/**
 	 * Replace the whole option.
 	 *
+	 * `update_option()` declines to write a value equal to the one `get_option()`
+	 * would return, and `register_setting()` is passed a `default`, which installs
+	 * a `default_option_wp_downloadmanager_options` filter answering with the
+	 * shipped defaults for a row that does not exist. Core's `add_option()`
+	 * fallback sits immediately below that comparison and is unreachable once the
+	 * two compare equal. So a migration whose result happens to equal the
+	 * defaults -- the commonest install there is -- writes nothing at all, the row
+	 * is never created, and the markers are stamped complete either way, so the
+	 * upgrade can never run again while the nineteen old rows have already been
+	 * deleted.
+	 *
+	 * It was held off by nothing but the order two callbacks were added in:
+	 * `Install::init()` runs before `Settings::init()` and both hook `admin_init`
+	 * at the same priority, so the migration went first. Swapping those two lines,
+	 * or any third-party `default_option_*` filter, reaches it silently.
+	 *
+	 * Passing an explicit default to `get_option()` defeats the registered one --
+	 * `filter_default_option()` returns early when a default was passed -- which
+	 * is what lets an absent row be told apart from a defaulted one and added
+	 * outright. `add_option()` runs the sanitize callback exactly as
+	 * `update_option()` does, so nothing else about the stored value changes.
+	 *
 	 * @param array $values Full option array.
 	 * @return bool
 	 */
 	public static function save( $values ) {
 		self::$cache = self::merge( self::defaults(), (array) $values );
+
+		if ( false === get_option( self::OPTION, false ) ) {
+			return add_option( self::OPTION, self::$cache );
+		}
 
 		return update_option( self::OPTION, self::$cache );
 	}

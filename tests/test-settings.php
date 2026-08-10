@@ -278,6 +278,26 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 		$this->assertSame( 9, $saved['rss']['limit'], 'And the feed limit.' );
 	}
 
+	/**
+	 * The stored category list survives the sanitiser with its numbering.
+	 *
+	 * The sanitiser is register_setting()'s callback, so core runs it on every
+	 * add_option() and update_option() against this row as well as on the form
+	 * post -- and those hand it the stored array, not the textarea's string. A
+	 * string sanitiser answers an array with '', so the whole list collapsed to
+	 * one blank entry and every file's category read back as "N/A". The keys
+	 * matter as much as the names: file_category is an index into this list.
+	 *
+	 * @return void
+	 */
+	public function test_the_stored_category_list_survives_a_whole_row_write() {
+		$saved = WP_DownloadManager_Settings::sanitize(
+			array( 'categories' => array( '', 'Alpha', 'Beta' ) )
+		);
+
+		$this->assertSame( array( '', 'Alpha', 'Beta' ), $saved['categories'], 'the list is kept key for key when the whole row is written' );
+	}
+
 	public function test_every_offered_sort_column_survives_the_sanitizer() {
 		foreach ( WP_DownloadManager_File::sort_columns() as $column ) {
 			$saved = WP_DownloadManager_Settings::sanitize( array( 'sort' => array( 'by' => $column ) ) );
