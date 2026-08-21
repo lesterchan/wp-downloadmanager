@@ -16,8 +16,8 @@ export default [
 			'**/vendor/**',
 			'**/*.min.js',
 			// webpack's output. Minified, so every formatting rule fires on it
-			// -- hundreds of errors on one line -- and none of them is ours to
-			// fix. The sources it is built from are in src/ and are linted.
+			// -- 600-odd errors on one line -- and none of them is ours to fix.
+			// The sources it is built from are in src/ and are linted.
 			'**/build/**',
 		],
 	},
