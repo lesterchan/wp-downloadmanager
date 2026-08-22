@@ -36,9 +36,7 @@
 
 
 // Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+defined( 'ABSPATH' ) || exit;
 
 
 // WP_DOWNLOADMANAGER_VERSION is the last-run plugin version and

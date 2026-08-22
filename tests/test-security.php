@@ -671,6 +671,6 @@ class WP_DownloadManager_Security_Test extends WP_DownloadManager_TestCase {
 	public function test_uninstall_is_not_reachable_without_the_wordpress_constant() {
 		$source = file_get_contents( WP_DOWNLOADMANAGER_DIR . 'uninstall.php' );
 
-		$this->assertStringContainsString( "if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {", $source, 'The uninstaller refuses to run outside WordPress.' );
+		$this->assertStringContainsString( "defined( 'WP_UNINSTALL_PLUGIN' ) || exit;", $source, 'The uninstaller refuses to run outside WordPress.' );
 	}
 }

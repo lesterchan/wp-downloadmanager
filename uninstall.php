@@ -5,9 +5,7 @@
  * @package WP-DownloadManager
  */
 
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	exit();
-}
+defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 require_once __DIR__ . '/includes/class-wp-downloadmanager-template.php';
 require_once __DIR__ . '/includes/class-wp-downloadmanager-options.php';
