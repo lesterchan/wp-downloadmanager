@@ -14,7 +14,7 @@
 /**
  * The upgrade path from the released version.
  */
-class WP_DownloadManager_Migration_Test extends WP_DownloadManager_TestCase {
+class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 
 	/**
 	 * Put the database back the way 1.69.2 left it.
