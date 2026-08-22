@@ -51,7 +51,7 @@ obligations.
  1. Example: `[download id="2" sort_by="file_id" sort_order="asc"]`
  1. This will sort the embedded downloads by file ID in ascending order.
  1. Valid values for `sort_by` are: `file_id`, `file`, `file_name`, `file_size`, `file_date`, and `file_hits`
-1. To choose what to display within the embedded file, use `[download id="1" display="both"]` where 1 is your file id and both will display both the file name and file description, whereas name will only display the filename. Note that this will overwrite the "Download Embedded File" template you have in your Download Templates.
+1. To choose what to display within the embedded file, use `[download id="1" display="both"]` where 1 is your file id and both will display both the file name and file description, whereas name will only display the filename. Note that this will overwrite the "Download Embedded File" template you have on the Templates tab.
 1. To embed files as well as categories, use `[download id="1,2,3" category="4,5,6"]` where 1,2,3 are your file id and 4,5,6 are your category ids.
 1. If you are using Default Permalinks, the file direct download link will be `http://yoursite.com/index.php?dl_id=2`. If you are using Nice Permalinks, the file direct download link will be `http://yoursite.com/download/2/`, where yoursite.com is your WordPress URL and 2 is your file id.
 1. The direct download category link will be `http://yoursite.com/downloads/?dl_cat=3`, where yoursite.com is your WordPress URL, downloads is your Downloads Page name and 3 is your download category id.
