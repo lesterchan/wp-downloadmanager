@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 class WP_DownloadManager_Display {
 
 	/**
-	 * Hook up.
+	 * Hook registration.
 	 *
 	 * @return void
 	 */

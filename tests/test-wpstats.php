@@ -146,13 +146,13 @@ class WP_DownloadManager_WPStats_Test extends WP_DownloadManager_TestCase {
 	public function test_the_row_limit_comes_from_this_plugins_settings() {
 		WP_DownloadManager_Options::set( 'stats_most_limit', 3 );
 
-		$this->assertSame( 3, WP_DownloadManager_WPStats::limit(), 'stats_most_limit is namespaced inside this plugin\'s options' );
+		$this->assertSame( 3, WP_DownloadManager_WPStats::most_limit(), 'stats_most_limit is namespaced inside this plugin\'s options' );
 	}
 
 	public function test_a_zero_row_limit_is_lifted_to_one() {
 		WP_DownloadManager_Options::set( 'stats_most_limit', 0 );
 
-		$this->assertSame( 1, WP_DownloadManager_WPStats::limit(), 'a limit of zero would render an empty list forever' );
+		$this->assertSame( 1, WP_DownloadManager_WPStats::most_limit(), 'a limit of zero would render an empty list forever' );
 	}
 
 	public function test_the_body_reports_the_library_totals() {

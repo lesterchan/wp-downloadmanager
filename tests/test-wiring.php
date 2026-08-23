@@ -61,7 +61,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 			wp_dequeue_script( 'wp-downloadmanager-admin' );
 			wp_deregister_script( 'wp-downloadmanager-admin' );
 
-			WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $slug );
+			WP_DownloadManager_Admin::enqueue( 'downloads_page_' . $slug );
 
 			$this->assertTrue( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ), $slug . ' should load the admin script' );
 		}
@@ -71,7 +71,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		wp_dequeue_script( 'wp-downloadmanager-admin' );
 		wp_deregister_script( 'wp-downloadmanager-admin' );
 
-		WP_DownloadManager_Admin::enqueue_assets( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
+		WP_DownloadManager_Admin::enqueue( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
 
 		$this->assertTrue( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ), 'The admin script loads on the top-level screen as well as the sub-screens.' );
 	}
@@ -81,7 +81,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 			wp_dequeue_script( 'wp-downloadmanager-admin' );
 			wp_deregister_script( 'wp-downloadmanager-admin' );
 
-			WP_DownloadManager_Admin::enqueue_assets( $hook );
+			WP_DownloadManager_Admin::enqueue( $hook );
 
 			$this->assertFalse( wp_script_is( 'wp-downloadmanager-admin', 'enqueued' ), $hook . ' is not this plugin\'s screen' );
 		}
@@ -91,7 +91,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		wp_dequeue_script( 'wp-downloadmanager-admin' );
 		wp_deregister_script( 'wp-downloadmanager-admin' );
 
-		WP_DownloadManager_Admin::enqueue_assets( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
+		WP_DownloadManager_Admin::enqueue( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
 
 		$data = (string) wp_scripts()->get_data( 'wp-downloadmanager-admin', 'data' );
 
@@ -107,7 +107,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		wp_dequeue_script( 'wp-downloadmanager-quicktag' );
 		wp_deregister_script( 'wp-downloadmanager-quicktag' );
 
-		WP_DownloadManager_Admin::enqueue_assets( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
+		WP_DownloadManager_Admin::enqueue( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
 		WP_DownloadManager_Admin::quicktag();
 
 		foreach ( array( 'wp-downloadmanager-admin', 'wp-downloadmanager-quicktag' ) as $handle ) {
@@ -134,7 +134,7 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 		$GLOBALS['wp_styles'] = new WP_Styles();
 
 		foreach ( WP_DownloadManager_Admin::screens() as $slug ) {
-			WP_DownloadManager_Admin::enqueue_assets( 'downloads_page_' . $slug );
+			WP_DownloadManager_Admin::enqueue( 'downloads_page_' . $slug );
 		}
 
 		$ours = array_filter(
@@ -271,8 +271,8 @@ class WP_DownloadManager_Wiring_Test extends WP_DownloadManager_TestCase {
 	public function test_activation_creates_the_table_and_grants_the_capability() {
 		global $wpdb;
 
-		WP_DownloadManager_Install::activate();
-		WP_DownloadManager_Install::activate();
+		WP_DownloadManager_Install::install();
+		WP_DownloadManager_Install::install();
 
 		$this->assertSame( $this->table(), $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table() ) ), 'activation is idempotent' );
 		$this->assertTrue( get_role( 'administrator' )->has_cap( 'manage_downloads' ), 'Activation grants the capability to the administrator role.' );

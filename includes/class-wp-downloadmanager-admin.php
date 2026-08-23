@@ -25,7 +25,7 @@ class WP_DownloadManager_Admin {
 	 * The plugin has granted administrators manage_downloads since its first
 	 * release, which is what lets a site hand the downloads library to an editor
 	 * without handing over the whole dashboard. Settings stay on manage_options
-	 * per section 2.7; capability() is where the two are told apart.
+	 * per section 2.7; that half lives in WP_DownloadManager_Settings::capability().
 	 *
 	 * @var string
 	 */
@@ -39,35 +39,31 @@ class WP_DownloadManager_Admin {
 	const PER_PAGE = 20;
 
 	/**
-	 * The capability required to reach one of the plugin's screens.
+	 * The capability required to reach one of the plugin's data screens.
 	 *
-	 * @param string $context Screen context: 'downloads' or 'settings'.
+	 * @param string $context Screen context: 'downloads'.
 	 * @return string
 	 */
 	public static function capability( $context = 'downloads' ) {
 		/**
-		 * Filters the capability a WP-DownloadManager screen requires.
+		 * Filters the capability required to reach a WP-DownloadManager screen.
 		 *
 		 * @since 2.0.0
 		 *
-		 * @param string $capability Capability name.
+		 * @param string $capability The required capability.
 		 * @param string $context    Screen context: 'downloads' or 'settings'.
 		 */
-		return apply_filters(
-			'wp_downloadmanager_capability',
-			'settings' === $context ? 'manage_options' : self::CAPABILITY,
-			$context
-		);
+		return (string) apply_filters( 'wp_downloadmanager_capability', self::CAPABILITY, $context );
 	}
 
 	/**
-	 * Hook up.
+	 * Hook registration.
 	 *
 	 * @return void
 	 */
 	public static function init() {
-		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
-		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		add_action( 'admin_menu', array( __CLASS__, 'add_page' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
 		add_action( 'init', array( __CLASS__, 'editor_buttons' ) );
 		add_filter( 'set-screen-option', array( __CLASS__, 'save_screen_option' ), 10, 3 );
 
@@ -140,7 +136,7 @@ class WP_DownloadManager_Admin {
 	 *
 	 * @return void
 	 */
-	public static function menu() {
+	public static function add_page() {
 		$capability = self::capability();
 
 		add_menu_page(
@@ -180,7 +176,7 @@ class WP_DownloadManager_Admin {
 			self::PAGE,
 			__( 'Settings', 'wp-downloadmanager' ),
 			__( 'Settings', 'wp-downloadmanager' ),
-			self::capability( 'settings' ),
+			WP_DownloadManager_Settings::capability(),
 			self::screens()['settings'],
 			array( 'WP_DownloadManager_Settings', 'render_page' )
 		);
@@ -1119,7 +1115,7 @@ class WP_DownloadManager_Admin {
 	 * @param string $hook_suffix Current admin page.
 	 * @return void
 	 */
-	public static function enqueue_assets( $hook_suffix ) {
+	public static function enqueue( $hook_suffix ) {
 		if ( ! self::is_plugin_screen( $hook_suffix ) ) {
 			return;
 		}

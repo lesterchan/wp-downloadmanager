@@ -172,6 +172,9 @@ wrapper and leave `%FILE_ICON%` on its own.
 
 ## Changelog
 ### 2.0.1
+* NEW: A Settings link on the plugin's row on the Plugins screen
+* CHANGED: A stylesheet named `wp-downloadmanager.css` in the parent theme now overrides the plugin's copy too; a child theme's copy still wins over both
+* CHANGED: The update migration runs on any request rather than only when an admin page loads, so a site updated by an automatic background update no longer serves its front end from unmigrated settings until somebody logs in
 * FIXED: A fresh install shipped one category, General, in the numbered slot that means "no category", so the Add File dropdown offered it as category 0 and every file you added was filed there. The first time you saved the Settings tab — for any reason at all — the category list was renumbered and General became category 1, while your files stayed at 0 and stopped showing a category on the downloads page, in the feed, in the widget and on Manage Downloads. Nothing warned you, and re-picking the category on every file was the only way back. The list now ships with that slot empty, and updating moves your categories up one and moves every file with them, so a file filed under General still reads General
 * FIXED: Manage Downloads read "N/A" for a file in no category, or in one you had deleted, while the Delete File confirmation for that same file left the category blank — one click apart, on the row you had just clicked
 

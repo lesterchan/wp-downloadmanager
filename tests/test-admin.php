@@ -52,7 +52,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		$this->become_download_admin();
 		set_current_screen( 'dashboard' );
 
-		WP_DownloadManager_Admin::menu();
+		WP_DownloadManager_Admin::add_page();
 
 		$slugs = wp_list_pluck( $menu, 2 );
 
@@ -67,7 +67,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		$this->become_download_admin();
 		set_current_screen( 'dashboard' );
 
-		WP_DownloadManager_Admin::menu();
+		WP_DownloadManager_Admin::add_page();
 
 		$slugs = wp_list_pluck( $submenu[ WP_DownloadManager_Admin::PAGE ], 2 );
 
@@ -86,7 +86,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		$this->become_download_admin();
 		set_current_screen( 'dashboard' );
 
-		WP_DownloadManager_Admin::menu();
+		WP_DownloadManager_Admin::add_page();
 
 		$settings = array_filter(
 			wp_list_pluck( $submenu[ WP_DownloadManager_Admin::PAGE ], 2 ),
@@ -104,7 +104,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		$this->become_download_admin();
 		set_current_screen( 'dashboard' );
 
-		WP_DownloadManager_Admin::menu();
+		WP_DownloadManager_Admin::add_page();
 
 		$entries = $submenu[ WP_DownloadManager_Admin::PAGE ];
 
@@ -120,7 +120,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		$this->become_download_admin();
 		set_current_screen( 'dashboard' );
 
-		WP_DownloadManager_Admin::menu();
+		WP_DownloadManager_Admin::add_page();
 
 		$entries = $submenu[ WP_DownloadManager_Admin::PAGE ];
 
@@ -131,7 +131,7 @@ class WP_DownloadManager_Admin_Test extends WP_DownloadManager_TestCase {
 		add_filter( 'wp_downloadmanager_capability', fn( $cap, $context ) => 'settings' === $context ? 'edit_theme_options' : 'edit_posts', 10, 2 );
 
 		$this->assertSame( 'edit_posts', WP_DownloadManager_Admin::capability(), 'A filter can replace the data capability.' );
-		$this->assertSame( 'edit_theme_options', WP_DownloadManager_Admin::capability( 'settings' ), 'And the settings capability, which is asked for separately.' );
+		$this->assertSame( 'edit_theme_options', WP_DownloadManager_Settings::capability(), 'And the settings capability, which is asked for separately.' );
 	}
 
 	public function test_a_screen_url_points_at_the_menu_slug() {

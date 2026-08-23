@@ -94,7 +94,7 @@ class WP_DownloadManager_Metadata_Test extends Plugin_Metadata_TestCase {
 	 * @return void
 	 */
 	protected function write_version_row() {
-		WP_DownloadManager_Options::save_markers( $this->expected_version(), WP_DOWNLOADMANAGER_DB_VERSION );
+		WP_DownloadManager_Options::update_markers();
 	}
 
 	/**
@@ -126,7 +126,7 @@ class WP_DownloadManager_Metadata_Test extends Plugin_Metadata_TestCase {
 	 */
 	protected function register_plugin_assets() {
 		WP_DownloadManager_Admin::quicktag();
-		WP_DownloadManager_Admin::enqueue_assets( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
+		WP_DownloadManager_Admin::enqueue( 'toplevel_page_' . WP_DownloadManager_Admin::PAGE );
 		WP_DownloadManager::enqueue_styles();
 	}
 

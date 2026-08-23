@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 class WP_DownloadManager_WPStats {
 
 	/**
-	 * Hook up.
+	 * Hook registration.
 	 *
 	 * @return void
 	 */
@@ -83,7 +83,7 @@ class WP_DownloadManager_WPStats {
 	 *
 	 * @return int
 	 */
-	public static function limit() {
+	public static function most_limit() {
 		return max( 1, (int) WP_DownloadManager_Options::get( 'stats_most_limit', 10 ) );
 	}
 
@@ -143,7 +143,7 @@ class WP_DownloadManager_WPStats {
 	 * @return void
 	 */
 	protected static function render_recent() {
-		$limit = self::limit();
+		$limit = self::most_limit();
 
 		printf(
 			'<p><strong>%s</strong></p>' . "\n",
@@ -167,7 +167,7 @@ class WP_DownloadManager_WPStats {
 	 * @return void
 	 */
 	protected static function render_most() {
-		$limit = self::limit();
+		$limit = self::most_limit();
 
 		printf(
 			'<p><strong>%s</strong></p>' . "\n",

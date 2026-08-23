@@ -67,12 +67,46 @@ class WP_DownloadManager_Settings {
 	const SECTION_TEMPLATES = 'wp_downloadmanager_templates';
 
 	/**
-	 * Hook up.
+	 * Hook registration.
 	 *
 	 * @return void
 	 */
 	public static function init() {
 		add_action( 'admin_init', array( __CLASS__, 'register' ) );
+		add_filter(
+			'plugin_action_links_' . plugin_basename( WP_DOWNLOADMANAGER_MAIN_FILE ),
+			array( __CLASS__, 'action_links' )
+		);
+	}
+
+	/**
+	 * The capability the settings screen is gated on.
+	 *
+	 * @param string $context Screen context.
+	 * @return string
+	 */
+	public static function capability( $context = 'settings' ) {
+		/** This filter is documented in includes/class-wp-downloadmanager-admin.php */
+		return (string) apply_filters( 'wp_downloadmanager_capability', 'manage_options', $context );
+	}
+
+	/**
+	 * Add a Settings link on the Plugins screen row.
+	 *
+	 * @param string[] $links Existing action links.
+	 * @return string[]
+	 */
+	public static function action_links( $links ) {
+		array_unshift(
+			$links,
+			sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( WP_DownloadManager_Admin::screen_url( 'settings' ) ),
+				esc_html__( 'Settings', 'wp-downloadmanager' )
+			)
+		);
+
+		return $links;
 	}
 
 	/**
@@ -900,7 +934,7 @@ class WP_DownloadManager_Settings {
 	 * @return void
 	 */
 	public static function render_page() {
-		if ( ! current_user_can( WP_DownloadManager_Admin::capability( 'settings' ) ) ) {
+		if ( ! current_user_can( self::capability() ) ) {
 			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'wp-downloadmanager' ), '', array( 'response' => 403 ) );
 		}
 
