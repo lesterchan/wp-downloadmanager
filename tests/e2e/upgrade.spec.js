@@ -3,8 +3,9 @@
  *
  * Activation does not fire when a plugin is merely updated -- a site that
  * updates from the Plugins screen never calls activate() -- so maybe_upgrade()
- * also hangs off admin_init. That is the hook every real upgrade goes through,
- * and loading an admin page in a browser is the only way to reach it.
+ * also hangs off init, at priority 5. That hook fires on every request an
+ * upgraded site serves, and loading a page in a browser is how a real site
+ * reaches it.
  *
  * Nineteen `download_*` rows fold into one here, plus the two WP-Stats rows this
  * plugin shared with six siblings, so the questions this file asks are: did
@@ -17,13 +18,12 @@
  * read, deleted and never written. Asking the plugin what it sees is how that
  * hides; asking the database is how it does not.
  *
- * One of these tests is about hook order and says so where it stands.
- * wp-downloadmanager.php calls Install::init() before Settings::init(), both
- * hooking admin_init at the same priority, so the migration runs before
- * register_setting() attaches a `default` to the row. Swap those two lines and
- * an install whose migrated settings equal the defaults writes no row at all
- * while its old rows are deleted anyway. Nothing else in the collection would
- * notice; this does.
+ * One of these tests is about hook order and says so where it stands. The
+ * migration runs on init at priority 5 and register_setting() on admin_init,
+ * so the migration runs before register_setting() attaches a `default` to the
+ * row. Move the migration after that registration and an install whose
+ * migrated settings equal the defaults writes no row at all while its old rows
+ * are deleted anyway. Nothing else in the collection would notice; this does.
  */
 
 const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
@@ -102,14 +102,17 @@ test.describe( 'The pre-2.0.0 upgrade', () => {
 	test( 'the scattered rows fold into one, every old row goes, and the markers are stamped', async ( {
 		page,
 	} ) => {
-		installLegacyRows( legacyInstall() );
+		const seeded = installLegacyRows( legacyInstall() );
 
 		// The fixture really is a pre-2.0.0 install: old rows present, new ones
 		// absent. Without this the assertions below could be describing a site
 		// that was already migrated, and would pass with the fold-in deleted.
-		expect( survivingLegacyRows().length ).toBeGreaterThan( 0 );
-		expect( rawOptions() ).toBe( false );
-		expect( versionRow() ).toBe( false );
+		// Asserted from what the seeding itself handed back, because any later
+		// wp eval would boot WordPress and perform the upgrade before the
+		// browser gets its turn.
+		expect( seeded.legacy.length ).toBeGreaterThan( 0 );
+		expect( seeded.options ).toBe( false );
+		expect( seeded.version ).toBe( false );
 
 		await page.goto( DASHBOARD_URL );
 
@@ -156,13 +159,12 @@ test.describe( 'The pre-2.0.0 upgrade', () => {
 		// one shape where a skipped write leaves no trace -- and the shape every
 		// customised fixture in this file is blind to.
 		//
-		// This is also the test that pins the hook order in
-		// wp-downloadmanager.php. Install::init() is called before
-		// Settings::init(), so the migration runs before register_setting()
+		// This is also the test that pins the hook order: the migration runs
+		// on init at priority 5, before register_setting() on admin_init
 		// attaches its `default` to this row; with that filter live, an absent
 		// row reads back as the defaults, update_option() finds nothing to
 		// change and writes nothing, and the legacy rows are deleted anyway.
-		installLegacyRows( {
+		const seeded = installLegacyRows( {
 			download_page_url: defaults.page_url,
 			download_method: defaults.method,
 			download_nice_permalink: defaults.nice_permalink,
@@ -177,7 +179,7 @@ test.describe( 'The pre-2.0.0 upgrade', () => {
 			download_db_version: '1.69.1',
 		} );
 
-		expect( rawOptions() ).toBe( false );
+		expect( seeded.options ).toBe( false );
 
 		await page.goto( DASHBOARD_URL );
 
@@ -246,22 +248,14 @@ test.describe( 'The pre-2.0.0 upgrade', () => {
 
 		delete legacy.stats_mostlimit;
 
-		installLegacyRows( legacy );
-
-		const data = Buffer.from(
-			JSON.stringify( {
-				...defaultOptions(),
-				page_url: 'https://example.com/new',
-				stats_most_limit: 3,
-			} ),
-			'utf8',
-		).toString( 'base64' );
-
-		wpEval(
-			`update_option( 'wp_downloadmanager_options', json_decode( base64_decode( '${ data }' ), true ) );
-			WP_DownloadManager_Options::flush();
-			echo '<<<done>>>';`,
-		);
+		// The new row rides along in the seeding call itself: a separate wp eval
+		// after it would boot WordPress and run the migration before the row was
+		// written, and the browser would then find nothing left to do.
+		installLegacyRows( legacy, {
+			...defaultOptions(),
+			page_url: 'https://example.com/new',
+			stats_most_limit: 3,
+		} );
 
 		await page.goto( DASHBOARD_URL );
 
@@ -314,12 +308,16 @@ test.describe( 'The pre-2.0.0 upgrade', () => {
 			WP_DownloadManager_Options::flush();
 			echo '<<<done>>>';`,
 		);
-		setVersionRow( { plugin: '2.0.0', db: '3' } );
 
 		const name = uniqueName( 'Filed under slot zero' );
 		const ids = seedDownloads( {
 			one: { file: 'e2e-slot-zero.txt', name, category: 0 },
 		} );
+
+		// Stamped last: the moment the markers say 2.0.0, the next WordPress
+		// boot -- wp eval or browser -- performs the upgrade, and the browser
+		// is the one that should.
+		setVersionRow( { plugin: '2.0.0', db: '3' } );
 
 		await page.goto( DASHBOARD_URL );
 

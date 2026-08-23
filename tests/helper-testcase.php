@@ -69,7 +69,7 @@ abstract class WP_DownloadManager_TestCase extends WP_UnitTestCase {
 		$defaults['categories'] = array( '', 'General', 'Software' );
 
 		WP_DownloadManager_Options::save( $defaults );
-		WP_DownloadManager_Options::save_markers( WP_DOWNLOADMANAGER_VERSION, WP_DOWNLOADMANAGER_DB_VERSION );
+		WP_DownloadManager_Options::update_markers();
 	}
 
 	/**

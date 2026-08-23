@@ -87,8 +87,8 @@ class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 	 * @return void
 	 */
 	protected function migrate() {
-		WP_DownloadManager_Options::migrate_from_legacy_rows();
-		WP_DownloadManager_Options::save_markers( WP_DOWNLOADMANAGER_VERSION, WP_DOWNLOADMANAGER_DB_VERSION );
+		WP_DownloadManager_Options::migrate_legacy_rows();
+		WP_DownloadManager_Options::update_markers();
 		WP_DownloadManager_Options::flush();
 	}
 
@@ -384,7 +384,13 @@ class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 
 	public function test_the_upgrade_re_sanitises_settings_when_only_the_plugin_marker_is_behind() {
 		WP_DownloadManager_Options::save( array( 'sort' => array( 'by' => 'DROP TABLE' ) ) );
-		WP_DownloadManager_Options::save_markers( '1.0.0', WP_DOWNLOADMANAGER_DB_VERSION );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '1.0.0',
+				'db'     => WP_DOWNLOADMANAGER_DB_VERSION,
+			)
+		);
 
 		WP_DownloadManager_Install::upgrade();
 		WP_DownloadManager_Options::flush();
@@ -420,7 +426,13 @@ class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 	 */
 	public function test_the_upgrade_moves_a_category_out_of_slot_zero_and_takes_its_files_with_it() {
 		WP_DownloadManager_Options::save( array( 'categories' => array( 'General', 'Manuals' ) ) );
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
 
 		$general = $this->insert_file(
 			array(
@@ -488,7 +500,13 @@ class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 	 */
 	public function test_a_list_that_already_reserves_slot_zero_is_left_alone() {
 		WP_DownloadManager_Options::save( array( 'categories' => array( '', 'Alpha', 'Beta' ) ) );
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
 
 		$before = $this->fetch_file( $this->ids['public'] )->file_category;
 
@@ -517,7 +535,13 @@ class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 				),
 			)
 		);
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
 
 		$file = $this->insert_file( array( 'file_category' => 2 ) );
 
@@ -540,7 +564,13 @@ class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 	 */
 	public function test_the_shift_runs_exactly_once() {
 		WP_DownloadManager_Options::save( array( 'categories' => array( 'General', 'Manuals' ) ) );
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
 
 		$file = $this->insert_file( array( 'file_category' => 1 ) );
 
@@ -551,7 +581,13 @@ class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 
 		// Put the markers back where an upgrade that never recorded itself would
 		// leave them, which is the only way to reach the step a second time.
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
 
 		WP_DownloadManager_Install::upgrade();
 		WP_DownloadManager_Options::flush();
@@ -593,7 +629,7 @@ class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 
 	public function test_the_upgrade_does_nothing_when_both_markers_are_current() {
 		WP_DownloadManager_Options::save( array( 'page_url' => 'https://example.com/untouched' ) );
-		WP_DownloadManager_Options::save_markers( WP_DOWNLOADMANAGER_VERSION, WP_DOWNLOADMANAGER_DB_VERSION );
+		WP_DownloadManager_Options::update_markers();
 
 		WP_DownloadManager_Install::upgrade();
 		WP_DownloadManager_Options::flush();

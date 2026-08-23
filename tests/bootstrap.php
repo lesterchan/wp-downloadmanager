@@ -30,7 +30,7 @@ function _wp_downloadmanager_manually_load_plugin() {
 
 	// register_activation_hook() never fires in the test environment, so the
 	// table, the capability and the option rows have to be created by hand.
-	WP_DownloadManager_Install::activate();
+	WP_DownloadManager_Install::install();
 }
 tests_add_filter( 'muplugins_loaded', '_wp_downloadmanager_manually_load_plugin' );
 

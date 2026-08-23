@@ -27,7 +27,7 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 	 * Put the table back so the next test has something to truncate.
 	 */
 	public function tear_down() {
-		WP_DownloadManager_Install::activate();
+		WP_DownloadManager_Install::install();
 
 		parent::tear_down();
 	}
@@ -41,7 +41,13 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_the_marker_row_is_removed() {
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
 
 		$this->uninstall();
 
@@ -84,7 +90,13 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 		global $wpdb;
 
 		WP_DownloadManager_Options::save( WP_DownloadManager_Options::defaults() );
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
 
 		$this->uninstall();
 

@@ -236,7 +236,7 @@ the front-end queries.
 
 ## Migrations, and why they are tested through a browser
 
-`maybe_upgrade()` hangs off `admin_init` as well as activation, because
+`maybe_upgrade()` hangs off `init` (priority 5) as well as activation, because
 activation hooks do not fire on a plugin update — the usual reason a migration
 never runs at all. `tests/e2e/upgrade.spec.js` drives that path, and three
 things about it are worth knowing before changing either side:
@@ -250,9 +250,9 @@ things about it are worth knowing before changing either side:
   over the defaults, so it cannot tell a written row from an absent one — which
   is the state a migration that read, deleted and never wrote leaves behind.
   Seed the *shipped* defaults for the same reason.
-* **`wp-downloadmanager.php` calls `Install::init()` before `Settings::init()`**,
-  both hooking `admin_init` at the same priority, so the migration runs before
-  `register_setting()` touches the row. That order used to be load-bearing twice
+* **The migration runs on `init` (priority 5) and `register_setting()` on
+  `admin_init`**, so the migration runs before `register_setting()` touches the
+  row. That order used to be load-bearing twice
   over, and neither dependency was asserted anywhere. `save()` now adds the row
   outright when a bare `get_option()` says it is absent, so an install whose
   migrated settings equal the defaults no longer writes nothing while its old

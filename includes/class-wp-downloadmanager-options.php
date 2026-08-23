@@ -276,10 +276,9 @@ class WP_DownloadManager_Options {
 	 * upgrade can never run again while the nineteen old rows have already been
 	 * deleted.
 	 *
-	 * It was held off by nothing but the order two callbacks were added in:
-	 * `Install::init()` runs before `Settings::init()` and both hook `admin_init`
-	 * at the same priority, so the migration went first. Swapping those two lines,
-	 * or any third-party `default_option_*` filter, reaches it silently.
+	 * It was held off by nothing but hook order: the migration runs on `init`
+	 * and `register_setting()` on `admin_init`, so the migration goes first.
+	 * Any third-party `default_option_*` filter reaches it silently.
 	 *
 	 * Passing an explicit default to `get_option()` defeats the registered one --
 	 * `filter_default_option()` returns early when a default was passed -- which
@@ -386,21 +385,19 @@ class WP_DownloadManager_Options {
 	}
 
 	/**
-	 * Write both markers in one go.
+	 * Record that this version's upgrade has finished.
 	 *
-	 * One update_option() for both, so a half-finished upgrade can never record
-	 * itself as complete.
+	 * One update_option() for both markers, so a half-finished upgrade can
+	 * never record itself as complete.
 	 *
-	 * @param string $plugin Plugin version just run.
-	 * @param string $db     Schema version just reached.
-	 * @return bool
+	 * @return void
 	 */
-	public static function save_markers( $plugin, $db ) {
-		return update_option(
+	public static function update_markers() {
+		update_option(
 			self::VERSION,
 			array(
-				'plugin' => (string) $plugin,
-				'db'     => (string) $db,
+				'plugin' => WP_DOWNLOADMANAGER_VERSION,
+				'db'     => WP_DOWNLOADMANAGER_DB_VERSION,
 			)
 		);
 	}
@@ -414,7 +411,7 @@ class WP_DownloadManager_Options {
 	 *
 	 * @return void
 	 */
-	public static function migrate_from_legacy_rows() {
+	public static function migrate_legacy_rows() {
 		// Start from whatever is already stored, not from the defaults. The
 		// marker gate is the primary guard, but it is not sufficient on its own:
 		// an install whose marker row is missing while the settings row survives

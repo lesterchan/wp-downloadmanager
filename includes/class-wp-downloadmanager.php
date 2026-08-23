@@ -1,6 +1,6 @@
 <?php
 /**
- * Front-end wiring for WP-DownloadManager.
+ * Bootstrap and front-end wiring for WP-DownloadManager.
  *
  * @package WP-DownloadManager
  */
@@ -8,23 +8,71 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Query vars, rewrite rules, assets and the feed link.
+ * Boots the plugin: the table, the hooks, the components and the front end.
  */
 class WP_DownloadManager {
 
 	/**
-	 * Hook up.
+	 * Register the table, the hooks and the activation hook.
 	 *
 	 * @return void
 	 */
 	public static function init() {
+		self::register_table();
+
+		// Must be registered at file-load time, which is when this runs.
+		register_activation_hook( WP_DOWNLOADMANAGER_MAIN_FILE, array( 'WP_DownloadManager_Install', 'activate' ) );
+
+		// Deliberately on init rather than admin_init. Activation does not fire
+		// on a plugin update, which is the single most common reason a migration
+		// never runs -- and an automatic background update runs on cron, which
+		// is not an admin request.
+		add_action( 'init', array( 'WP_DownloadManager_Install', 'maybe_upgrade' ), 5 );
+
 		add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
 		add_filter( 'generate_rewrite_rules', array( __CLASS__, 'rewrite_rules' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
 		add_action( 'enqueue_block_assets', array( __CLASS__, 'block_editor_styles' ) );
 		add_action( 'wp_head', array( __CLASS__, 'feed_link' ) );
 
+		add_action( 'widgets_init', array( __CLASS__, 'register_widget' ) );
+
+		WP_DownloadManager_File::init();
+		WP_DownloadManager_Display::init();
+		WP_DownloadManager_Blocks::init();
+		WP_DownloadManager_WPStats::init();
+		WP_DownloadManager_Settings::init();
+		WP_DownloadManager_Admin::init();
+
 		self::register_command();
+	}
+
+	/**
+	 * Register the downloads table with $wpdb.
+	 *
+	 * The tables[] entry is what keeps the name correct across
+	 * switch_to_blog(): wpdb::set_blog_id() rebuilds every registered table
+	 * name against the new prefix, while a bare assignment keeps pointing at
+	 * whichever site happened to be current when this file loaded.
+	 *
+	 * @return void
+	 */
+	private static function register_table() {
+		global $wpdb;
+
+		if ( ! in_array( 'downloads', $wpdb->tables, true ) ) {
+			$wpdb->tables[] = 'downloads';
+		}
+		$wpdb->downloads = $wpdb->prefix . 'downloads';
+	}
+
+	/**
+	 * Register the widget.
+	 *
+	 * @return void
+	 */
+	public static function register_widget() {
+		register_widget( 'WP_DownloadManager_Widget' );
 	}
 
 	/**
@@ -79,16 +127,21 @@ class WP_DownloadManager {
 	/**
 	 * The front-end stylesheet, overridable from the theme.
 	 *
+	 * A copy in the child theme wins, then one in the parent theme, then the
+	 * plugin's own.
+	 *
 	 * @return void
 	 */
 	public static function enqueue_styles() {
-		$theme_css = get_stylesheet_directory() . '/wp-downloadmanager.css';
+		if ( file_exists( get_stylesheet_directory() . '/wp-downloadmanager.css' ) ) {
+			$css_file = get_stylesheet_directory_uri() . '/wp-downloadmanager.css';
+		} elseif ( file_exists( get_template_directory() . '/wp-downloadmanager.css' ) ) {
+			$css_file = get_template_directory_uri() . '/wp-downloadmanager.css';
+		} else {
+			$css_file = WP_DOWNLOADMANAGER_URL . 'css/wp-downloadmanager.css';
+		}
 
-		$src = file_exists( $theme_css )
-			? get_stylesheet_directory_uri() . '/wp-downloadmanager.css'
-			: WP_DOWNLOADMANAGER_URL . 'css/wp-downloadmanager.css';
-
-		wp_enqueue_style( 'wp-downloadmanager', $src, array(), WP_DOWNLOADMANAGER_VERSION );
+		wp_enqueue_style( 'wp-downloadmanager', $css_file, array(), WP_DOWNLOADMANAGER_VERSION );
 	}
 
 	/**

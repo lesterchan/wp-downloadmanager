@@ -121,12 +121,14 @@ class WP_DownloadManager_Options_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_both_markers_are_written_in_one_call() {
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+		delete_option( WP_DownloadManager_Options::VERSION );
+
+		WP_DownloadManager_Options::update_markers();
 
 		$this->assertSame(
 			array(
-				'plugin' => '2.0.0',
-				'db'     => '3',
+				'plugin' => WP_DOWNLOADMANAGER_VERSION,
+				'db'     => WP_DOWNLOADMANAGER_DB_VERSION,
 			),
 			get_option( WP_DownloadManager_Options::VERSION ),
 			'one update_option() for both, so a half-finished upgrade cannot record itself as complete'
@@ -134,7 +136,13 @@ class WP_DownloadManager_Options_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_the_markers_are_not_in_the_settings_row() {
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
 
 		$settings = get_option( WP_DownloadManager_Options::OPTION );
 
@@ -143,7 +151,13 @@ class WP_DownloadManager_Options_Test extends WP_DownloadManager_TestCase {
 	}
 
 	public function test_saving_the_settings_cannot_disturb_the_markers() {
-		WP_DownloadManager_Options::save_markers( '2.0.0', '3' );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
 		WP_DownloadManager_Options::save( WP_DownloadManager_Settings::sanitize( array( 'page_url' => 'https://example.com/d' ) ) );
 
 		$this->assertSame(

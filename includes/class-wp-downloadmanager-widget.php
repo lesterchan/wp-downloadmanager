@@ -27,20 +27,6 @@ class WP_DownloadManager_Widget extends WP_Widget {
 	}
 
 	/**
-	 * Hook up.
-	 *
-	 * @return void
-	 */
-	public static function init() {
-		add_action(
-			'widgets_init',
-			static function () {
-				register_widget( 'WP_DownloadManager_Widget' );
-			}
-		);
-	}
-
-	/**
 	 * Default instance values.
 	 *
 	 * @return array

@@ -13,7 +13,7 @@
  *
  * @group ms-required
  *
- * @covers WP_DownloadManager_Install::on_activation
+ * @covers WP_DownloadManager_Install::activate
  */
 class WP_DownloadManager_Multisite_Test extends WP_DownloadManager_TestCase {
 
@@ -68,7 +68,7 @@ class WP_DownloadManager_Multisite_Test extends WP_DownloadManager_TestCase {
 
 		$site_ids = $this->seed_network( 2 );
 
-		WP_DownloadManager_Install::on_activation( true );
+		WP_DownloadManager_Install::activate( true );
 
 		foreach ( $site_ids as $blog_id ) {
 			switch_to_blog( $blog_id );
@@ -93,7 +93,7 @@ class WP_DownloadManager_Multisite_Test extends WP_DownloadManager_TestCase {
 		$site_ids = $this->seed_network( 1 );
 		$other    = $site_ids[0];
 
-		WP_DownloadManager_Install::on_activation( false );
+		WP_DownloadManager_Install::activate( false );
 
 		switch_to_blog( $other );
 		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->downloads ) );
@@ -122,7 +122,7 @@ class WP_DownloadManager_Multisite_Test extends WP_DownloadManager_TestCase {
 			}
 		);
 
-		WP_DownloadManager_Install::on_activation( true );
+		WP_DownloadManager_Install::activate( true );
 
 		$this->assertNotEmpty( $captured, 'Activation never queried the site list.' );
 		$this->assertSame( 0, (int) $captured[0]['number'], 'get_sites() was left at its default cap of 100 sites.' );
@@ -142,7 +142,7 @@ class WP_DownloadManager_Multisite_Test extends WP_DownloadManager_TestCase {
 		$original = get_current_blog_id();
 		$this->seed_network( 2 );
 
-		WP_DownloadManager_Install::on_activation( true );
+		WP_DownloadManager_Install::activate( true );
 
 		$this->assertFalse( ms_is_switched(), 'The blog stack was left switched.' );
 		$this->assertSame( $original, get_current_blog_id(), 'The original site is no longer current.' );

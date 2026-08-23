@@ -454,20 +454,55 @@ function defaultOptions() {
  * their place, because that is what the migration has to meet: thirty-odd rows
  * named after the plugin's folder, no markers, and nothing else.
  *
- * @param {Object} rows Legacy option name => value, stored exactly as given.
- * @return {void}
+ * **It hands back what it can see, and that is not a convenience.**
+ * maybe_upgrade() is hooked to `init`, which a WP-CLI request reaches like any
+ * other. So the moment this call ends, the next `wp eval` boots WordPress with
+ * the markers missing and performs the upgrade itself, before running a line of
+ * the code it was given -- and a test that read the rows back through another
+ * helper would be asserting on WP-CLI's run rather than on the browser's, with
+ * nothing left for the browser to do.
+ *
+ * @param {Object} rows         Legacy option name => value, stored exactly as given.
+ * @param {Object} [currentRow] A wp_downloadmanager_options row to write beside the
+ *                              legacy ones, for the half-migrated shape.
+ * @return {{legacy: string[], options: *, version: *}} The state as just seeded.
  */
-function installLegacyRows( rows ) {
+function installLegacyRows( rows, currentRow = null ) {
 	const data = Buffer.from( JSON.stringify( rows ), 'utf8' ).toString( 'base64' );
 
-	wpEval(
-		`delete_option( 'wp_downloadmanager_options' );
-		delete_option( 'wp_downloadmanager_version' );
-		foreach ( json_decode( base64_decode( '${ data }' ), true ) as $name => $value ) {
-			update_option( $name, $value );
-		}
-		WP_DownloadManager_Options::flush();
-		echo '<<<done>>>';`,
+	const current = currentRow
+		? Buffer.from( JSON.stringify( currentRow ), 'utf8' ).toString( 'base64' )
+		: '';
+	const writeCurrent = currentRow
+		? `update_option( 'wp_downloadmanager_options', json_decode( base64_decode( '${ current }' ), true ) );`
+		: '';
+
+	return JSON.parse(
+		wpEval(
+			`delete_option( 'wp_downloadmanager_options' );
+			delete_option( 'wp_downloadmanager_version' );
+			foreach ( json_decode( base64_decode( '${ data }' ), true ) as $name => $value ) {
+				update_option( $name, $value );
+			}
+			${ writeCurrent }
+			WP_DownloadManager_Options::flush();
+			$names = array_merge(
+				array_keys( WP_DownloadManager_Options::legacy_map() ),
+				array_values( WP_DownloadManager_Options::legacy_structured_rows() ),
+				WP_DownloadManager_Options::legacy_extra_rows()
+			);
+			$alive = array();
+			foreach ( array_unique( $names ) as $name ) {
+				if ( false !== get_option( $name, false ) ) {
+					$alive[] = $name;
+				}
+			}
+			echo '<<<' . wp_json_encode( array(
+				'legacy'  => array_values( $alive ),
+				'options' => get_option( 'wp_downloadmanager_options' ),
+				'version' => get_option( 'wp_downloadmanager_version' ),
+			) ) . '>>>';`,
+		),
 	);
 }
 

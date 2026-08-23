@@ -13,27 +13,14 @@ defined( 'ABSPATH' ) || exit;
 class WP_DownloadManager_Install {
 
 	/**
-	 * Hook up.
-	 *
-	 * @return void
-	 */
-	public static function init() {
-		register_activation_hook( WP_DOWNLOADMANAGER_MAIN_FILE, array( __CLASS__, 'on_activation' ) );
-
-		// Activation does not fire on plugin *update*, which is the single most
-		// common reason a migration never runs. Check on load as well.
-		add_action( 'admin_init', array( __CLASS__, 'maybe_upgrade' ) );
-	}
-
-	/**
 	 * Activation hook. Handles network activation site by site.
 	 *
-	 * @param bool $network_wide Whether the plugin is being network activated.
+	 * @param bool $network_wide Whether the plugin is being activated network-wide.
 	 * @return void
 	 */
-	public static function on_activation( $network_wide = false ) {
+	public static function activate( $network_wide = false ) {
 		if ( is_multisite() && $network_wide ) {
-			// 'number' => 0 lifts WP_Site_Query's default cap of 100.
+			// 'number' => 0 lifts WP_Site_Query's default cap of 100, which would otherwise skip every site past the hundredth while reporting success.
 			$site_ids = get_sites(
 				array(
 					'fields' => 'ids',
@@ -43,13 +30,12 @@ class WP_DownloadManager_Install {
 
 			foreach ( $site_ids as $site_id ) {
 				switch_to_blog( (int) $site_id );
-				self::activate();
-				// switch_to_blog() pushes onto a stack, so the restore belongs
-				// inside the loop.
+				self::install();
+				// Inside the loop: switch_to_blog() pushes onto a stack, so restoring once after the loop unwinds it by exactly one.
 				restore_current_blog();
 			}
 		} else {
-			self::activate();
+			self::install();
 		}
 	}
 
@@ -58,7 +44,7 @@ class WP_DownloadManager_Install {
 	 *
 	 * @return void
 	 */
-	public static function activate() {
+	public static function install() {
 		self::create_table();
 		self::upgrade();
 		self::create_files_dir();
@@ -115,7 +101,7 @@ class WP_DownloadManager_Install {
 		if ( $installed < 3 ) {
 			self::upgrade_pre_130();
 			self::upgrade_pre_150();
-			WP_DownloadManager_Options::migrate_from_legacy_rows();
+			WP_DownloadManager_Options::migrate_legacy_rows();
 		} else {
 			WP_DownloadManager_Options::flush();
 			WP_DownloadManager_Options::save(
@@ -134,10 +120,7 @@ class WP_DownloadManager_Install {
 
 		// Both markers in one write, so a half-finished upgrade never records
 		// itself as complete.
-		WP_DownloadManager_Options::save_markers(
-			WP_DOWNLOADMANAGER_VERSION,
-			WP_DOWNLOADMANAGER_DB_VERSION
-		);
+		WP_DownloadManager_Options::update_markers();
 		WP_DownloadManager_Options::flush();
 	}
 
