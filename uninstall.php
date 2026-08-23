@@ -61,9 +61,8 @@ if ( ! function_exists( 'wp_downloadmanager_uninstall_site' ) ) {
 }
 
 if ( is_multisite() ) {
-	// 'number' => 0 lifts WP_Site_Query's default cap of 100. Without it a
-	// network larger than that silently keeps its options and tables on every
-	// site past the hundredth, and uninstall still reports success.
+	// 'number' => 0 lifts WP_Site_Query's default cap of 100, which would
+	// otherwise skip every site past the hundredth while reporting success.
 	$site_ids = get_sites(
 		array(
 			'fields' => 'ids',
