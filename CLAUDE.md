@@ -70,9 +70,12 @@ locally and loses the exception.
   `array( 'General' )` for a decade and did exactly that. Two things now stop it:
   the default is `array( '', 'General' )`, and `upgrade_pre_201()` shifts a stored
   list whose slot 0 is non-empty **and adds one to every `file_category` in the
-  same breath** — the list and the rows only mean anything together. It writes the
-  option before the table on purpose, so a request dying between the two cannot
-  come back and add a second 1 to every row.
+  same breath** — the list and the rows only mean anything together. The two
+  writes cannot be made one, so `wp_downloadmanager_category_shift_pending`
+  stands between them: set before the list moves, cleared after the rows follow,
+  and either half alone says what is still owed. Drop it and an interrupted run
+  leaves a list one ahead of its rows with nothing able to tell, because an
+  empty slot 0 is also what an install that never needed shifting looks like.
 * **A file in no category reads "N/A" on the two admin screens and blank in the
   feed, the listing heading and WP-CLI's csv/json/yaml — deliberately.**
   `category_name()`'s no-name fallback is a parameter so the choice sits at each
@@ -238,8 +241,19 @@ the front-end queries.
 
 `maybe_upgrade()` hangs off `init` (priority 5) as well as activation, because
 activation hooks do not fire on a plugin update — the usual reason a migration
-never runs at all. `tests/e2e/upgrade.spec.js` drives that path, and three
-things about it are worth knowing before changing either side:
+never runs at all. It costs a current site nothing: `is_behind()` reads one
+autoloaded row and compares two strings, so there is no query and the lock below
+is never reached. What it does change is that the migration can now run on a
+front-end request rather than only an admin one, which is why **the upgrade
+takes a lock before it does anything** — two visitors arriving together would
+otherwise both migrate, and both add their own 1 to every `file_category`. The
+lock is an `add_option()` row, because the unique key on `option_name` is the
+only atomic thing available on a site with no persistent object cache;
+`wp_cache_add()` succeeds in every request on such a site and would protect
+nothing. An abandoned lock times out rather than stranding the site.
+
+`tests/e2e/upgrade.spec.js` drives that path, and three things about it are
+worth knowing before changing either side:
 
 * **The legacy row wins over an existing current row.** The migration seeds from
   `all()` and lays the old rows over it, because the old rows are what the site
