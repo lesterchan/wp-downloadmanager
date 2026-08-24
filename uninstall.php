@@ -34,6 +34,11 @@ if ( ! function_exists( 'wp_downloadmanager_uninstall_site' ) ) {
 			array(
 				WP_DownloadManager_Options::OPTION,
 				WP_DownloadManager_Options::VERSION,
+				// Both are the upgrade's own bookkeeping, and both are absent on
+				// a site that finished one -- but a site uninstalling part way
+				// through an interrupted upgrade would otherwise keep them.
+				WP_DownloadManager_Install::UPGRADE_LOCK,
+				WP_DownloadManager_Install::SHIFT_PENDING,
 				'widget_downloads',
 			)
 		);

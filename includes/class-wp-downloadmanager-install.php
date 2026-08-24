@@ -13,6 +13,21 @@ defined( 'ABSPATH' ) || exit;
 class WP_DownloadManager_Install {
 
 	/**
+	 * Row held for the duration of an upgrade, so two requests cannot run one.
+	 */
+	const UPGRADE_LOCK = 'wp_downloadmanager_upgrade_lock';
+
+	/**
+	 * How long a held lock is believed before it is treated as abandoned.
+	 */
+	const UPGRADE_LOCK_TIMEOUT = 300;
+
+	/**
+	 * Row saying the downloads table is still owed the category shift.
+	 */
+	const SHIFT_PENDING = 'wp_downloadmanager_category_shift_pending';
+
+	/**
 	 * Activation hook. Handles network activation site by site.
 	 *
 	 * @param bool $network_wide Whether the plugin is being activated network-wide.
@@ -93,6 +108,20 @@ class WP_DownloadManager_Install {
 			return;
 		}
 
+		// Since the upgrade moved to init it runs on front-end requests too, so
+		// a busy site can have two of them in the migration at once.
+		if ( ! self::lock() ) {
+			return;
+		}
+
+		// Re-read behind the lock: the request that held it may have finished
+		// the whole upgrade between the check above and the lock being free.
+		WP_DownloadManager_Options::flush();
+		if ( ! self::is_behind() ) {
+			self::unlock();
+			return;
+		}
+
 		$installed = (int) WP_DownloadManager_Options::markers()['db'];
 
 		// The pre-2.0.0 rows, including WP-Stats' two shared ones. Schema 3 is
@@ -122,6 +151,44 @@ class WP_DownloadManager_Install {
 		// itself as complete.
 		WP_DownloadManager_Options::update_markers();
 		WP_DownloadManager_Options::flush();
+
+		self::unlock();
+	}
+
+	/**
+	 * Take the upgrade lock for this site.
+	 *
+	 * The atomic half is add_option(): the options table has a unique key on
+	 * option_name, so a second request's INSERT fails rather than overwriting,
+	 * and only one caller is told it succeeded. wp_cache_add() would not do --
+	 * with no persistent object cache it succeeds in every request, and a site
+	 * with no object cache is exactly the one at risk.
+	 *
+	 * @return bool Whether this request now holds the lock.
+	 */
+	protected static function lock() {
+		$held = get_option( self::UPGRADE_LOCK, false );
+
+		if ( false !== $held ) {
+			// A request that died mid-upgrade must not stop every later one from
+			// ever finishing it.
+			if ( ( time() - (int) $held ) < self::UPGRADE_LOCK_TIMEOUT ) {
+				return false;
+			}
+
+			delete_option( self::UPGRADE_LOCK );
+		}
+
+		return add_option( self::UPGRADE_LOCK, time(), '', false );
+	}
+
+	/**
+	 * Release the upgrade lock.
+	 *
+	 * @return void
+	 */
+	protected static function unlock() {
+		delete_option( self::UPGRADE_LOCK );
 	}
 
 	/**
@@ -261,10 +328,12 @@ class WP_DownloadManager_Install {
 	 * did the renumbering to the list years ago, and moving its rows now would be
 	 * the same bug with the sign flipped.
 	 *
-	 * The option is written before the table, and the order is deliberate. Both
-	 * the marker and the state of index 0 gate this, so the shift cannot run
-	 * twice; writing the list first means a request that dies between the two
-	 * cannot come back and add a second 1 to every row.
+	 * The two writes cannot be made one, so a flag stands between them instead.
+	 * It is set before the list moves and cleared after the rows follow, and
+	 * either half alone is enough to say what is still owed: a request that dies
+	 * part way through is resumed by the next one rather than leaving a list
+	 * that has moved and rows that have not, which would read every file under
+	 * its neighbour's category with nothing left to notice it.
 	 *
 	 * @return void
 	 */
@@ -274,27 +343,34 @@ class WP_DownloadManager_Install {
 		WP_DownloadManager_Options::flush();
 		$categories = (array) WP_DownloadManager_Options::get( 'categories', array() );
 
-		if ( ! isset( $categories[0] ) || '' === trim( (string) $categories[0] ) ) {
+		if ( isset( $categories[0] ) && '' !== trim( (string) $categories[0] ) ) {
+			add_option( self::SHIFT_PENDING, 1, '', false );
+
+			// Built by hand rather than with array_unshift(), which renumbers
+			// from scratch and would close any gap in the keys. A stored list can
+			// have gaps -- nothing renumbers it when a category is emptied -- and
+			// the column update below adds one to every row, so the keys have to
+			// move by exactly one each for the two to still agree.
+			$shifted = array( '' );
+			foreach ( $categories as $index => $category ) {
+				$shifted[ (int) $index + 1 ] = $category;
+			}
+
+			WP_DownloadManager_Options::set( 'categories', $shifted );
+			WP_DownloadManager_Options::flush();
+		}
+
+		// Set above, or left behind by a run that got no further than the list.
+		if ( ! get_option( self::SHIFT_PENDING, false ) ) {
 			return;
 		}
-
-		// Built by hand rather than with array_unshift(), which renumbers from
-		// scratch and would close any gap in the keys. A stored list can have
-		// gaps -- nothing renumbers it when a category is emptied -- and the
-		// column update below adds one to every row, so the keys have to move by
-		// exactly one each for the two to still agree.
-		$shifted = array( '' );
-		foreach ( $categories as $index => $category ) {
-			$shifted[ (int) $index + 1 ] = $category;
-		}
-
-		WP_DownloadManager_Options::set( 'categories', $shifted );
-		WP_DownloadManager_Options::flush();
 
 		// Negative numbers are not category ids and never were; leaving them
 		// where they are keeps a hand-written row out of slot 0, which now means
 		// something.
 		$wpdb->query( "UPDATE {$wpdb->downloads} SET file_category = file_category + 1 WHERE file_category >= 0" );
+
+		delete_option( self::SHIFT_PENDING );
 	}
 
 	/**

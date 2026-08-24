@@ -636,4 +636,86 @@ class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 
 		$this->assertSame( 'https://example.com/untouched', WP_DownloadManager_Options::get( 'page_url' ), 'an up-to-date install pays nothing on every admin request' );
 	}
+
+	/**
+	 * The half-finished upgrade, which is what the pending row exists for.
+	 *
+	 * A request that wrote the shifted list and died before the rows followed
+	 * leaves slot 0 empty -- the same shape as an install that never needed
+	 * shifting at all. Without the flag the rows would stay one behind the list
+	 * for good, and every file would read its neighbour's category.
+	 */
+	public function test_an_interrupted_shift_is_finished_by_the_next_request() {
+		WP_DownloadManager_Options::save( array( 'categories' => array( '', 'General', 'Manuals' ) ) );
+		add_option( WP_DownloadManager_Install::SHIFT_PENDING, 1, '', false );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
+
+		$file = $this->insert_file( array( 'file_category' => 0 ) );
+
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
+
+		$this->assertSame( array( '', 'General', 'Manuals' ), WP_DownloadManager_Options::get( 'categories' ), 'the list that already moved is left where it is' );
+		$this->assertSame( 1, (int) $this->fetch_file( $file )->file_category, 'and the rows it was waiting for catch up' );
+		$this->assertFalse( get_option( WP_DownloadManager_Install::SHIFT_PENDING, false ), 'and the flag goes once they have' );
+	}
+
+	/**
+	 * Two requests in the migration at once, which init made reachable.
+	 *
+	 * On admin_init this took an administrator opening two tabs; on init any two
+	 * visitors will do, and both would read the unshifted list and both add
+	 * their own 1 to every row.
+	 */
+	public function test_a_request_does_not_migrate_while_another_holds_the_lock() {
+		WP_DownloadManager_Options::save( array( 'categories' => array( 'General', 'Manuals' ) ) );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
+
+		$file = $this->insert_file( array( 'file_category' => 1 ) );
+
+		add_option( WP_DownloadManager_Install::UPGRADE_LOCK, time(), '', false );
+
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
+
+		$this->assertSame( array( 'General', 'Manuals' ), WP_DownloadManager_Options::get( 'categories' ), 'the list is left to whoever holds the lock' );
+		$this->assertSame( 1, (int) $this->fetch_file( $file )->file_category, 'and no row moves under them' );
+	}
+
+	/**
+	 * The lock must not be able to strand a site on the old schema for ever.
+	 */
+	public function test_a_lock_left_by_a_dead_request_is_taken_back() {
+		WP_DownloadManager_Options::save( array( 'categories' => array( 'General', 'Manuals' ) ) );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
+
+		$file = $this->insert_file( array( 'file_category' => 1 ) );
+
+		add_option( WP_DownloadManager_Install::UPGRADE_LOCK, time() - ( WP_DownloadManager_Install::UPGRADE_LOCK_TIMEOUT + 1 ), '', false );
+
+		WP_DownloadManager_Install::upgrade();
+		WP_DownloadManager_Options::flush();
+
+		$this->assertSame( array( '', 'General', 'Manuals' ), WP_DownloadManager_Options::get( 'categories' ), 'an abandoned lock is stolen rather than believed' );
+		$this->assertSame( 2, (int) $this->fetch_file( $file )->file_category, 'and the upgrade it was blocking runs' );
+		$this->assertFalse( get_option( WP_DownloadManager_Install::UPGRADE_LOCK, false ), 'and the lock is released afterwards' );
+	}
 }
