@@ -229,4 +229,18 @@ class WP_DownloadManager_Uninstall_Test extends WP_DownloadManager_TestCase {
 
 		$this->assertFalse( get_option( WP_DownloadManager_Options::OPTION, false ), 'Uninstalling a site that never finished installing leaves no row behind.' );
 	}
+
+	/**
+	 * A site uninstalling part way through an interrupted upgrade keeps neither
+	 * of the upgrade's own rows.
+	 */
+	public function test_the_upgrade_bookkeeping_rows_are_removed() {
+		add_option( WP_DownloadManager_Install::UPGRADE_LOCK, time(), '', false );
+		add_option( WP_DownloadManager_Install::SHIFT_PENDING, 1, '', false );
+
+		$this->uninstall();
+
+		$this->assertFalse( get_option( WP_DownloadManager_Install::UPGRADE_LOCK, false ), 'the upgrade lock outlived the uninstall' );
+		$this->assertFalse( get_option( WP_DownloadManager_Install::SHIFT_PENDING, false ), 'the pending shift flag outlived the uninstall' );
+	}
 }

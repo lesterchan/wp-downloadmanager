@@ -718,4 +718,31 @@ class WP_DownloadManager_Upgrade_Test extends WP_DownloadManager_TestCase {
 		$this->assertSame( 2, (int) $this->fetch_file( $file )->file_category, 'and the upgrade it was blocking runs' );
 		$this->assertFalse( get_option( WP_DownloadManager_Install::UPGRADE_LOCK, false ), 'and the lock is released afterwards' );
 	}
+
+	/**
+	 * The lock is released whichever way the upgrade leaves.
+	 *
+	 * A lock held past the end of the request that took it is a lock nothing
+	 * releases for five minutes, so every request in that window skips an
+	 * upgrade it should have run.
+	 */
+	public function test_the_upgrade_lock_is_never_left_held() {
+		WP_DownloadManager_Options::save( array( 'categories' => array( 'General', 'Manuals' ) ) );
+		update_option(
+			WP_DownloadManager_Options::VERSION,
+			array(
+				'plugin' => '2.0.0',
+				'db'     => '3',
+			)
+		);
+
+		WP_DownloadManager_Install::upgrade();
+
+		$this->assertFalse( get_option( WP_DownloadManager_Install::UPGRADE_LOCK, false ), 'the lock survived a completed upgrade' );
+
+		// And again on the path where nothing is owed at all.
+		WP_DownloadManager_Install::upgrade();
+
+		$this->assertFalse( get_option( WP_DownloadManager_Install::UPGRADE_LOCK, false ), 'the lock survived a no-op run' );
+	}
 }
