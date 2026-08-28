@@ -1,17 +1,9 @@
 /**
  * Behaviour for every WP-DownloadManager admin screen.
  *
- * This replaces five kinds of inline handler that used to be printed into the
- * markup: onclick= radio selection, a "use today's date" function with both
- * sets of date parts interpolated into string literals, a confirm() with
- * the file name spliced into a JavaScript string, history.go(-1) cancels, and a
- * switch statement holding a second copy of every default template. The file
- * name in particular went through esc_js( esc_attr( ... ) ), which is where
- * these screens hid their escaping bugs.
- *
- * Every behaviour is one delegated listener on `document`, so a control that
- * arrives later in the page still works. Server data comes from
- * wp_localize_script() into wpDownloadManagerL10n.
+ * Values arrive in data attributes rather than spliced into inline handlers,
+ * which is where these screens used to hide their escaping bugs. One delegated
+ * listener on document per behaviour, so a control added later still works.
  */
 ( function() {
 	'use strict';

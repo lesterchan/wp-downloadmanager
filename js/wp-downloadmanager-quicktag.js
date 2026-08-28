@@ -1,10 +1,4 @@
-/**
- * The Download quicktag on the Text tab of the classic editor.
- *
- * Was an inline <script> printed into admin_footer that trimmed the entered id
- * through the bundled DOM library. Neither the inline block nor the library is
- * needed for this.
- */
+/** The Download quicktag on the Text tab of the classic editor. */
 ( function() {
 	'use strict';
 

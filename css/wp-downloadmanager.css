@@ -1,14 +1,7 @@
 /**
- * WP-DownloadManager front end.
- *
- * Everything is scoped under the one root class the plugin puts on its
- * outermost element, and nothing here sets font-family, font-size or color: a
- * downloads listing is body copy and should look like the theme's body copy.
- * The only colours are custom properties with sensible fallbacks, so a theme
- * can restyle the plugin without overriding a single selector.
- *
- * Direction-neutral throughout - margin-inline, padding-inline, text-align:
- * start - so there is no separate -rtl.css to keep in step with this one.
+ * WP-DownloadManager front end. A listing is body copy, so nothing here sets a
+ * font or colour; the colours that exist are custom properties a theme can set
+ * without overriding a selector. Direction-neutral, so there is no -rtl.css.
  */
 
 .wp-downloadmanager {
