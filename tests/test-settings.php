@@ -360,6 +360,93 @@ class WP_DownloadManager_Settings_Test extends WP_DownloadManager_TestCase {
 		$this->assertSame( $missing, $saved['path']['dir'], 'the old check reset the path to wp-content on every save when the directory was missing' );
 	}
 
+	public function test_a_path_already_in_use_outside_wp_content_stands() {
+		$legacy = $this->store_legacy_path( '/srv/legacy-downloads' );
+
+		$saved = WP_DownloadManager_Settings::sanitize( array( 'path' => array( 'dir' => $legacy ) ) );
+
+		$this->assertSame( $legacy, $saved['path']['dir'], 'the path was unconstrained before 2.0.0, and resetting one in use takes the files away from every visitor' );
+	}
+
+	public function test_the_upgrade_pass_leaves_a_path_outside_wp_content_alone() {
+		$legacy = $this->store_legacy_path( '/srv/legacy-downloads' );
+
+		// What the upgrade does: the stored settings back through the sanitiser,
+		// so a tightened rule cleans up what an older one let through.
+		$saved = WP_DownloadManager_Settings::sanitize( WP_DownloadManager_Options::all() );
+
+		$this->assertSame( $legacy, $saved['path']['dir'], 'a background update resets it with nobody watching, and every download 404s afterwards' );
+	}
+
+	public function test_a_path_outside_wp_content_is_still_refused_when_it_is_not_the_stored_one() {
+		WP_DownloadManager_Options::set( 'path.dir', WP_CONTENT_DIR . '/files' );
+
+		$saved = WP_DownloadManager_Settings::sanitize( array( 'path' => array( 'dir' => '/srv/somewhere-new' ) ) );
+
+		$this->assertSame( WP_CONTENT_DIR, $saved['path']['dir'], 'Standing by a stored path is not permission to point at a new one.' );
+	}
+
+	public function test_a_download_path_through_a_symlink_is_accepted() {
+		// The downloads directory itself is the symlink: named inside
+		// wp-content, living somewhere else. The temp directory stands in for
+		// the volume it would really be on.
+		$link = $this->symlink_to( untrailingslashit( get_temp_dir() ), WP_CONTENT_DIR . '/downloads-symlink' );
+
+		$saved = WP_DownloadManager_Settings::sanitize( array( 'path' => array( 'dir' => $link ) ) );
+
+		wp_delete_file( $link );
+
+		$this->assertSame( $link, $saved['path']['dir'], 'a downloads directory symlinked elsewhere is inside wp-content by the only name anyone types' );
+	}
+
+	public function test_a_path_that_resolves_into_wp_content_is_accepted() {
+		// And here the symlink is above wp-content, which is how shared hosting
+		// spells one document root two ways - /home and /home2 both naming the
+		// same directory. The path is outside wp-content as written and is
+		// wp-content once resolved.
+		$link = $this->symlink_to( WP_CONTENT_DIR, untrailingslashit( get_temp_dir() ) . '/wp-downloadmanager-content-alias' );
+
+		$saved = WP_DownloadManager_Settings::sanitize( array( 'path' => array( 'dir' => $link ) ) );
+
+		wp_delete_file( $link );
+
+		$this->assertSame( $link, $saved['path']['dir'], 'resolving one end of the comparison and not the other calls a path that never left wp-content an escape' );
+	}
+
+	/**
+	 * Store a download path the way a site that predates the constraint has one.
+	 *
+	 * Not through the Settings API: register_setting() filters every write to
+	 * the row through sanitize(), and the row this stands in for was written
+	 * years before there was anything to satisfy.
+	 *
+	 * @param string $path The path.
+	 * @return string The same path.
+	 */
+	protected function store_legacy_path( $path ) {
+		remove_all_filters( 'sanitize_option_' . WP_DownloadManager_Options::OPTION );
+		WP_DownloadManager_Options::set( 'path.dir', $path );
+
+		return $path;
+	}
+
+	/**
+	 * A symlink at $link pointing at $target, replacing one left behind.
+	 *
+	 * @param string $target Existing directory.
+	 * @param string $link   Where to put the link.
+	 * @return string The link.
+	 */
+	protected function symlink_to( $target, $link ) {
+		if ( is_link( $link ) ) {
+			wp_delete_file( $link );
+		}
+
+		$this->assertTrue( symlink( $target, $link ), 'The test needs a symlink it can point at ' . $target . '.' );
+
+		return $link;
+	}
+
 	public function test_a_trailing_slash_is_normalised_away() {
 		$saved = WP_DownloadManager_Settings::sanitize( array( 'path' => array( 'dir' => WP_CONTENT_DIR . '/uploads/' ) ) );
 

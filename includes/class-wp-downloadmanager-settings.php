@@ -183,7 +183,8 @@ class WP_DownloadManager_Settings {
 
 		if ( isset( $input['path'] ) ) {
 			$values['path']['dir'] = self::sanitize_download_path(
-				isset( $input['path']['dir'] ) ? sanitize_text_field( $input['path']['dir'] ) : ''
+				isset( $input['path']['dir'] ) ? sanitize_text_field( $input['path']['dir'] ) : '',
+				$values['path']['dir']
 			);
 			$values['path']['url'] = isset( $input['path']['url'] ) ? esc_url_raw( $input['path']['url'] ) : '';
 		}
@@ -251,12 +252,32 @@ class WP_DownloadManager_Settings {
 	/**
 	 * Keep the downloads directory inside wp-content.
 	 *
-	 * @param string $path Submitted path.
+	 * The constraint is on a path being moved, not on one already in use. A
+	 * download path was unconstrained for the plugin's whole life before 2.0.0,
+	 * so a site can be serving quite happily from somewhere else entirely, and
+	 * this runs over the stored settings on upgrade as well as over a submitted
+	 * form -- an upgrade that resets it takes the files away from every visitor,
+	 * silently, because nobody is looking at an admin screen when a background
+	 * update runs. So a path that is what is already stored stands, whatever it
+	 * is, and the check applies to a value that differs from it: nothing can be
+	 * pointed anywhere new outside wp-content.
+	 *
+	 * @param string $path   Submitted path.
+	 * @param string $stored The path already in use.
 	 * @return string
 	 */
-	protected static function sanitize_download_path( $path ) {
+	protected static function sanitize_download_path( $path, $stored = '' ) {
 		$path    = untrailingslashit( wp_normalize_path( trim( $path ) ) );
 		$content = untrailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
+
+		// Traversal is refused even here: a stored path holding one was never
+		// typed into this screen, and the download endpoint refuses to read
+		// through it anyway.
+		if ( '' !== $path
+			&& false === strpos( $path, '..' )
+			&& untrailingslashit( wp_normalize_path( (string) $stored ) ) === $path ) {
+			return $path;
+		}
 
 		// realpath() resolves symlinks and .., but returns false for a directory
 		// that does not exist yet. Falling back to the raw path there is what
@@ -265,11 +286,21 @@ class WP_DownloadManager_Settings {
 		// old check did, on every save of this screen, to anyone whose downloads
 		// directory was missing.
 		$resolved = realpath( $path );
-		$compare  = false !== $resolved ? untrailingslashit( wp_normalize_path( $resolved ) ) : $path;
+
+		// Inside by either spelling: the path as it is written, or both ends
+		// resolved. Resolving one end and not the other reads a symlink in the
+		// document root - /home2 for /home on a lot of shared hosting, or a
+		// release directory for the live one - as an escape from a directory the
+		// path never left.
+		$real_content = realpath( WP_CONTENT_DIR );
+		$real_content = false !== $real_content ? untrailingslashit( wp_normalize_path( $real_content ) ) : $content;
+
+		$inside = 0 === strpos( $path . '/', $content . '/' )
+			|| ( false !== $resolved && 0 === strpos( untrailingslashit( wp_normalize_path( $resolved ) ) . '/', $real_content . '/' ) );
 
 		$escapes = false !== strpos( $path, '..' )
 			|| '' === $path
-			|| 0 !== strpos( $compare . '/', $content . '/' );
+			|| ! $inside;
 
 		if ( $escapes ) {
 			add_settings_error(

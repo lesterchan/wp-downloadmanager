@@ -4,7 +4,7 @@ Donate link: https://lesterchan.net/site/donation/
 Tags: download, downloads, file, files, manager  
 Requires at least: 6.8  
 Tested up to: 7.1  
-Stable tag: 2.0.1  
+Stable tag: 2.0.2  
 Requires PHP: 8.2  
 License: GPLv2 or later  
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -171,6 +171,9 @@ wrapper and leave `%FILE_ICON%` on its own.
 6. The Download block in the editor, with the file it embeds previewed and the sidebar choosing which files, which categories and what each row shows
 
 ## Changelog
+### 2.0.2
+* FIXED: Updating to 2.0.1 could reset your download path to `wp-content`, and every file then answered "File does not exist" — the listing still showed them, the links still pointed at them, and none of them downloaded. The update re-checks your settings, and the check that keeps the download path inside `wp-content` resolved one end of the comparison and not the other, so a path that had never left it read as an escape on any host where the site's directory is reached through a symlink — `/home2` standing in for `/home` on a lot of shared hosting, or a release directory for the live one. It also ran with nobody watching: an automatic background update reset the path and the notice explaining why went nowhere. Both ends are resolved now, and a path that is already the one in use stands whatever it is — the check applies to a path being moved somewhere new. If your path was reset, set it back under Downloads -> Settings and it will hold
+
 ### 2.0.1
 * NEW: A Settings link on the plugin's row on the Plugins screen
 * CHANGED: A stylesheet named `wp-downloadmanager.css` in the parent theme now overrides the plugin's copy too; a child theme's copy still wins over both
