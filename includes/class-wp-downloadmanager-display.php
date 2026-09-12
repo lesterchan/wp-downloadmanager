@@ -313,10 +313,10 @@ class WP_DownloadManager_Display {
 	 * Shared by the listing, embedded and stats templates, which each used to
 	 * carry their own near-identical block of twenty str_replace() calls.
 	 *
-	 * @param string $template   Template markup.
-	 * @param object $file       Row from the downloads table.
-	 * @param array  $context    Optional overrides: 'categories', 'search',
-	 *                           'file_name', 'description'.
+	 * @param string   $template   Template markup.
+	 * @param stdClass $file       Row from the downloads table.
+	 * @param array    $context    Optional overrides: 'categories', 'search',
+	 *                             'file_name', 'description'.
 	 * @return string
 	 */
 	public static function replace_file_vars( $template, $file, $context = array() ) {
@@ -886,7 +886,7 @@ class WP_DownloadManager_Display {
 	 * @param int  $limit   Row limit.
 	 * @param int  $chars   Truncate file names to this many characters.
 	 * @param bool $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? void : string)
 	 */
 	public static function most_downloaded( $limit = 10, $chars = 0, $display = true ) {
 		global $wpdb;
@@ -904,7 +904,7 @@ class WP_DownloadManager_Display {
 	 * @param int  $limit   Row limit.
 	 * @param int  $chars   Truncate file names to this many characters.
 	 * @param bool $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? void : string)
 	 */
 	public static function recent_downloads( $limit = 10, $chars = 0, $display = true ) {
 		global $wpdb;
@@ -923,7 +923,7 @@ class WP_DownloadManager_Display {
 	 * @param int       $limit   Row limit.
 	 * @param int       $chars   Truncate file names to this many characters.
 	 * @param bool      $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? void : string)
 	 */
 	public static function downloads_category( $cat_id = 0, $limit = 10, $chars = 0, $display = true ) {
 		global $wpdb;
@@ -1068,7 +1068,7 @@ class WP_DownloadManager_Display {
 	 * Total number of files.
 	 *
 	 * @param bool $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? void : string)
 	 */
 	public static function total_files( $display = true ) {
 		global $wpdb;
@@ -1080,7 +1080,7 @@ class WP_DownloadManager_Display {
 	 * Total size of all files.
 	 *
 	 * @param bool $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? void : string)
 	 */
 	public static function total_size( $display = true ) {
 		global $wpdb;
@@ -1093,7 +1093,7 @@ class WP_DownloadManager_Display {
 	 * Total number of hits.
 	 *
 	 * @param bool $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? void : string)
 	 */
 	public static function total_hits( $display = true ) {
 		global $wpdb;
@@ -1108,7 +1108,7 @@ class WP_DownloadManager_Display {
 	 *
 	 * @param string $output  Markup.
 	 * @param bool   $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? void : string)
 	 */
 	protected static function output( $output, $display ) {
 		if ( $display ) {

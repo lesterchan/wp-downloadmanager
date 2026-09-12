@@ -179,7 +179,7 @@ class WP_DownloadManager_List_Table extends WP_List_Table {
 	/**
 	 * The bulk checkbox for one row.
 	 *
-	 * @param object $item Row from the downloads table.
+	 * @param stdClass $item Row from the downloads table.
 	 * @return string
 	 */
 	public function column_cb( $item ) {
@@ -193,7 +193,7 @@ class WP_DownloadManager_List_Table extends WP_List_Table {
 	/**
 	 * The primary column: name, path, dates and the row actions.
 	 *
-	 * @param object $item Row from the downloads table.
+	 * @param stdClass $item Row from the downloads table.
 	 * @return string
 	 */
 	public function column_file_name( $item ) {
@@ -240,8 +240,8 @@ class WP_DownloadManager_List_Table extends WP_List_Table {
 	/**
 	 * Every other column.
 	 *
-	 * @param object $item        Row from the downloads table.
-	 * @param string $column_name Column key.
+	 * @param stdClass $item        Row from the downloads table.
+	 * @param string   $column_name Column key.
 	 * @return string
 	 */
 	public function column_default( $item, $column_name ) {

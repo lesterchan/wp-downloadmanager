@@ -46,7 +46,7 @@ if ( ! function_exists( 'get_most_downloaded' ) ) {
 	 * @param int  $limit   Row limit.
 	 * @param int  $chars   Truncate file names to this many characters.
 	 * @param bool $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? null : string)
 	 */
 	function get_most_downloaded( $limit = 10, $chars = 0, $display = true ) {
 		return WP_DownloadManager_Display::most_downloaded( $limit, $chars, $display );
@@ -60,7 +60,7 @@ if ( ! function_exists( 'get_recent_downloads' ) ) {
 	 * @param int  $limit   Row limit.
 	 * @param int  $chars   Truncate file names to this many characters.
 	 * @param bool $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? null : string)
 	 */
 	function get_recent_downloads( $limit = 10, $chars = 0, $display = true ) {
 		return WP_DownloadManager_Display::recent_downloads( $limit, $chars, $display );
@@ -75,7 +75,7 @@ if ( ! function_exists( 'get_downloads_category' ) ) {
 	 * @param int       $limit   Row limit.
 	 * @param int       $chars   Truncate file names to this many characters.
 	 * @param bool      $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? null : string)
 	 */
 	function get_downloads_category( $cat_id = 0, $limit = 10, $chars = 0, $display = true ) {
 		return WP_DownloadManager_Display::downloads_category( $cat_id, $limit, $chars, $display );
@@ -87,7 +87,7 @@ if ( ! function_exists( 'get_download_files' ) ) {
 	 * Total number of files.
 	 *
 	 * @param bool $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? null : string)
 	 */
 	function get_download_files( $display = true ) {
 		return WP_DownloadManager_Display::total_files( $display );
@@ -99,7 +99,7 @@ if ( ! function_exists( 'get_download_size' ) ) {
 	 * Total size of all files.
 	 *
 	 * @param bool $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? null : string)
 	 */
 	function get_download_size( $display = true ) {
 		return WP_DownloadManager_Display::total_size( $display );
@@ -111,7 +111,7 @@ if ( ! function_exists( 'get_download_hits' ) ) {
 	 * Total number of hits.
 	 *
 	 * @param bool $display Echo rather than return.
-	 * @return string|void
+	 * @return ($display is true ? null : string)
 	 */
 	function get_download_hits( $display = true ) {
 		return WP_DownloadManager_Display::total_hits( $display );

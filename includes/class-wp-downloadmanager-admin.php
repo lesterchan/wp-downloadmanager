@@ -439,7 +439,7 @@ class WP_DownloadManager_Admin {
 	/**
 	 * The fields shared by Add File and Edit File.
 	 *
-	 * @param object|null $file Row being edited, or null when adding.
+	 * @param stdClass|null $file Row being edited, or null when adding.
 	 * @return void
 	 */
 	protected static function render_file_form( $file ) {
@@ -856,10 +856,10 @@ class WP_DownloadManager_Admin {
 	/**
 	 * Work out which file the form is pointing at, and how big it is.
 	 *
-	 * @param array       $post      Unslashed form data.
-	 * @param array       $upload    The $_FILES entry for the upload field.
-	 * @param int         $file_type Source: -1 keep, 0 browse, 1 upload, 2 remote.
-	 * @param object|null $existing  Row being edited, when there is one.
+	 * @param array         $post      Unslashed form data.
+	 * @param array         $upload    The $_FILES entry for the upload field.
+	 * @param int           $file_type Source: -1 keep, 0 browse, 1 upload, 2 remote.
+	 * @param stdClass|null $existing  Row being edited, when there is one.
 	 * @return array|WP_Error Keys 'file' and 'size', or the reason it failed.
 	 */
 	protected static function resolve_source( $post, $upload, $file_type, $existing = null ) {

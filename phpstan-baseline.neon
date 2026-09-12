@@ -1,0 +1,949 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to an undefined property object\:\:\$file\.$#'
+			identifier: property.notFound
+			count: 3
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_category\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_hits\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_id\.$#'
+			identifier: property.notFound
+			count: 6
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_permission\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_size\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:collect_files\(\) has parameter \$files with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:collect_files\(\) has parameter \$subfolders with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:collect_folders\(\) has parameter \$folders with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:date_parts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:mce_button\(\) has parameter \$buttons with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:mce_button\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:mce_plugin\(\) has parameter \$plugins with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:mce_plugin\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:mce_translation\(\) has parameter \$translations with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:mce_translation\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:posted_description\(\) has parameter \$post with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:posted_int\(\) has parameter \$post with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:posted_name\(\) has parameter \$post with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:posted_permission\(\) has parameter \$post with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:posted_size\(\) has parameter \$post with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:posted_timestamp\(\) has parameter \$post with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:posted_timestamp\(\) should return int but returns int\|false\.$#'
+			identifier: return.type
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:resolve_source\(\) has parameter \$post with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:resolve_source\(\) has parameter \$upload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:resolve_source\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:resolve_upload\(\) has parameter \$post with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:resolve_upload\(\) has parameter \$upload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:resolve_upload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:screens\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Admin\:\:script_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Parameter \#1 \$file of static method WP_DownloadManager_Admin\:\:render_file_form\(\) expects stdClass\|null, object given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 2
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Parameter \#4 \$existing of static method WP_DownloadManager_Admin\:\:resolve_source\(\) expects stdClass\|null, object given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-admin.php
+
+		-
+			message: '#^Method WP_DownloadManager_Blocks\:\:render_download\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-blocks.php
+
+		-
+			message: '#^Method WP_DownloadManager_Blocks\:\:render_page_download\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-blocks.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file\.$#'
+			identifier: property.notFound
+			count: 2
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_category\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_des\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_hits\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_last_downloaded_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_permission\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_size\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file_updated_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:delete\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:delete\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:file_ids_or_die\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:file_ids_or_die\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:file_or_die\(\) should return object but returns object\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:get\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:get\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:list_\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:list_\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:print_rows\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:print_rows\(\) has parameter \$rows with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:reset_hits\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:reset_hits\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:stats\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Command\:\:stats\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Parameter \#1 \$file_id of static method WP_DownloadManager_Download\:\:get\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-command.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:allowed_html\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:category_name\(\) has parameter \$categories with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:download_shortcode\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:downloads_category\(\) has parameter \$cat_id with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:feed_files\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:page_shortcode\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:paging\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:paging_markup\(\) has parameter \$paging with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:query_args\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:replace_category_vars\(\) has parameter \$names with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:replace_category_vars\(\) has parameter \$stats with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:replace_file_vars\(\) has parameter \$context with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:replace_page_vars\(\) has parameter \$context with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:replace_page_vars\(\) has parameter \$totals with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Method WP_DownloadManager_Display\:\:stats_list\(\) has parameter \$files with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Parameter \#1 \$category_id of static method WP_DownloadManager_Display\:\:downloads_page\(\) expects int, int\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int\|string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 2
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, array\<int, int\|string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, array\<int, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Parameter \#3 \$subject of function str_replace expects array\<string\>\|string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Parameter \#6 \$stream_limit of static method WP_DownloadManager_Display\:\:render_download\(\) expects int, int\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-display.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$file\.$#'
+			identifier: property.notFound
+			count: 2
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_Download\:\:count\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_Download\:\:delete\(\) has parameter \$file_ids with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_Download\:\:filter_values\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_Download\:\:filter_values\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_Download\:\:query\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_Download\:\:query\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_Download\:\:query_defaults\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_Download\:\:reset_hits\(\) has parameter \$file_ids with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_Download\:\:sortable_columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_Download\:\:totals\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-download.php
+
+		-
+			message: '#^Method WP_DownloadManager_File\:\:extension_families\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-file.php
+
+		-
+			message: '#^Method WP_DownloadManager_File\:\:icon_families\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-file.php
+
+		-
+			message: '#^Method WP_DownloadManager_File\:\:rename_file\(\) should return string but returns string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: includes/class-wp-downloadmanager-file.php
+
+		-
+			message: '#^Method WP_DownloadManager_File\:\:sort_columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-file.php
+
+		-
+			message: '#^Parameter \#2 \$file_size of static method WP_DownloadManager_File\:\:send_headers\(\) expects int, int\<0, max\>\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-file.php
+
+		-
+			message: '#^Parameter \#2 \$file_size of static method WP_DownloadManager_File\:\:send_headers\(\) expects int, int\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-file.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: includes/class-wp-downloadmanager-install.php
+
+		-
+			message: '#^Parameter \#1 \$option of function get_option expects string, int\<min, \-1\>\|int\<1, max\>\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: includes/class-wp-downloadmanager-install.php
+
+		-
+			message: '#^Method WP_DownloadManager_List_Table\:\:get_bulk_actions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-list-table.php
+
+		-
+			message: '#^Method WP_DownloadManager_List_Table\:\:get_columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-list-table.php
+
+		-
+			message: '#^Method WP_DownloadManager_List_Table\:\:get_sortable_columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-list-table.php
+
+		-
+			message: '#^Method WP_DownloadManager_List_Table\:\:sortable_sql_columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-list-table.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:all\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:defaults\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:legacy_extra_rows\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:legacy_map\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:legacy_shared_rows\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:legacy_structured_rows\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:list_keys\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:markers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:merge\(\) has parameter \$defaults with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:merge\(\) has parameter \$values with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:merge\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Options\:\:save\(\) has parameter \$values with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Property WP_DownloadManager_Options\:\:\$cache type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-options.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:option_sections\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:render_field\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:render_template_field\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:sanitize\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:sanitize_categories\(\) has parameter \$raw with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:sanitize_categories\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:sanitize_templates\(\) has parameter \$existing with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:sanitize_templates\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:sanitize_templates\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:sort_column_labels\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:tabs\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Settings\:\:template_fields\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-settings.php
+
+		-
+			message: '#^Method WP_DownloadManager_Template\:\:defaults\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-template.php
+
+		-
+			message: '#^Method WP_DownloadManager_Template\:\:for_script\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-template.php
+
+		-
+			message: '#^Method WP_DownloadManager_Template\:\:keys\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-template.php
+
+		-
+			message: '#^Method WP_DownloadManager_Template\:\:paired_keys\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-template.php
+
+		-
+			message: '#^Method WP_DownloadManager_Widget\:\:defaults\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-widget.php
+
+		-
+			message: '#^Method WP_DownloadManager_Widget\:\:form\(\) has parameter \$instance with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-widget.php
+
+		-
+			message: '#^Method WP_DownloadManager_Widget\:\:update\(\) has parameter \$new_instance with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-widget.php
+
+		-
+			message: '#^Method WP_DownloadManager_Widget\:\:update\(\) has parameter \$old_instance with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-widget.php
+
+		-
+			message: '#^Method WP_DownloadManager_Widget\:\:update\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-widget.php
+
+		-
+			message: '#^Method WP_DownloadManager_Widget\:\:widget\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-widget.php
+
+		-
+			message: '#^Method WP_DownloadManager_Widget\:\:widget\(\) has parameter \$instance with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-widget.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: includes/class-wp-downloadmanager-widget.php
+
+		-
+			message: '#^Return type \(void\) of method WP_DownloadManager_Widget\:\:form\(\) should be compatible with return type \(string\|null\) of method WP_Widget\<array\<string, mixed\>\>\:\:form\(\)$#'
+			identifier: method.childReturnType
+			count: 1
+			path: includes/class-wp-downloadmanager-widget.php
+
+		-
+			message: '#^Method WP_DownloadManager_WPStats\:\:register_section\(\) has parameter \$sections with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-wpstats.php
+
+		-
+			message: '#^Method WP_DownloadManager_WPStats\:\:register_section\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager-wpstats.php
+
+		-
+			message: '#^Filter callback return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: includes/class-wp-downloadmanager.php
+
+		-
+			message: '#^Method WP_DownloadManager\:\:query_vars\(\) has parameter \$vars with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager.php
+
+		-
+			message: '#^Method WP_DownloadManager\:\:query_vars\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-wp-downloadmanager.php
+
+		-
+			message: '#^Function download_category_name\(\) has parameter \$categories with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/template-tags.php
+
+		-
+			message: '#^Function file_extension_image\(\) has parameter \$images with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/template-tags.php
+
+		-
+			message: '#^Function file_extension_images\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/template-tags.php
+
+		-
+			message: '#^Function get_downloads_category\(\) has parameter \$cat_id with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/template-tags.php
